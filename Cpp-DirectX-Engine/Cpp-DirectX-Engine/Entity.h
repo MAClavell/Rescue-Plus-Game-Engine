@@ -19,7 +19,6 @@ private:
 	bool worldDirty;
 
 	Mesh* mesh;
-	bool isInRenderList;
 
 public:
 	// --------------------------------------------------------
@@ -167,10 +166,5 @@ public:
 	// Remove this entity from the render list
 	// --------------------------------------------------------
 	void RemoveThisEntityFromRenderList();
-	
-	// --------------------------------------------------------
-	// Check if this entity is in the render list
-	// --------------------------------------------------------
-	bool IsInRenderList();
 };
 

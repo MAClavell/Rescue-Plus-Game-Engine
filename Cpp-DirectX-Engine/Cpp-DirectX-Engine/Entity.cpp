@@ -17,7 +17,6 @@ Entity::Entity(Mesh* mesh)
 	RebuildWorld();
 
 	Renderer::GetInstance()->AddEntityToRenderList(this);
-	isInRenderList = true;
 }
 
 // Destructor for when an instance is deleted
@@ -202,10 +201,4 @@ void Entity::AddThisEntityToRenderList()
 void Entity::RemoveThisEntityFromRenderList()
 {
 	Renderer::GetInstance()->RemoveEntityFromRenderList(this);
-}
-
-// Check if this entity is in the render list
-bool Entity::IsInRenderList()
-{
-	return isInRenderList;
 }

@@ -79,12 +79,6 @@ void Renderer::Draw(ID3D11DeviceContext* context, XMFLOAT4X4 viewMatrix, XMFLOAT
 	}
 }
 
-// Check if an entity is in the render list
-bool Renderer::IsEntityInRenderList(Entity* e)
-{
-	return e->IsInRenderList();
-}
-
 // Add an entity to the render list
 void Renderer::AddEntityToRenderList(Entity* e)
 {
@@ -122,5 +116,23 @@ void Renderer::RemoveEntityFromRenderList(Entity* e)
 
 	//Pop the last one
 	renderList.pop_back();
-	return;
+}
+
+// Check if an entity is in the render list. O(n) complexity
+bool Renderer::IsEntityInRenderList(Entity* e)
+{
+	//Early return if render list is empty
+	if (renderList.size() == 0)
+		return false;
+
+	//Get the index of the entity
+	for (size_t i = 0; i < renderList.size(); i++)
+	{
+		if (e == renderList[i])
+		{
+			return true;
+		}
+	}
+
+	return false;
 }

@@ -67,11 +67,6 @@ public:
 	void Draw(ID3D11DeviceContext* context, DirectX::XMFLOAT4X4 viewMatrix, DirectX::XMFLOAT4X4 projectionMatrix);
 
 	// --------------------------------------------------------
-	// Check if an entity is in the render list
-	// --------------------------------------------------------
-	bool IsEntityInRenderList(Entity* e);
-
-	// --------------------------------------------------------
 	// Add an entity to the render list
 	// --------------------------------------------------------
 	void AddEntityToRenderList(Entity* e);
@@ -80,4 +75,9 @@ public:
 	// Remove an entity from the render list
 	// --------------------------------------------------------
 	void RemoveEntityFromRenderList(Entity* e);
+
+	// --------------------------------------------------------
+	// Check if an entity is in the render list. O(n) complexity
+	// --------------------------------------------------------
+	bool IsEntityInRenderList(Entity* e);
 };
