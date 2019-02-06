@@ -42,6 +42,13 @@ Game::~Game()
 		if (meshes[i]) { delete meshes[i]; }
 	}
 
+	//Delete shaders
+	if (vertexShader) { delete vertexShader; }
+	if (pixelShader) { delete pixelShader; }
+
+	//Delete materials
+	if (material) { delete material; }
+
 	//Delete demo entities
 	for (int i = 0; i < 5; i++)
 	{
@@ -64,7 +71,6 @@ void Game::Init()
 
 	//Initialize singleton data
 	inputManager->Init(hWnd);
-	renderer->LoadShaders(device, context);
 
 	//Create the camera and initialize matrices
 	camera = new Camera();
@@ -74,6 +80,7 @@ void Game::Init()
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
+	LoadShaders();
 	CreateBasicGeometry();
 	CreateEntities();
 
@@ -87,6 +94,21 @@ void Game::Init()
 	// geometric primitives (points, lines or triangles) we want to draw.  
 	// Essentially: "What kind of shape should the GPU draw with our data?"
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+// --------------------------------------------------------
+// Loads shaders from compiled shader object (.cso) files using
+// my SimpleShader wrapper for DirectX shader manipulation.
+// - SimpleShader provides helpful methods for sending
+//   data to individual variables on the GPU
+// --------------------------------------------------------
+void Game::LoadShaders()
+{
+	vertexShader = new SimpleVertexShader(device, context);
+	vertexShader->LoadShaderFile(L"VertexShader.cso");
+
+	pixelShader = new SimplePixelShader(device, context);
+	pixelShader->LoadShaderFile(L"PixelShader.cso");
 }
 
 // --------------------------------------------------------
@@ -139,25 +161,28 @@ void Game::CreateBasicGeometry()
 
 void Game::CreateEntities()
 {
+	//Create the material
+	material = new Material(vertexShader, pixelShader);
+
 	//Triangle at origin
-	entities[0] = new Entity(meshes[0]);
+	entities[0] = new Entity(meshes[0], material);
 	
 	//Square offset by (2, 1, 0)
-	entities[1] = new Entity(meshes[1]);
+	entities[1] = new Entity(meshes[1], material);
 	entities[1]->SetPosition(2, 1, 0);
 
 	//Pentagon offset by (-2, 1, 0)
-	entities[2] = new Entity(meshes[2]);
+	entities[2] = new Entity(meshes[2], material);
 	entities[2]->SetPosition(-2, 1, 0);
 	entities[2]->SetScale(0.75f, 0.75f, 0.75f);
 
 	//Moving triangle
-	entities[3] = new Entity(meshes[0]);
+	entities[3] = new Entity(meshes[0], material);
 	entities[3]->SetPosition(position, -1, 0);
 	entities[3]->SetScale(0.5f, 0.5f, 0.5f);
 
 	//Upside down triangle
-	entities[4] = new Entity(meshes[0]);
+	entities[4] = new Entity(meshes[0], material);
 	entities[4]->SetPosition(0, 1.70f, 0);
 	entities[4]->EulerAngles(0, 0, 180);
 	entities[4]->SetScale(0.25f, 0.25f, 0.25f);

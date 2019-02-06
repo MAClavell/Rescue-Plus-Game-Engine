@@ -4,9 +4,10 @@
 using namespace DirectX;
 
 // Constructor - Set up the entity
-Entity::Entity(Mesh* mesh)
+Entity::Entity(Mesh* mesh, Material* material)
 {
 	this->mesh = mesh;
+	this->material = material;
 	worldDirty = false;
 
 	//Set default transformation values
@@ -165,6 +166,24 @@ void Entity::SetScale(float x, float y, float z)
 	scale.x = x;
 	scale.y = y;
 	scale.z = z;
+}
+
+// Get the material this entity uses
+Material* Entity::GetMaterial()
+{
+	return material;
+}
+
+// Get the vertex shader this entity's material uses
+SimpleVertexShader* Entity::GetVertexShader()
+{
+	return material->GetVertexShader();
+}
+
+// Get the pixel this entity's material uses
+SimplePixelShader* Entity::GetPixelShader()
+{
+	return material->GetPixelShader();
 }
 
 // Get the mesh this entity uses

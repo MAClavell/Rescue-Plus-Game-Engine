@@ -14,14 +14,6 @@ public:
 	Game(HINSTANCE hInstance);
 	~Game();
 
-	//Singletons
-	Renderer* renderer;
-	InputManager* inputManager;
-	
-	//3 Demo meshes
-	Mesh* meshes[3];
-	Entity* entities[5];
-
 	//Camera
 	Camera* camera;
 
@@ -38,13 +30,27 @@ public:
 	void OnMouseMove (WPARAM buttonState, int x, int y);
 	void OnMouseWheel(float wheelDelta,   int x, int y);
 private:
+	//Singletons
+	Renderer* renderer;
+	InputManager* inputManager;
+
+	//3 Demo meshes
+	Mesh* meshes[3];
+	Entity* entities[5];
+	Material* material;
+
 	//Transformation modifiers
 	float position;
 	float rotation;
 	float rotSpeed;
 	float scale;
 
+	// Wrappers for DirectX shaders to provide simplified functionality
+	SimpleVertexShader* vertexShader;
+	SimplePixelShader* pixelShader;
+
 	// Initialization helper methods - feel free to customize, combine, etc.
+	void LoadShaders();
 	void CreateBasicGeometry();
 	void CreateEntities();
 };

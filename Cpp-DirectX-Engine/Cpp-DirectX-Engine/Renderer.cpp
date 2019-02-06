@@ -12,29 +12,17 @@ void Renderer::Init()
 
 // Destructor for when the singleton instance is deleted
 Renderer::~Renderer()
-{ 
-	// Delete our simple shader objects, which
-	// will clean up their own internal DirectX stuff
-	delete vertexShader;
-	delete pixelShader;
-}
-
-// Loads shaders from compiled shader object (.cso) files using
-// my SimpleShader wrapper for DirectX shader manipulation.
-void Renderer::LoadShaders(ID3D11Device* device, ID3D11DeviceContext* context)
-{
-	vertexShader = new SimpleVertexShader(device, context);
-	vertexShader->LoadShaderFile(L"VertexShader.cso");
-
-	pixelShader = new SimplePixelShader(device, context);
-	pixelShader->LoadShaderFile(L"PixelShader.cso");
-}
+{ }
 
 // Draw all entities in the render list
 void Renderer::Draw(ID3D11DeviceContext* context, Camera* camera)
 {
 	for (size_t i = 0; i < renderList.size(); i++)
 	{
+		//Get the entity's shaders
+		vertexShader = renderList[i]->GetVertexShader();
+		pixelShader = renderList[i]->GetPixelShader();
+
 		// Send data to shader variables
 		//  - Do this ONCE PER OBJECT you're drawing
 		//  - This is actually a complex process of copying data to a local buffer

@@ -51,14 +51,6 @@ public:
 	void operator=(Renderer const&) = delete;
 
 	// --------------------------------------------------------
-	// Loads shaders from compiled shader object (.cso) files using
-	// my SimpleShader wrapper for DirectX shader manipulation.
-	// - SimpleShader provides helpful methods for sending
-	//   data to individual variables on the GPU
-	// --------------------------------------------------------
-	void LoadShaders(ID3D11Device* device, ID3D11DeviceContext* context);
-
-	// --------------------------------------------------------
 	// Draw all entities in the render list
 	//
 	// context - DirectX device context

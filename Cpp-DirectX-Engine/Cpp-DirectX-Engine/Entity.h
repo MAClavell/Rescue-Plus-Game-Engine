@@ -2,6 +2,7 @@
 
 #include <DirectXMath.h>
 #include "Mesh.h"
+#include "Material.h"
 
 // --------------------------------------------------------
 // A entity definition.
@@ -18,7 +19,9 @@ private:
 	DirectX::XMFLOAT3 scale;
 	bool worldDirty;
 
+	//Renderinh
 	Mesh* mesh;
+	Material* material;
 
 public:
 	// --------------------------------------------------------
@@ -27,7 +30,7 @@ public:
 	//
 	// mesh	- The mesh that this entity displays
 	// --------------------------------------------------------
-	Entity(Mesh* mesh);
+	Entity(Mesh* mesh, Material* material);
 
 	// --------------------------------------------------------
 	// Destructor for when an instance is deleted
@@ -137,6 +140,21 @@ public:
 	// --------------------------------------------------------
 	void SetScale(float x, float y, float z);
 
+	// --------------------------------------------------------
+	// Get the material this entity uses
+	// --------------------------------------------------------
+	Material* GetMaterial();
+
+	// --------------------------------------------------------
+	// Get the vertex shader this entity's material uses
+	// --------------------------------------------------------
+	SimpleVertexShader* GetVertexShader();
+
+	// --------------------------------------------------------
+	// Get the pixel this entity's material uses
+	// --------------------------------------------------------
+	SimplePixelShader* GetPixelShader();
+	
 	// --------------------------------------------------------
 	// Get the mesh this entity uses
 	// --------------------------------------------------------
