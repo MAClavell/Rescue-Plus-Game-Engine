@@ -31,7 +31,7 @@ void Renderer::LoadShaders(ID3D11Device* device, ID3D11DeviceContext* context)
 }
 
 // Draw all entities in the render list
-void Renderer::Draw(ID3D11DeviceContext* context, XMFLOAT4X4 viewMatrix, XMFLOAT4X4 projectionMatrix)
+void Renderer::Draw(ID3D11DeviceContext* context, Camera* camera)
 {
 	for (size_t i = 0; i < renderList.size(); i++)
 	{
@@ -41,8 +41,8 @@ void Renderer::Draw(ID3D11DeviceContext* context, XMFLOAT4X4 viewMatrix, XMFLOAT
 		//    and then copying that entire buffer to the GPU.  
 		//  - The "SimpleShader" class handles all of that for you.
 		vertexShader->SetMatrix4x4("world", renderList[i]->GetWorldMatrix());
-		vertexShader->SetMatrix4x4("view", viewMatrix);
-		vertexShader->SetMatrix4x4("projection", projectionMatrix);
+		vertexShader->SetMatrix4x4("view", camera->GetViewMatrix());
+		vertexShader->SetMatrix4x4("projection", camera->GetProjectionMatrix());
 
 		// Once you've set all of the data you care to change for
 		// the next draw call, you need to actually send it to the GPU

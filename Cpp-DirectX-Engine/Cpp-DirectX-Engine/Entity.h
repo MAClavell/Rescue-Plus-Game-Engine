@@ -59,7 +59,7 @@ public:
 	// --------------------------------------------------------
 	// Set the position for this entity
 	//
-	// newPosition - The new position to translate to
+	// newPosition - The new position to go to
 	// --------------------------------------------------------
 	void SetPosition(DirectX::XMFLOAT3 newPosition);
 

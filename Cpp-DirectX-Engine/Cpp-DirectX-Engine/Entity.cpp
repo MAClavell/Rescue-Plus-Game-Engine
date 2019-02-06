@@ -12,7 +12,7 @@ Entity::Entity(Mesh* mesh)
 	//Set default transformation values
 	world = XMFLOAT4X4();
 	position = XMFLOAT3(0, 0, 0);
-	rotation = XMFLOAT4(0, 0, 0, 0);
+	EulerAngles(0, 0, 0);
 	scale = XMFLOAT3(1, 1, 1);
 	RebuildWorld();
 
@@ -124,7 +124,7 @@ void Entity::EulerAngles(DirectX::XMFLOAT3 angleVector)
 {
 	worldDirty = true;
 	
-	//Convert to angles
+	//Convert to degrees
 	XMVECTOR angles = XMVectorScale(XMLoadFloat3(&angleVector), XM_PI / 180.0f);
 
 	//Convert from angles to a quaternion
@@ -136,7 +136,7 @@ void Entity::EulerAngles(float x, float y, float z)
 {
 	worldDirty = true;
 
-	//Convert to angles
+	//Convert to degrees
 	XMVECTOR angles = XMVectorScale(XMVectorSet(x, y, z, 0.0f), XM_PI / 180.0f);
 
 	//Convert from angles to a quaternion

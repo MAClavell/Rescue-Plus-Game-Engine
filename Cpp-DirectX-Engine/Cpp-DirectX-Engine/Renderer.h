@@ -2,6 +2,7 @@
 #include <vector>
 #include "SimpleShader.h"
 #include "Entity.h"
+#include "Camera.h"
 
 // Basis from: https://stackoverflow.com/questions/1008019/c-singleton-design-pattern
 
@@ -61,10 +62,9 @@ public:
 	// Draw all entities in the render list
 	//
 	// context - DirectX device context
-	// viewMatrix - the camera's view
-	// projectionMatrix - the camera's projection matrix
+	// camera - The active camera object
 	// --------------------------------------------------------
-	void Draw(ID3D11DeviceContext* context, DirectX::XMFLOAT4X4 viewMatrix, DirectX::XMFLOAT4X4 projectionMatrix);
+	void Draw(ID3D11DeviceContext* context, Camera* camera);
 
 	// --------------------------------------------------------
 	// Add an entity to the render list

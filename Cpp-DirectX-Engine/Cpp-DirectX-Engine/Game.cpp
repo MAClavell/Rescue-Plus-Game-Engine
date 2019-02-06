@@ -47,6 +47,9 @@ Game::~Game()
 	{
 		if (entities[i]) { delete entities[i]; }
 	}
+
+	//Delete the camera
+	if (camera) { delete camera; }
 }
 
 // --------------------------------------------------------
@@ -56,13 +59,21 @@ Game::~Game()
 void Game::Init()
 {
 	//Initialize singletons
+	inputManager = InputManager::GetInstance();
 	renderer = Renderer::GetInstance();
+
+	//Initialize singleton data
+	inputManager->Init(hWnd);
 	renderer->LoadShaders(device, context);
+
+	//Create the camera and initialize matrices
+	camera = new Camera();
+	camera->CreateProjectionMatrix(0.25f * XM_PI, (float)width / height, 0.1f, 100.0f);
+	camera->SetPosition(0, 0, -5);
 
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
-	CreateMatrices();
 	CreateBasicGeometry();
 	CreateEntities();
 
@@ -77,40 +88,6 @@ void Game::Init()
 	// Essentially: "What kind of shape should the GPU draw with our data?"
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
-
-// --------------------------------------------------------
-// Initializes the matrices necessary to represent our geometry's 
-// transformations and our 3D camera
-// --------------------------------------------------------
-void Game::CreateMatrices()
-{
-	// Create the View matrix
-	// - In an actual game, recreate this matrix every time the camera 
-	//    moves (potentially every frame)
-	// - We're using the LOOK TO function, which takes the position of the
-	//    camera and the direction vector along which to look (as well as "up")
-	// - Another option is the LOOK AT function, to look towards a specific
-	//    point in 3D space
-	XMVECTOR pos = XMVectorSet(0, 0, -5, 0);
-	XMVECTOR dir = XMVectorSet(0, 0, 1, 0);
-	XMVECTOR up = XMVectorSet(0, 1, 0, 0);
-	XMMATRIX V = XMMatrixLookToLH(
-		pos,     // The position of the "camera"
-		dir,     // Direction the camera is looking
-		up);     // "Up" direction in 3D space (prevents roll)
-	XMStoreFloat4x4(&viewMatrix, XMMatrixTranspose(V)); // Transpose for HLSL!
-
-	// Create the Projection matrix
-	// - This should match the window's aspect ratio, and also update anytime
-	//    the window resizes (which is already happening in OnResize() below)
-	XMMATRIX P = XMMatrixPerspectiveFovLH(
-		0.25f * 3.1415926535f,		// Field of View Angle
-		(float)width / height,		// Aspect ratio
-		0.1f,						// Near clip plane distance
-		100.0f);					// Far clip plane distance
-	XMStoreFloat4x4(&projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
-}
-
 
 // --------------------------------------------------------
 // Creates the geometry we're going to draw - a single triangle for now
@@ -196,12 +173,11 @@ void Game::OnResize()
 	DXCore::OnResize();
 
 	// Update our projection matrix since the window size changed
-	XMMATRIX P = XMMatrixPerspectiveFovLH(
-		0.25f * 3.1415926535f,	// Field of View Angle
+	camera->CreateProjectionMatrix(
+		0.25f * XM_PI,			// Field of View Angle
 		(float)width / height,	// Aspect ratio
 		0.1f,				  	// Near clip plane distance
 		100.0f);			  	// Far clip plane distance
-	XMStoreFloat4x4(&projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
 }
 
 // --------------------------------------------------------
@@ -209,9 +185,16 @@ void Game::OnResize()
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
+	//The only call to UpdateMousePosition() for the InputManager
+	//Get the current mouse position
+	inputManager->UpdateMousePos();
+
 	// Quit if the escape key is pressed
-	if (GetAsyncKeyState(VK_ESCAPE))
+	if (inputManager->GetKey(VK_ESCAPE))
 		Quit();
+
+	//Update the camera
+	camera->Update(deltaTime);
 
 	//Move position around
 	position = sin(totalTime / 2) * 2.5f;
@@ -224,6 +207,10 @@ void Game::Update(float deltaTime, float totalTime)
 	//Scale
 	scale = (sin(totalTime / 2) + 1) / 2;
 	entities[1]->SetScale(scale, scale, scale);
+
+	//The only call to Update() for the InputManager
+	//Update for next frame
+	inputManager->UpdateStates();
 }
 
 // --------------------------------------------------------
@@ -245,7 +232,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		0);
 
 	//Draw all entities in the renderer
-	renderer->Draw(context, viewMatrix, projectionMatrix);
+	renderer->Draw(context, camera);
 
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it
@@ -263,28 +250,15 @@ void Game::Draw(float deltaTime, float totalTime)
 // --------------------------------------------------------
 void Game::OnMouseDown(WPARAM buttonState, int x, int y)
 {
-	// Add any custom code here...
-
-	// Save the previous mouse position, so we have it for the future
-	prevMousePos.x = x;
-	prevMousePos.y = y;
-
-	// Caputure the mouse so we keep getting mouse move
-	// events even if the mouse leaves the window.  we'll be
-	// releasing the capture once a mouse button is released
-	SetCapture(hWnd);
+	inputManager->OnMouseDown(buttonState, x, y);
 }
 
 // --------------------------------------------------------
 // Helper method for mouse release
 // --------------------------------------------------------
-void Game::OnMouseUp(WPARAM buttonState, int x, int y)
+void Game::OnMouseUp(WPARAM buttonState, int x, int y, int button)
 {
-	// Add any custom code here...
-
-	// We don't care about the tracking the cursor outside
-	// the window anymore (we're not dragging if the mouse is up)
-	ReleaseCapture();
+	inputManager->OnMouseUp(buttonState, x, y, button);
 }
 
 // --------------------------------------------------------
@@ -294,11 +268,7 @@ void Game::OnMouseUp(WPARAM buttonState, int x, int y)
 // --------------------------------------------------------
 void Game::OnMouseMove(WPARAM buttonState, int x, int y)
 {
-	// Add any custom code here...
-
-	// Save the previous mouse position, so we have it for the future
-	prevMousePos.x = x;
-	prevMousePos.y = y;
+	inputManager->OnMouseMove(buttonState, x, y);
 }
 
 // --------------------------------------------------------
@@ -308,6 +278,6 @@ void Game::OnMouseMove(WPARAM buttonState, int x, int y)
 // --------------------------------------------------------
 void Game::OnMouseWheel(float wheelDelta, int x, int y)
 {
-	// Add any custom code here...
+	inputManager->OnMouseWheel(wheelDelta, x, y);
 }
 #pragma endregion
