@@ -4,7 +4,7 @@
 #include <DirectXMath.h>
 #include "Renderer.h"
 #include "InputManager.h"
-#include "Camera.h"
+#include "FirstPersonCamera.h"
 
 class Game 
 	: public DXCore
@@ -15,7 +15,7 @@ public:
 	~Game();
 
 	//Camera
-	Camera* camera;
+	FirstPersonCamera* camera;
 
 	// Overridden setup and game loop methods, which
 	// will be called automatically
@@ -35,7 +35,7 @@ private:
 	InputManager* inputManager;
 
 	//3 Demo meshes
-	Mesh* meshes[3];
+	Mesh* meshes[4];
 	Entity* entities[5];
 	Material* material;
 

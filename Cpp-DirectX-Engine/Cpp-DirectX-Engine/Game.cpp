@@ -37,7 +37,7 @@ Game::Game(HINSTANCE hInstance)
 Game::~Game()
 {
 	//Delete demo meshes
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		if (meshes[i]) { delete meshes[i]; }
 	}
@@ -73,7 +73,7 @@ void Game::Init()
 	inputManager->Init(hWnd);
 
 	//Create the camera and initialize matrices
-	camera = new Camera();
+	camera = new FirstPersonCamera();
 	camera->CreateProjectionMatrix(0.25f * XM_PI, (float)width / height, 0.1f, 100.0f);
 	camera->SetPosition(0, 0, -5);
 
@@ -127,25 +127,25 @@ void Game::CreateBasicGeometry()
 	//    over to a DirectX-controlled data structure (the vertex buffer)
 	Vertex vertices0[] =
 	{ 
-		{ XMFLOAT3(+0.0f, +1.0f, +0.0f), red },
-		{ XMFLOAT3(+1.5f, -1.0f, +0.0f), blue },
-		{ XMFLOAT3(-1.5f, -1.0f, +0.0f), green }
+		{ XMFLOAT3(+0.0f, +1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
+		{ XMFLOAT3(+1.5f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
+		{ XMFLOAT3(-1.5f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) }
 	};
 	Vertex vertices1[] =
 	{
-		{ XMFLOAT3(-1.0f, +1.0f, +0.0f), green },
-		{ XMFLOAT3(+1.0f, +1.0f, +0.0f), blue },
-		{ XMFLOAT3(+1.0f, -1.0f, +0.0f), green },
-		{ XMFLOAT3(-1.0f, -1.0f, +0.0f), red }
+		{ XMFLOAT3(-1.0f, +1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
+		{ XMFLOAT3(+1.0f, +1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
+		{ XMFLOAT3(+1.0f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
+		{ XMFLOAT3(-1.0f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) }
 	};
 	Vertex vertices2[] =
 	{
-		{ XMFLOAT3(-0.0f, +0.0f, +0.0f), green },
-		{ XMFLOAT3(-0.0f, +1.0f, +0.0f), green },
-		{ XMFLOAT3(+1.0f, +0.2f, +0.0f), blue },
-		{ XMFLOAT3(+0.75f, -1.0f, +0.0f), green },
-		{ XMFLOAT3(-0.75f, -1.0f, +0.0f), red },
-		{ XMFLOAT3(-1.0f, +0.2f, +0.0f), red }
+		{ XMFLOAT3(-0.0f, +0.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
+		{ XMFLOAT3(-0.0f, +1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
+		{ XMFLOAT3(+1.0f, +0.2f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
+		{ XMFLOAT3(+0.75f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
+		{ XMFLOAT3(-0.75f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
+		{ XMFLOAT3(-1.0f, +0.2f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) }
 	};
 
 	// Set up the indices, which tell us which vertices to use and in which order
@@ -157,6 +157,7 @@ void Game::CreateBasicGeometry()
 	meshes[0] = new Mesh(vertices0, 3, indices0, 3, device);
 	meshes[1] = new Mesh(vertices1, 4, indices1, 6, device);
 	meshes[2] = new Mesh(vertices2, 6, indices2, 15, device);
+	meshes[3] = new Mesh("Assets\\Models\\cone.obj", device);
 }
 
 void Game::CreateEntities()
@@ -164,28 +165,28 @@ void Game::CreateEntities()
 	//Create the material
 	material = new Material(vertexShader, pixelShader);
 
-	//Triangle at origin
-	entities[0] = new Entity(meshes[0], material);
-	
 	//Square offset by (2, 1, 0)
-	entities[1] = new Entity(meshes[1], material);
-	entities[1]->SetPosition(2, 1, 0);
+	entities[0] = new Entity(meshes[1], material);
+	entities[0]->SetPosition(2, 1, 0);
 
 	//Pentagon offset by (-2, 1, 0)
-	entities[2] = new Entity(meshes[2], material);
-	entities[2]->SetPosition(-2, 1, 0);
-	entities[2]->SetScale(0.75f, 0.75f, 0.75f);
+	entities[1] = new Entity(meshes[2], material);
+	entities[1]->SetPosition(-2, 1, 0);
+	entities[1]->SetScale(0.75f, 0.75f, 0.75f);
 
 	//Moving triangle
-	entities[3] = new Entity(meshes[0], material);
-	entities[3]->SetPosition(position, -1, 0);
-	entities[3]->SetScale(0.5f, 0.5f, 0.5f);
+	entities[2] = new Entity(meshes[0], material);
+	entities[2]->SetPosition(position, -1, 0);
+	entities[2]->SetScale(0.5f, 0.5f, 0.5f);
 
 	//Upside down triangle
-	entities[4] = new Entity(meshes[0], material);
-	entities[4]->SetPosition(0, 1.70f, 0);
-	entities[4]->EulerAngles(0, 0, 180);
-	entities[4]->SetScale(0.25f, 0.25f, 0.25f);
+	entities[3] = new Entity(meshes[0], material);
+	entities[3]->SetPosition(0, 1.70f, 0);
+	entities[3]->SetRotation(0, 0, 180);
+	entities[3]->SetScale(0.25f, 0.25f, 0.25f);
+
+	//Cone at origin
+	entities[4] = new Entity(meshes[3], material);
 }
 
 // --------------------------------------------------------
@@ -223,15 +224,15 @@ void Game::Update(float deltaTime, float totalTime)
 
 	//Move position around
 	position = sin(totalTime / 2) * 2.5f;
-	entities[3]->SetPosition(position, -1, 0);
+	entities[2]->SetPosition(position, -1, 0);
 
 	//Rotate
 	rotation += rotSpeed * deltaTime;
-	entities[2]->EulerAngles(0, 0, rotation);
+	entities[1]->SetRotation(0, 0, rotation);
 
 	//Scale
 	scale = (sin(totalTime / 2) + 1) / 2;
-	entities[1]->SetScale(scale, scale, scale);
+	entities[0]->SetScale(scale, scale, scale);
 
 	//The only call to Update() for the InputManager
 	//Update for next frame

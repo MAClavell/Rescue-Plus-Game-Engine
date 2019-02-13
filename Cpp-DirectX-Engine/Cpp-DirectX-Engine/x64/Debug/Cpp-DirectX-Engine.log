@@ -1,14 +1,1 @@
-﻿  compilation object save succeeded; see D:\Git Repos\Cpp-DirectX-Engine\Cpp-DirectX-Engine\x64\Debug\PixelShader.cso
-  compilation object save succeeded; see D:\Git Repos\Cpp-DirectX-Engine\Cpp-DirectX-Engine\x64\Debug\VertexShader.cso
-  Camera.cpp
-  DXCore.cpp
-  Entity.cpp
-  Game.cpp
-  InputManager.cpp
-  Main.cpp
-  Material.cpp
-  Mesh.cpp
-  Renderer.cpp
-  SimpleShader.cpp
-  Generating Code...
-  Cpp-DirectX-Engine.vcxproj -> D:\Git Repos\Cpp-DirectX-Engine\Cpp-DirectX-Engine\x64\Debug\Cpp-DirectX-Engine.exe
+﻿  Cpp-DirectX-Engine.vcxproj -> D:\Documents\GitHub\Cpp-DirectX-Engine\Cpp-DirectX-Engine\x64\Debug\Cpp-DirectX-Engine.exe

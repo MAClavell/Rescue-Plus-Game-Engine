@@ -1,6 +1,7 @@
 #pragma once
 
 #include <d3d11.h>
+#include "GameObject.h"
 #include "Vertex.h"
 
 // --------------------------------------------------------
@@ -15,6 +16,11 @@ private:
 	ID3D11Buffer* indexBuffer;
 	int indexCount;
 
+	// --------------------------------------------------------
+	// Create the vertex and index buffers for the mesh
+	// --------------------------------------------------------
+	void CreateBuffers(Vertex* vertices, int vertexCount, unsigned* indices, int indexCount, ID3D11Device* device);
+
 public:
 	// --------------------------------------------------------
 	// Constructor - Set up fields and buffers
@@ -25,7 +31,13 @@ public:
 	// indexCount - The number of indices in this mesh
 	// device - The ID3D11Device for this mesh
 	// --------------------------------------------------------
-	Mesh(Vertex* vertices, int vertexCount, unsigned* indices, int indexCount, ID3D11Device* device);\
+	Mesh(Vertex* vertices, int vertexCount, unsigned* indices, int indexCount, ID3D11Device* device);
+	// --------------------------------------------------------
+	// Constructor - Set up fields and buffers
+	//
+	// filePath	- The path to the mesh file
+	// --------------------------------------------------------
+	Mesh(char* objFile, ID3D11Device* device);
 	// --------------------------------------------------------
 	// Destructor for when an instance is deleted
 	// --------------------------------------------------------
