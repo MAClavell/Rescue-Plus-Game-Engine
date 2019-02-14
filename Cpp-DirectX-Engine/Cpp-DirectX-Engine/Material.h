@@ -11,6 +11,8 @@ class Material
 private:
 	SimpleVertexShader* vertexShader;
 	SimplePixelShader* pixelShader;
+	DirectX::XMFLOAT4 surfaceColor;
+	float specularity;
 
 public:
 	// --------------------------------------------------------
@@ -27,14 +29,33 @@ public:
 	~Material();
 
 	// --------------------------------------------------------
-	// Get this materials vertex shas=der
+	// Get this material's vertex shas=der
 	// --------------------------------------------------------
 	SimpleVertexShader* GetVertexShader();
 
 	// --------------------------------------------------------
-	// Get this materials pixel shader
+	// Get this material's pixel shader
 	// --------------------------------------------------------
 	SimplePixelShader* GetPixelShader();
 
+	// --------------------------------------------------------
+	// Set this material's surface color
+	// --------------------------------------------------------
+	void SetSurfaceColor(DirectX::XMFLOAT4 color);
+
+	// --------------------------------------------------------
+	// Get this material's surface color
+	// --------------------------------------------------------
+	DirectX::XMFLOAT4 GetSurfaceColor();
+
+	// --------------------------------------------------------
+	// Set this material's specularity
+	// --------------------------------------------------------
+	void SetSpecularity(float spec);
+
+	// --------------------------------------------------------
+	// Get this material's specularity
+	// --------------------------------------------------------
+	float GetSpecularity();
 };
 

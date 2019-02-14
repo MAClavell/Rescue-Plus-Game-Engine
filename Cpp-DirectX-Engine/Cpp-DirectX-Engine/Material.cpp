@@ -5,6 +5,7 @@ Material::Material(SimpleVertexShader * vertexShader, SimplePixelShader * pixelS
 {
 	this->vertexShader = vertexShader;
 	this->pixelShader = pixelShader;
+	specularity = 0;
 }
 
 // Release all data in the material
@@ -21,4 +22,26 @@ SimpleVertexShader* Material::GetVertexShader()
 SimplePixelShader* Material::GetPixelShader()
 {
 	return pixelShader;
+}
+
+// Set this materials surface color
+void Material::SetSurfaceColor(DirectX::XMFLOAT4 color)
+{
+	surfaceColor = color;
+}
+
+// Get this materials surface color
+DirectX::XMFLOAT4 Material::GetSurfaceColor()
+{
+	return surfaceColor;
+}
+
+void Material::SetSpecularity(float spec)
+{
+	specularity = spec;
+}
+
+float Material::GetSpecularity()
+{
+	return specularity;
 }

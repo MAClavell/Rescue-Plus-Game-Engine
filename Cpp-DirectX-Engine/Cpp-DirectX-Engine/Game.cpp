@@ -116,12 +116,6 @@ void Game::LoadShaders()
 // --------------------------------------------------------
 void Game::CreateBasicGeometry()
 {
-	// Create some temporary variables to represent colors
-	// - Not necessary, just makes things more readable
-	XMFLOAT4 red = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-	XMFLOAT4 green = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-	XMFLOAT4 blue = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
-
 	// Set up the vertices of the triangle we would like to draw
 	// - We're going to copy this array, exactly as it exists in memory
 	//    over to a DirectX-controlled data structure (the vertex buffer)
@@ -157,13 +151,15 @@ void Game::CreateBasicGeometry()
 	meshes[0] = new Mesh(vertices0, 3, indices0, 3, device);
 	meshes[1] = new Mesh(vertices1, 4, indices1, 6, device);
 	meshes[2] = new Mesh(vertices2, 6, indices2, 15, device);
-	meshes[3] = new Mesh("Assets\\Models\\cone.obj", device);
+	meshes[3] = new Mesh("Assets\\Models\\sphere.obj", device);
 }
 
 void Game::CreateEntities()
 {
 	//Create the material
 	material = new Material(vertexShader, pixelShader);
+	material->SetSurfaceColor(XMFLOAT4(1, 1, 1, 1));
+	material->SetSpecularity(48);
 
 	//Square offset by (2, 1, 0)
 	entities[0] = new Entity(meshes[1], material);
@@ -214,6 +210,7 @@ void Game::Update(float deltaTime, float totalTime)
 	//The only call to UpdateMousePosition() for the InputManager
 	//Get the current mouse position
 	inputManager->UpdateMousePos();
+	// --------------------------------------------------------
 
 	// Quit if the escape key is pressed
 	if (inputManager->GetKey(VK_ESCAPE))
@@ -234,6 +231,7 @@ void Game::Update(float deltaTime, float totalTime)
 	scale = (sin(totalTime / 2) + 1) / 2;
 	entities[0]->SetScale(scale, scale, scale);
 
+	// --------------------------------------------------------
 	//The only call to Update() for the InputManager
 	//Update for next frame
 	inputManager->UpdateStates();
@@ -245,7 +243,8 @@ void Game::Update(float deltaTime, float totalTime)
 void Game::Draw(float deltaTime, float totalTime)
 {
 	// Background color (Cornflower Blue in this case) for clearing
-	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
+	//const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
+	const float color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 	// Clear the render target and depth buffer (erases what's on the screen)
 	//  - Do this ONCE PER FRAME

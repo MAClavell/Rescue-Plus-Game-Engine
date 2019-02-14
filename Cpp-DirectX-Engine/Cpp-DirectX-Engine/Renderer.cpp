@@ -8,17 +8,34 @@ void Renderer::Init()
 	// Initialize fields
 	vertexShader = 0;
 	pixelShader = 0;
+
+	dLight1 = new DirectionalLight();
+	dLight1->SetDiffuseColor(0, 0, 1, 1);
+
+	dLight2 = new DirectionalLight();
+	dLight2->SetRotation(90, 0, 0);
+	dLight2->SetAmbientColor(0, 0, 0, 1);
+	dLight2->SetDiffuseColor(1, 0, 0, 1);
+	dLight2->SetIntensity(1.5f);
 }
 
 // Destructor for when the singleton instance is deleted
 Renderer::~Renderer()
-{ }
+{ 
+	if (dLight1)
+		delete dLight1;
+
+	if (dLight2)
+		delete dLight2;
+}
 
 // Draw all entities in the render list
 void Renderer::Draw(ID3D11DeviceContext* context, Camera* camera)
 {
 	for (size_t i = 0; i < renderList.size(); i++)
 	{
+		Material* mat = renderList[i]->GetMaterial();
+
 		//Get the entity's shaders
 		vertexShader = renderList[i]->GetVertexShader();
 		pixelShader = renderList[i]->GetPixelShader();
@@ -31,11 +48,19 @@ void Renderer::Draw(ID3D11DeviceContext* context, Camera* camera)
 		vertexShader->SetMatrix4x4("world", renderList[i]->GetWorldMatrix());
 		vertexShader->SetMatrix4x4("view", camera->GetViewMatrix());
 		vertexShader->SetMatrix4x4("projection", camera->GetProjectionMatrix());
+		vertexShader->SetMatrix4x4("worldInvTrans", renderList[i]->GetWorldInvTransMatrix());
+	
+		pixelShader->SetData("light1", dLight1->GetLightStruct(), sizeof(LightStruct));
+		pixelShader->SetData("light2", dLight2->GetLightStruct(), sizeof(LightStruct));
+		pixelShader->SetFloat4("surfaceColor", mat->GetSurfaceColor());
+		pixelShader->SetFloat3("cameraPosition", camera->GetPosition());
+		pixelShader->SetFloat("specularity", mat->GetSpecularity());
 
 		// Once you've set all of the data you care to change for
 		// the next draw call, you need to actually send it to the GPU
 		//  - If you skip this, the "SetMatrix" calls above won't make it to the GPU!
 		vertexShader->CopyAllBufferData();
+		pixelShader->CopyAllBufferData();
 
 		// Set the vertex and pixel shaders to use for the next Draw() command
 		//  - These don't technically need to be set every frame...YET

@@ -3,6 +3,7 @@
 #include "SimpleShader.h"
 #include "Entity.h"
 #include "Camera.h"
+#include "Lights.h"
 
 // Basis from: https://stackoverflow.com/questions/1008019/c-singleton-design-pattern
 
@@ -16,6 +17,10 @@ class Renderer
 private:
 	std::vector<Entity*> renderList;
 	
+	//Test lighting
+	DirectionalLight* dLight1;
+	DirectionalLight* dLight2;
+
 	// Wrappers for DirectX shaders to provide simplified functionality
 	SimpleVertexShader* vertexShader;
 	SimplePixelShader* pixelShader;

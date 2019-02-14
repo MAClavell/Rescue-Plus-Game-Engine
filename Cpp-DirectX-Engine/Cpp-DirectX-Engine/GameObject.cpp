@@ -17,8 +17,7 @@ GameObject::GameObject()
 
 // Destructor for when an instance is deleted
 GameObject::~GameObject()
-{
-}
+{ }
 
 // Get the world matrix for this GameObject (rebuilding if necessary)
 XMFLOAT4X4 GameObject::GetWorldMatrix()
@@ -30,10 +29,14 @@ XMFLOAT4X4 GameObject::GetWorldMatrix()
 	return world;
 }
 
-// Set the world matrix for this GameObject
-void GameObject::SetWorldMatrix(XMFLOAT4X4 newWorld)
+// Get the inverse transpose of the world matrix for this entity (rebuilding if necessary)
+XMFLOAT4X4 GameObject::GetWorldInvTransMatrix()
 {
-	world = newWorld;
+	//Rebuild the world if it is not current
+	if (worldDirty)
+		RebuildWorld();
+
+	return worldInvTrans;
 }
 
 // Rebuild the world matrix from the different components
@@ -43,15 +46,19 @@ void GameObject::RebuildWorld()
 	XMMATRIX translation = XMMatrixTranslationFromVector(XMLoadFloat3(&position));
 
 	//Get rotation matrix
-
-	//Get rotation matrix
 	XMMATRIX rotating = XMMatrixRotationQuaternion(XMLoadFloat4(&rotationQuat));
 
 	//Get scale matrix
 	XMMATRIX scaling = XMMatrixScalingFromVector(XMLoadFloat3(&scale));
 
 	//Calculate matrix and store
-	XMStoreFloat4x4(&world, XMMatrixTranspose(scaling * rotating * translation));
+	XMMATRIX newWorld = XMMatrixTranspose(scaling * rotating * translation);
+	XMStoreFloat4x4(&world, newWorld);
+
+	//Calculate inverse transpose
+	XMStoreFloat4x4(&worldInvTrans, XMMatrixInverse(&XMVectorSet(-1, -1, -1, -1), XMMatrixTranspose(newWorld)));
+
+	worldDirty = false;
 }
 
 // Get the position for this GameObject
@@ -73,9 +80,7 @@ void GameObject::SetPosition(float x, float y, float z)
 	worldDirty = true;
 
 	//Set values
-	position.x = x;
-	position.y = y;
-	position.z = z;
+	position = XMFLOAT3(x, y, z);
 }
 
 // Moves this GameObject in absolute space by a given vector.
@@ -103,6 +108,11 @@ void GameObject::MoveRelative(XMFLOAT3 moveAmnt)
 	XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), move));
 }
 
+XMFLOAT3 GameObject::GetForwardAxis()
+{
+	return forwardAxis;
+}
+
 // Get the rotation for this GameObject (Quaternion)
 XMFLOAT3 GameObject::GetRotation()
 {
@@ -123,7 +133,12 @@ void GameObject::SetRotation(XMFLOAT3 newRotation)
 
 	//Convert to quaternions and store
 	XMVECTOR angles = XMVectorScale(XMLoadFloat3(&rotation), XM_PI / 180.0f);
-	XMStoreFloat4(&rotationQuat, XMQuaternionRotationRollPitchYawFromVector(angles));
+	XMVECTOR quat = XMQuaternionRotationRollPitchYawFromVector(angles);
+	XMStoreFloat4(&rotationQuat, quat);
+
+	//Rotate the forward axis
+	XMStoreFloat3(&forwardAxis, XMVector3Normalize(
+		XMVector3Rotate(XMVectorSet(1, 0, 0, 0), quat)));
 }
 
 // Set the rotation for this GameObject using euler angles (Quaternion)
@@ -132,13 +147,16 @@ void GameObject::SetRotation(float x, float y, float z)
 	worldDirty = true;
 
 	//Convert to degrees
-	rotation.x = x;
-	rotation.y = y;
-	rotation.z = z;
+	rotation = XMFLOAT3(x, y, z);
 
 	//Convert to quaternions and store
 	XMVECTOR angles = XMVectorScale(XMLoadFloat3(&rotation), XM_PI / 180.0f);
-	XMStoreFloat4(&rotationQuat, XMQuaternionRotationRollPitchYawFromVector(angles));
+	XMVECTOR quat = XMQuaternionRotationRollPitchYawFromVector(angles);
+	XMStoreFloat4(&rotationQuat, quat);
+
+	//Rotate the forward axis
+	XMStoreFloat3(&forwardAxis, XMVector3Normalize(
+		XMVector3Rotate(XMVectorSet(1, 0, 0, 0), quat)));
 }
 
 // Get the scale for this GameObject
@@ -160,7 +178,5 @@ void GameObject::SetScale(float x, float y, float z)
 	worldDirty = true;
 
 	//Set values
-	scale.x = x;
-	scale.y = y;
-	scale.z = z;
+	scale = XMFLOAT3(x, y, z);
 }
