@@ -9,29 +9,37 @@ void Renderer::Init()
 	vertexShader = 0;
 	pixelShader = 0;
 
-	dLight1 = new DirectionalLight();
-	dLight1->SetDiffuseColor(0, 0, 1, 1);
+	//Directional lights
+	dLight = new DirectionalLight(XMFLOAT4(0.1f, 0.1f, 0.1f, 1), XMFLOAT4(1, 1, 1, 1), 1);
 
-	dLight2 = new DirectionalLight();
-	dLight2->SetRotation(90, 0, 0);
-	dLight2->SetAmbientColor(0, 0, 0, 1);
-	dLight2->SetDiffuseColor(1, 0, 0, 1);
-	dLight2->SetIntensity(1.5f);
+	//Point light
+	pLight = new PointLight(5, XMFLOAT4(0, 1, 0, 1), 1);
+	pLight->SetPosition(0, -2, 3);
+
+	//Spot light
+	sLight = new SpotLight(5, XMFLOAT4(0, 0, 1, 1), 1);
+	sLight->SetPosition(2, 0, -1);
+	sLight->SetRotation(0, -90, 0);
 }
 
 // Destructor for when the singleton instance is deleted
 Renderer::~Renderer()
 { 
-	if (dLight1)
-		delete dLight1;
-
-	if (dLight2)
-		delete dLight2;
+	//Release lights
+	if (dLight)
+		delete dLight;
+	if (pLight)
+		delete pLight;
+	if (sLight)
+		delete sLight;
 }
 
 // Draw all entities in the render list
 void Renderer::Draw(ID3D11DeviceContext* context, Camera* camera)
 {
+	//TODO: Sort enties based on meshes/materials
+	//TODO: Assign lights to entities
+	//TODO: Apply attenuation
 	for (size_t i = 0; i < renderList.size(); i++)
 	{
 		Material* mat = renderList[i]->GetMaterial();
@@ -50,11 +58,14 @@ void Renderer::Draw(ID3D11DeviceContext* context, Camera* camera)
 		vertexShader->SetMatrix4x4("projection", camera->GetProjectionMatrix());
 		vertexShader->SetMatrix4x4("worldInvTrans", renderList[i]->GetWorldInvTransMatrix());
 	
-		pixelShader->SetData("light1", dLight1->GetLightStruct(), sizeof(LightStruct));
-		pixelShader->SetData("light2", dLight2->GetLightStruct(), sizeof(LightStruct));
+		pixelShader->SetData("light1", dLight->GetLightStruct(), sizeof(LightStruct));
+		pixelShader->SetData("light2", pLight->GetLightStruct(), sizeof(LightStruct));
+		pixelShader->SetData("light3", sLight->GetLightStruct(), sizeof(LightStruct));
 		pixelShader->SetFloat4("surfaceColor", mat->GetSurfaceColor());
 		pixelShader->SetFloat3("cameraPosition", camera->GetPosition());
 		pixelShader->SetFloat("specularity", mat->GetSpecularity());
+		pixelShader->SetShaderResourceView("diffuseTexture", mat->GetResourceView());
+		pixelShader->SetSamplerState("basicSampler", mat->GetSamplerState());
 
 		// Once you've set all of the data you care to change for
 		// the next draw call, you need to actually send it to the GPU

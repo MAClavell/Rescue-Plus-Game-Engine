@@ -1,11 +1,15 @@
 #include "Material.h"
 
 // Constructor - Set up a material
-Material::Material(SimpleVertexShader * vertexShader, SimplePixelShader * pixelShader)
+Material::Material(SimpleVertexShader * vertexShader, SimplePixelShader * pixelShader, 
+	ID3D11ShaderResourceView* resourceView, ID3D11SamplerState* samplerState)
 {
 	this->vertexShader = vertexShader;
 	this->pixelShader = pixelShader;
-	specularity = 0;
+	specularity = 64;
+	this->resourceView = resourceView;
+	this->samplerState = samplerState;
+	surfaceColor = DirectX::XMFLOAT4(1, 1, 1, 1);
 }
 
 // Release all data in the material
@@ -22,6 +26,18 @@ SimpleVertexShader* Material::GetVertexShader()
 SimplePixelShader* Material::GetPixelShader()
 {
 	return pixelShader;
+}
+
+// Get this material's resource view
+ID3D11ShaderResourceView* Material::GetResourceView()
+{
+	return resourceView;
+}
+
+// Get this material's sampler state
+ID3D11SamplerState* Material::GetSamplerState()
+{
+	return samplerState;
 }
 
 // Set this materials surface color

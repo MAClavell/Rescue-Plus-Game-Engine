@@ -14,10 +14,15 @@ cbuffer externalData : register(b0)
 {
 	Light light1;
 	Light light2;
+	Light light3;
 	float4 surfaceColor;
 	float3 cameraPosition;
 	float specularity;
 };
+
+//Texturing
+Texture2D diffuseTexture : register(t0);
+SamplerState basicSampler : register(s0);
 
 // Struct representing the data we expect to receive from earlier pipeline stages
 // - Should match the output of our corresponding vertex shader
@@ -40,62 +45,65 @@ struct VertexToPixel
 // --------------------------------------------------------
 // Calculate directional light and apply the color
 // --------------------------------------------------------
-float4 dLightCalc(VertexToPixel input, Light light, float3 toCamera)
+float4 dLightCalc(VertexToPixel input, Light light, float3 toCamera, float4 finalSurface)
 {
 	//Calc direction to the light
-	float3 dirToLight = normalize(-light.direction);
+	float3 lightDir = normalize(light.direction);
 
 	//Get NdotL "brightness" factor
-	float NdotL = saturate(dot(dirToLight, input.normal));
+	float NdotL = saturate(dot(input.normal, -lightDir));
 
 	//Calculate specularness ("shinyness")
-	float dirSpec = pow(max(dot(reflect(-dirToLight, input.normal), toCamera), 0), specularity);
+	float spec = pow(saturate(dot(reflect(lightDir, input.normal), toCamera)), specularity);
 
 	//Add all colors
-	return (light.ambientColor + 
-		(light.diffuseColor * NdotL * surfaceColor) +
-		float4(dirSpec, dirSpec, dirSpec, 0)) * light.intensity;
+	return ((light.ambientColor * finalSurface)  
+			+ (light.diffuseColor * NdotL * finalSurface)
+			+ float4(spec, spec, spec, 0))
+			* light.intensity;
 }
 
 // --------------------------------------------------------
 // Calculate point light and apply the color
 // --------------------------------------------------------
-float4 pLightCalc(VertexToPixel input, Light light, float3 toCamera)
+float4 pLightCalc(VertexToPixel input, Light light, float3 toCamera, float4 finalSurface)
 {
 	//Calc direction to the light
-	float3 dirToLight = normalize(light.position - input.worldPos);
+	float3 lightDir = normalize(light.position - input.worldPos);
 
 	//Get NdotL "brightness" factor
-	float NdotL = saturate(dot(dirToLight, input.normal));
+	float NdotL = saturate(dot(input.normal, lightDir));
 
 	//Calculate specularness ("shinyness")
-	float dirSpec = pow(max(dot(reflect(-dirToLight, input.normal), toCamera), 0), specularity);
+	float spec = pow(saturate(dot(reflect(-lightDir, input.normal), toCamera)), specularity);
 
 	//Add all colors
-	return ((light.diffuseColor * NdotL * surfaceColor) +
-		float4(dirSpec, dirSpec, dirSpec, 0)) * light.intensity;
+	return ((light.diffuseColor * NdotL * finalSurface)
+			+ float4(spec, spec, spec, 0))
+			* light.intensity;
 }
 
 // --------------------------------------------------------
 // Calculate spot light and apply the color
 // --------------------------------------------------------
-float4 sLightCalc(VertexToPixel input, Light light, float3 toCamera)
+float4 sLightCalc(VertexToPixel input, Light light, float3 toCamera, float4 finalSurface)
 {
 	//Calc direction to the light
-	float3 dirToLight = normalize(light.position - input.worldPos);
+	float3 lightDir = normalize(light.position - input.worldPos);
 
 	//Get NdotL "brightness" factor
-	float NdotL = saturate(dot(dirToLight, input.normal));
-
-	//Calculate specularness ("shinyness")
-	float dirSpec = pow(max(dot(reflect(-dirToLight, input.normal), toCamera), 0), specularity);
+	float NdotL = saturate(dot(input.normal, lightDir));
 
 	//Calculate spotlight amount
-	float spotAmnt = pow(max(dot(-dirToLight, light.direction), 0.0f), light.intensity);
+	float spotAmnt = pow(max(dot(-lightDir, light.direction), 0.0f), light.intensity);
+
+	//Calculate specularness ("shinyness")
+	float spec = pow(saturate(dot(reflect(-lightDir, input.normal), toCamera)), specularity);
 
 	//Add all colors
-	return ((light.diffuseColor * NdotL * surfaceColor) +
-		float4(dirSpec, dirSpec, dirSpec, 0)) * spotAmnt;
+	return ((light.diffuseColor * NdotL * finalSurface)
+			+ float4(spec, spec, spec, 0))
+			* spotAmnt;
 }
 
 // --------------------------------------------------------
@@ -115,9 +123,13 @@ float4 main(VertexToPixel input) : SV_TARGET
 	//Calculate direction to camera
 	float3 toCamera = normalize(cameraPosition - input.worldPos);
 
-	//Calculate the directional light effect
-	float4 finalColor = dLightCalc(input, light1, toCamera) +
-		dLightCalc(input, light2, toCamera);
+	//Apply texture
+	float4 finalSurface = diffuseTexture.Sample(basicSampler, input.uv);
+
+	//Calculate lighting effects
+	float4 finalColor = float4(dLightCalc(input, light1, toCamera, finalSurface).xyz, 1) +
+		float4(pLightCalc(input, light2, toCamera, finalSurface).xyz, 1) +
+		float4(sLightCalc(input, light3, toCamera, finalSurface).xyz, 1);
 
 	//Return final pixel color after lighting
 	return finalColor;

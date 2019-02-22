@@ -5,6 +5,7 @@
 #include "Renderer.h"
 #include "InputManager.h"
 #include "FirstPersonCamera.h"
+#include "WICTextureLoader.h"
 
 class Game 
 	: public DXCore
@@ -34,10 +35,14 @@ private:
 	Renderer* renderer;
 	InputManager* inputManager;
 
-	//3 Demo meshes
+	//Meshes and entities
 	Mesh* meshes[4];
 	Entity* entities[5];
-	Material* material;
+
+	//Materials and textures
+	Material* materials[2];
+	ID3D11SamplerState* samplerState;
+	ID3D11ShaderResourceView* srvs[2];
 
 	//Transformation modifiers
 	float position;

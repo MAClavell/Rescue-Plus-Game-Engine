@@ -18,8 +18,9 @@ private:
 	std::vector<Entity*> renderList;
 	
 	//Test lighting
-	DirectionalLight* dLight1;
-	DirectionalLight* dLight2;
+	DirectionalLight* dLight;
+	PointLight* pLight;
+	SpotLight* sLight;
 
 	// Wrappers for DirectX shaders to provide simplified functionality
 	SimpleVertexShader* vertexShader;

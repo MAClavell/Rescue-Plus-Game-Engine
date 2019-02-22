@@ -11,6 +11,8 @@ class Material
 private:
 	SimpleVertexShader* vertexShader;
 	SimplePixelShader* pixelShader;
+	ID3D11ShaderResourceView* resourceView;
+	ID3D11SamplerState* samplerState;
 	DirectX::XMFLOAT4 surfaceColor;
 	float specularity;
 
@@ -21,7 +23,8 @@ public:
 	// vertexShader - The vertex shader this material uses
 	// pixelShader - The pixel shader this material uses
 	// --------------------------------------------------------
-	Material(SimpleVertexShader* vertexShader, SimplePixelShader* pixelShader);
+	Material(SimpleVertexShader* vertexShader, SimplePixelShader* pixelShader, 
+		ID3D11ShaderResourceView* resourceView, ID3D11SamplerState* samplerState);
 	
 	// --------------------------------------------------------
 	// Release all data in the material
@@ -37,6 +40,16 @@ public:
 	// Get this material's pixel shader
 	// --------------------------------------------------------
 	SimplePixelShader* GetPixelShader();
+
+	// --------------------------------------------------------
+	// Get this material's resource view
+	// --------------------------------------------------------
+	ID3D11ShaderResourceView* GetResourceView();
+
+	// --------------------------------------------------------
+	// Get this material's sampler state
+	// --------------------------------------------------------
+	ID3D11SamplerState* GetSamplerState();
 
 	// --------------------------------------------------------
 	// Set this material's surface color

@@ -6,7 +6,6 @@ using namespace DirectX;
 Camera::Camera()
 {
 	//Default transformation values
-	forward = XMFLOAT3(0, 0, 1);
 	up = XMFLOAT3(0, 1, 0);
 	CreateViewMatrix();
 }
@@ -25,8 +24,7 @@ void Camera::Update(float deltaTime)
 void Camera::CreateViewMatrix()
 {
 	//Rotate the forward vector
-	XMVECTOR forward = XMVector3Rotate(XMLoadFloat3(&(this->forward)), 
-						XMLoadFloat4(&GetQuatRotation()));
+	XMVECTOR forward = XMLoadFloat3(&GetForwardAxis());
 
 	//Create the up vector from the forward
 	XMVECTOR up = XMVector3Cross(XMVector3Cross(forward, XMLoadFloat3(&(this->up))), forward);

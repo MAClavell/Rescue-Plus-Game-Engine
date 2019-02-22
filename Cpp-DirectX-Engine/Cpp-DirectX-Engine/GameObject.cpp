@@ -138,7 +138,7 @@ void GameObject::SetRotation(XMFLOAT3 newRotation)
 
 	//Rotate the forward axis
 	XMStoreFloat3(&forwardAxis, XMVector3Normalize(
-		XMVector3Rotate(XMVectorSet(1, 0, 0, 0), quat)));
+		XMVector3Rotate(XMVectorSet(0, 0, 1, 0), quat)));
 }
 
 // Set the rotation for this GameObject using euler angles (Quaternion)
@@ -156,7 +156,7 @@ void GameObject::SetRotation(float x, float y, float z)
 
 	//Rotate the forward axis
 	XMStoreFloat3(&forwardAxis, XMVector3Normalize(
-		XMVector3Rotate(XMVectorSet(1, 0, 0, 0), quat)));
+		XMVector3Rotate(XMVectorSet(0, 0, 1, 0), quat)));
 }
 
 // Get the scale for this GameObject

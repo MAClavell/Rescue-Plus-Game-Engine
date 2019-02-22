@@ -13,7 +13,6 @@ private:
 	DirectX::XMFLOAT4X4 projection;
 
 	//Transformation data
-	DirectX::XMFLOAT3 forward;
 	DirectX::XMFLOAT3 up;
 
 public:

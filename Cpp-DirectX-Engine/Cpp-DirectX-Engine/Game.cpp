@@ -41,13 +41,23 @@ Game::~Game()
 	{
 		if (meshes[i]) { delete meshes[i]; }
 	}
+	
+	//Delete textures
+	for (int i = 0; i < 2; i++)
+	{
+		if (srvs[i]) { srvs[i]->Release(); }
+	}
+	samplerState->Release();
 
 	//Delete shaders
 	if (vertexShader) { delete vertexShader; }
 	if (pixelShader) { delete pixelShader; }
 
 	//Delete materials
-	if (material) { delete material; }
+	for (int i = 0; i < 2; i++)
+	{
+		if (materials[i]) { delete materials[i]; }
+	}
 
 	//Delete demo entities
 	for (int i = 0; i < 5; i++)
@@ -116,73 +126,66 @@ void Game::LoadShaders()
 // --------------------------------------------------------
 void Game::CreateBasicGeometry()
 {
-	// Set up the vertices of the triangle we would like to draw
-	// - We're going to copy this array, exactly as it exists in memory
-	//    over to a DirectX-controlled data structure (the vertex buffer)
-	Vertex vertices0[] =
-	{ 
-		{ XMFLOAT3(+0.0f, +1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(+1.5f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(-1.5f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) }
-	};
-	Vertex vertices1[] =
-	{
-		{ XMFLOAT3(-1.0f, +1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(+1.0f, +1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(+1.0f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(-1.0f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) }
-	};
-	Vertex vertices2[] =
-	{
-		{ XMFLOAT3(-0.0f, +0.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(-0.0f, +1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(+1.0f, +0.2f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(+0.75f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(-0.75f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(-1.0f, +0.2f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) }
-	};
-
-	// Set up the indices, which tell us which vertices to use and in which order
-	unsigned indices0[] = { 0, 1, 2 }; //triangle
-	unsigned indices1[] = { 0, 1, 2, 0, 2, 3 }; //square
-	unsigned indices2[] = { 0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 1 }; //pentagon
-
 	//Create meshes
-	meshes[0] = new Mesh(vertices0, 3, indices0, 3, device);
-	meshes[1] = new Mesh(vertices1, 4, indices1, 6, device);
-	meshes[2] = new Mesh(vertices2, 6, indices2, 15, device);
+	meshes[0] = new Mesh("Assets\\Models\\torus.obj", device);
+	meshes[1] = new Mesh("Assets\\Models\\cube.obj", device);
+	meshes[2] = new Mesh("Assets\\Models\\helix.obj", device);
 	meshes[3] = new Mesh("Assets\\Models\\sphere.obj", device);
+
+	//Load textures
+	wchar_t* path1 = L"Assets\\Textures\\pat_road_orange\\diffuse.png";
+	if (!CreateWICTextureFromFile(device, context, path1, 0, &srvs[0]) == S_OK)
+	{
+		printf("Could not load %ls", path1);
+	}
+
+	wchar_t* path2 = L"Assets\\Textures\\pat_road_mossy\\diffuse.png";
+	if (!CreateWICTextureFromFile(device, context, path2, 0, &srvs[1]) == S_OK)
+	{
+		printf("Could not load %ls", path2);
+	}
+
+	//Create sampler state
+	samplerState = nullptr;
+	D3D11_SAMPLER_DESC samplerDesc = {};
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; //Trilinear filter
+	//samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; //Anisotropic filtering filter
+	//samplerDesc.MaxAnisotropy = 16;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	device->CreateSamplerState(&samplerDesc, &samplerState);
 }
 
 void Game::CreateEntities()
 {
-	//Create the material
-	material = new Material(vertexShader, pixelShader);
-	material->SetSurfaceColor(XMFLOAT4(1, 1, 1, 1));
-	material->SetSpecularity(48);
+	//Create the materials
+	materials[0] = new Material(vertexShader, pixelShader, srvs[0], samplerState);
+	materials[1] = new Material(vertexShader, pixelShader, srvs[1], samplerState);
 
-	//Square offset by (2, 1, 0)
-	entities[0] = new Entity(meshes[1], material);
+	//Cube
+	entities[0] = new Entity(meshes[1], materials[1]);
 	entities[0]->SetPosition(2, 1, 0);
 
-	//Pentagon offset by (-2, 1, 0)
-	entities[1] = new Entity(meshes[2], material);
+	//Helix
+	entities[1] = new Entity(meshes[2], materials[0]);
 	entities[1]->SetPosition(-2, 1, 0);
 	entities[1]->SetScale(0.75f, 0.75f, 0.75f);
 
-	//Moving triangle
-	entities[2] = new Entity(meshes[0], material);
+	//Torus 1
+	entities[2] = new Entity(meshes[0], materials[0]);
 	entities[2]->SetPosition(position, -1, 0);
 	entities[2]->SetScale(0.5f, 0.5f, 0.5f);
 
-	//Upside down triangle
-	entities[3] = new Entity(meshes[0], material);
+	//Torus 2
+	entities[3] = new Entity(meshes[0], materials[1]);
 	entities[3]->SetPosition(0, 1.70f, 0);
 	entities[3]->SetRotation(0, 0, 180);
 	entities[3]->SetScale(0.25f, 0.25f, 0.25f);
 
-	//Cone at origin
-	entities[4] = new Entity(meshes[3], material);
+	//Sphere
+	entities[4] = new Entity(meshes[3], materials[0]);
 }
 
 // --------------------------------------------------------
@@ -222,10 +225,11 @@ void Game::Update(float deltaTime, float totalTime)
 	//Move position around
 	position = sin(totalTime / 2) * 2.5f;
 	entities[2]->SetPosition(position, -1, 0);
+	entities[4]->SetPosition(0, 0, position);
 
 	//Rotate
 	rotation += rotSpeed * deltaTime;
-	entities[1]->SetRotation(0, 0, rotation);
+	entities[1]->SetRotation(0, rotation, 0);
 
 	//Scale
 	scale = (sin(totalTime / 2) + 1) / 2;
