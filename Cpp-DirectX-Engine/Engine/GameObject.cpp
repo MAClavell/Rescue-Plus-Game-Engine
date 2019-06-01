@@ -14,9 +14,9 @@ Component::Component(GameObject* gameObject)
 GameObject::GameObject()
 {
 	//Set default transformation values
+	parent = nullptr;
 	world = XMFLOAT4X4();
 	position = XMFLOAT3(0, 0, 0);
-	collider = nullptr;
 	SetRotation(0, 0, 0);
 	scale = XMFLOAT3(1, 1, 1);
 	worldDirty = false;
@@ -34,9 +34,14 @@ GameObject::GameObject(std::string name)
 }
 
 // Destructor for when an instance is deleted
+// Destroys all children too
 GameObject::~GameObject()
 { 
-	if(collider != nullptr) delete collider;
+	//Delete all children
+	for (auto go : children)
+	{
+		delete go;
+	}
 }
 
 // Get the enabled state of the gameobject
@@ -63,14 +68,58 @@ std::string GameObject::GetName()
 	return name;
 }
 
+// Set the parent of this GameObject
+void GameObject::SetParent(GameObject* parent)
+{
+	if (this->parent != nullptr)
+		this->parent->RemoveChild(this);
+
+	this->parent = parent;
+
+	if (this->parent != nullptr)
+		this->parent->AddChild(this);
+}
+
+// Get the parent of this GameObject
+GameObject* GameObject::GetParent()
+{
+	return this->parent;
+}
+
+// Remove a child from a gameobject
+void GameObject::RemoveChild(GameObject* child)
+{
+	for (auto iter = children.begin(); iter != children.end(); iter++)
+	{
+		if (*iter == child)
+		{
+			//Swap with the last and pop
+			std::iter_swap(iter, children.end());
+			children.pop_back();
+
+			//Delete
+			delete child;
+			break;
+		}
+	}
+}
+
+// --------------------------------------------------------
+// Add a child to a gameobject
+// --------------------------------------------------------
+void GameObject::AddChild(GameObject* child)
+{
+	children.push_back(child);
+}
+
 // Add a component of a specific type (must derive from component)
-template <typename T>
-T GameObject::AddComponent(T type)
+template <typename T, typename... Args>
+T GameObject::AddComponent(T type, Args... args)
 {
 	static_assert(std::is_base_of<Component, T>::value, "Can't add a component not derived from Component");
 
 	//Push new T
-	components.push_back(new T);
+	components.push_back(new T(args...);
 }
 
 // Remove a component of a specific type (must derive from component
@@ -82,12 +131,18 @@ T GameObject::RemoveComponent(T type)
 
 	//Try to find it
 	bool found = false;
-	for (auto iter = vec.begin(); iter != vec.end(); iter++) 
+	for (auto iter = components.begin(); iter != components.end(); iter++) 
 	{
 		try
 		{
 			T& c = dynamic_cast<T&>(**iter); // try to cast
 			found = true;
+
+			//Swap with the last and pop
+			std::iter_swap(iter, components.end());
+			components.pop_back();
+
+			//Delete
 			delete c;
 			break;
 		}
@@ -114,10 +169,6 @@ XMFLOAT4X4 GameObject::GetWorldMatrix()
 	//Rebuild the world if it is not current
 	if (worldDirty)
 		RebuildWorld();
-
-	//Add collider to render list
-	if (collider != nullptr && IsDebug())
-		Renderer::GetInstance()->AddDebugCubeToThisFrame(collider->GetWorldMatrix());
 
 	return world;
 }
@@ -154,6 +205,30 @@ void GameObject::RebuildWorld()
 	worldDirty = false;
 }
 
+// Update transformations after parent's transformations changed
+void GameObject::ParentPositionChanged()
+{
+	XMFLOAT3 newPos;
+	XMStoreFloat3(&newPos, XMVectorAdd(XMLoadFloat3(&parent->position), XMLoadFloat3(&position)));
+	SetPosition(newPos);
+}
+
+// Update transformations after parent's transformations changed
+void GameObject::ParentRotationChanged()
+{
+	XMFLOAT4 newRot;
+	XMStoreFloat4(&newRot, XMQuaternionMultiply(XMLoadFloat4(&parent->rotationQuat), XMLoadFloat4(&rotationQuat)));
+	SetRotation(newRot);
+}
+
+// Update transformations after parent's transformations changed
+void GameObject::ParentScaleChanged()
+{
+	XMFLOAT3 newScale;
+	XMStoreFloat3(&newScale, XMVectorMultiply(XMLoadFloat3(&parent->scale), XMLoadFloat3(&scale)));
+	SetScale(newScale);
+}
+
 // Get the position for this GameObject
 XMFLOAT3 GameObject::GetPosition()
 {
@@ -165,44 +240,43 @@ void GameObject::SetPosition(XMFLOAT3 newPosition)
 {
 	worldDirty = true;
 	position = newPosition;
-	if (collider != nullptr) collider->SetPosition(position);
+
+	//Update transforms of all children
+	for (auto c : children)
+	{
+		c->ParentPositionChanged();
+	}
 }
 
 // Set the position for this GameObject
 void GameObject::SetPosition(float x, float y, float z)
 {
-	worldDirty = true;
-
-	//Set values
-	position = XMFLOAT3(x, y, z);
-	if (collider != nullptr) collider->SetPosition(position);
+	SetPosition(XMFLOAT3(x, y, z));
 }
 
 // Moves this GameObject in absolute space by a given vector.
 // Does not take rotation into account
 void GameObject::MoveAbsolute(XMFLOAT3 moveAmnt)
 {
-	worldDirty = true;
-
 	//Add the vector to the position
-	XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position),
+	XMFLOAT3 newPos;
+	XMStoreFloat3(&newPos, XMVectorAdd(XMLoadFloat3(&position),
 		XMLoadFloat3(&moveAmnt)));
-	if (collider != nullptr) collider->SetPosition(position);
+	SetRotation(newPos);
 }
 
 // Moves this GameObject in relative space by a given vector.
 // Does take rotation into account
 void GameObject::MoveRelative(XMFLOAT3 moveAmnt)
 {
-	worldDirty = true;
-
 	// Rotate the movement vector
 	XMVECTOR move = XMVector3Rotate(XMLoadFloat3(&moveAmnt),
 		XMLoadFloat4(&rotationQuat));
 
-	//Add to position and
-	XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), move));
-	if (collider != nullptr) collider->SetPosition(position);
+	//Add to position
+	XMFLOAT3 newPos;
+	XMStoreFloat3(&newPos, XMVectorAdd(XMLoadFloat3(&position), move));
+	SetPosition(newPos);
 }
 
 // Get the rotated forward axis of this gameobject
@@ -230,38 +304,6 @@ DirectX::XMFLOAT4 GameObject::GetRotation()
 }
 
 // Set the rotation for this GameObject (Quaternion)
-void GameObject::SetRotation(XMFLOAT3 newRotation)
-{
-	worldDirty = true;
-
-	//Convert to quaternions and store
-	XMVECTOR angles = XMVectorScale(XMLoadFloat3(&newRotation), XM_PI / 180.0f);
-	XMVECTOR quat = XMQuaternionRotationRollPitchYawFromVector(angles);
-	XMStoreFloat4(&rotationQuat, quat);
-
-	CalculateAxis();
-
-	//Apply to collider
-	if (collider != nullptr) collider->SetRotation(rotationQuat);
-}
-
-// Set the rotation for this GameObject using euler angles (Quaternion)
-void GameObject::SetRotation(float x, float y, float z)
-{
-	worldDirty = true;
-
-	//Convert to quaternions and store
-	XMVECTOR angles = XMVectorScale(XMVectorSet(x, y, z, 0), XM_PI / 180.0f);
-	XMVECTOR quat = XMQuaternionRotationRollPitchYawFromVector(angles);
-	XMStoreFloat4(&rotationQuat, quat);
-
-	CalculateAxis();
-
-	//Apply to collider
-	if (collider != nullptr) collider->SetRotation(rotationQuat);
-}
-
-// Set the rotation for this GameObject (Quaternion)
 void GameObject::SetRotation(DirectX::XMFLOAT4 newQuatRotation)
 {
 	worldDirty = true;
@@ -269,8 +311,31 @@ void GameObject::SetRotation(DirectX::XMFLOAT4 newQuatRotation)
 
 	CalculateAxis();
 
-	//Apply to collider
-	if (collider != nullptr) collider->SetRotation(rotationQuat);
+	//Update transforms of all children
+	for (auto c : children)
+	{
+		c->ParentRotationChanged();
+	}
+}
+
+// Set the rotation for this GameObject (Quaternion)
+void GameObject::SetRotation(XMFLOAT3 newRotation)
+{
+	//Convert to quaternions and store
+	XMVECTOR angles = XMVectorScale(XMLoadFloat3(&newRotation), XM_PI / 180.0f);
+	XMFLOAT4 newRot;
+	XMStoreFloat4(&newRot, XMQuaternionRotationRollPitchYawFromVector(angles));
+	SetRotation(newRot);
+}
+
+// Set the rotation for this GameObject using euler angles (Quaternion)
+void GameObject::SetRotation(float x, float y, float z)
+{
+	//Convert to quaternions and store
+	XMVECTOR angles = XMVectorScale(XMVectorSet(x, y, z, 0), XM_PI / 180.0f);
+	XMFLOAT4 newRot;
+	XMStoreFloat4(&newRot, XMQuaternionRotationRollPitchYawFromVector(angles));
+	SetRotation(newRot);
 }
 
 // Rotate this GameObject (Angles)
@@ -324,29 +389,18 @@ XMFLOAT3 GameObject::GetScale()
 void GameObject::SetScale(XMFLOAT3 newScale)
 {
 	worldDirty = true;
+
 	scale = newScale;
+
+	//Update transforms of all children
+	for (auto c : children)
+	{
+		c->ParentRotationChanged();
+	}
 }
 
 // Set the scale for this GameObject
 void GameObject::SetScale(float x, float y, float z)
 {
-	worldDirty = true;
-
-	//Set values
-	scale = XMFLOAT3(x, y, z);
-}
-
-// Get this object's collider
-Collider* GameObject::GetCollider()
-{
-	return collider;
-}
-
-// Add a collider to this object if it has none
-void GameObject::AddCollider(DirectX::XMFLOAT3 size, DirectX::XMFLOAT3 offset)
-{
-	if (collider == nullptr)
-	{
-		collider = new Collider(position, size, offset);
-	}
+	SetScale(XMFLOAT3(x, y, z));
 }

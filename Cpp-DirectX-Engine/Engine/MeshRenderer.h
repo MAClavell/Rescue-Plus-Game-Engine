@@ -9,7 +9,7 @@
 //
 // An entity is a game object that renders a model
 // --------------------------------------------------------
-class Entity : public GameObject
+class MeshRenderer : public Component
 {
 private:
 	//Rendering
@@ -19,28 +19,18 @@ private:
 
 public:
 	// --------------------------------------------------------
-	// Constructor - Set up the entity.
-	// Entities are automatically added to the EntityManager and Renderer
+	// Constructor - Set up the MeshRenderer.
+	// MeshRenderers are automatically added to the Renderer
 	//
 	// mesh	- The mesh that this entity displays
 	// material - The material this entity uses.
 	// --------------------------------------------------------
-	Entity(Mesh* mesh, Material* material);
-
-	// --------------------------------------------------------
-	// Constructor - Set up the entity.
-	// Entities are automatically added to the EntityManager and Renderer
-	//
-	// mesh	- The mesh that this entity displays
-	// material - The material this entity uses.
-	// name - The name of the entity
-	// --------------------------------------------------------
-	Entity(Mesh* mesh, Material* material, std::string name);
+	MeshRenderer(Mesh* mesh, Material* material);
 
 	// --------------------------------------------------------
 	// Destructor for when an instance is deleted
 	// --------------------------------------------------------
-	~Entity();
+	~MeshRenderer();
 
 	// --------------------------------------------------------
 	// Get the material this entity uses

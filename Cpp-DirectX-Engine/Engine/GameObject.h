@@ -40,6 +40,10 @@ public:
 class GameObject
 {
 private:
+	//Parenting
+	GameObject* parent;
+	std::vector<GameObject*> children;
+
 	//Transformations
 	DirectX::XMFLOAT4X4 world;
 	DirectX::XMFLOAT4X4 worldInvTrans;
@@ -56,8 +60,30 @@ private:
 	//Components
 	std::vector<Component*> components;
 
-	//Other data
-	Collider* collider;
+	// --------------------------------------------------------
+	// Remove a child from a gameobject
+	// --------------------------------------------------------
+	void RemoveChild(GameObject* child);
+
+	// --------------------------------------------------------
+	// Add a child to a gameobject
+	// --------------------------------------------------------
+	void AddChild(GameObject* child);
+	
+	// --------------------------------------------------------
+	// Update transformations after parent's transformations changed
+	// --------------------------------------------------------
+	void ParentPositionChanged();
+
+	// --------------------------------------------------------
+	// Update transformations after parent's transformations changed
+	// --------------------------------------------------------
+	void ParentRotationChanged();
+	
+	// --------------------------------------------------------
+	// Update transformations after parent's transformations changed
+	// --------------------------------------------------------
+	void ParentScaleChanged();
 
 	// --------------------------------------------------------
 	// Calculate the local axis for the gameobject
@@ -83,7 +109,8 @@ public:
 	GameObject(std::string name);
 
 	// --------------------------------------------------------
-	// Destructor for when an instance is deleted
+	// Destructor for when an instance is deleted.
+	// Destroys all children too
 	// --------------------------------------------------------
 	~GameObject();
 
@@ -110,10 +137,20 @@ public:
 	std::string GetName();
 
 	// --------------------------------------------------------
+	// Set the parent of this GameObject
+	// --------------------------------------------------------
+	void SetParent(GameObject* parent);
+	
+	// --------------------------------------------------------
+	// Get the parent of this GameObject
+	// --------------------------------------------------------
+	GameObject* GetParent();
+
+	// --------------------------------------------------------
 	// Add a component of a specific type (must derive from component)
 	// --------------------------------------------------------
-	template <typename T>
-	T AddComponent(T type);
+	template <typename T, typename... Args>
+	T AddComponent(T type, Args... args);
 	
 	// --------------------------------------------------------
 	// Remove a component of a specific type (must derive from component
@@ -201,6 +238,13 @@ public:
 	DirectX::XMFLOAT4 GetRotation();
 
 	// --------------------------------------------------------
+	// Set the rotation for this GameObject (Quaternion)
+	//
+	// newQuatRotation - The new rotation to rotate to
+	// --------------------------------------------------------
+	void SetRotation(DirectX::XMFLOAT4 newQuatRotation);
+
+	// --------------------------------------------------------
 	// Set the rotation for this GameObject (Angles)
 	//
 	// newRotation - The new rotation to rotate to
@@ -215,13 +259,6 @@ public:
 	// z - z angle
 	// --------------------------------------------------------
 	void SetRotation(float x, float y, float z);
-
-	// --------------------------------------------------------
-	// Set the rotation for this GameObject (Quaternion)
-	//
-	// newQuatRotation - The new rotation to rotate to
-	// --------------------------------------------------------
-	void SetRotation(DirectX::XMFLOAT4 newQuatRotation);
 
 	// --------------------------------------------------------
 	// Rotate this GameObject (Angles)
@@ -259,18 +296,5 @@ public:
 	// z - new z scale
 	// --------------------------------------------------------
 	void SetScale(float x, float y, float z);
-
-	// --------------------------------------------------------
-	// Get this object's collider
-	// --------------------------------------------------------
-	Collider* GetCollider();
-
-	// --------------------------------------------------------
-	// Add a collider to this object if it has none
-	//
-	// size - dimensions of bounding box
-	// offset - offset of collider from position of game object
-	// --------------------------------------------------------
-	void AddCollider(DirectX::XMFLOAT3 size, DirectX::XMFLOAT3 offset = DirectX::XMFLOAT3());
 };
 
