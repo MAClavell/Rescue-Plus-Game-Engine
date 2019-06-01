@@ -4,6 +4,12 @@
 // For the DirectX Math library
 using namespace DirectX;
 
+//Construct a component
+Component::Component(GameObject* gameObject)
+{
+	this->gameObject = gameObject;
+}
+
 // Constructor - Set up the gameobject.
 GameObject::GameObject()
 {
@@ -15,7 +21,6 @@ GameObject::GameObject()
 	scale = XMFLOAT3(1, 1, 1);
 	worldDirty = false;
 	RebuildWorld();
-	debug = false;
 
 	enabled = true;
 	name = "GameObject";
@@ -58,9 +63,50 @@ std::string GameObject::GetName()
 	return name;
 }
 
+// Add a component of a specific type (must derive from component)
+template <typename T>
+T GameObject::AddComponent(T type)
+{
+	static_assert(std::is_base_of<Component, T>::value, "Can't add a component not derived from Component");
+
+	//Push new T
+	components.push_back(new T);
+}
+
+// Remove a component of a specific type (must derive from component
+//		and be in the gameobject's component list)
+template <typename T>
+T GameObject::RemoveComponent(T type)
+{
+	static_assert(std::is_base_of<Component, T>::value, "Can't remove a component not derived from Component");
+
+	//Try to find it
+	bool found = false;
+	for (auto iter = vec.begin(); iter != vec.end(); iter++) 
+	{
+		try
+		{
+			T& c = dynamic_cast<T&>(**iter); // try to cast
+			found = true;
+			delete c;
+			break;
+		}
+		catch (...)
+		{ }
+	}
+
+	if(!found)
+		printf("Could not find a component of type '%s' in %s", typeid(T).name(), name.c_str());
+}
+
 // Update this entity
 void GameObject::Update(float deltaTime)
-{ }
+{ 
+	for (auto c : components)
+	{
+		c->Update(deltaTime);
+	}
+}
 
 // Get the world matrix for this GameObject (rebuilding if necessary)
 XMFLOAT4X4 GameObject::GetWorldMatrix()
@@ -303,16 +349,4 @@ void GameObject::AddCollider(DirectX::XMFLOAT3 size, DirectX::XMFLOAT3 offset)
 	{
 		collider = new Collider(position, size, offset);
 	}
-}
-
-// Check if the collider is in debug mode (draw outline)
-bool GameObject::IsDebug()
-{
-	return debug;
-}
-
-// Set debug mode for this collider (draw outline)
-void GameObject::SetDebug(bool setting)
-{
-	debug = setting;
 }

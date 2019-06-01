@@ -1,12 +1,41 @@
 #pragma once
 #include <DirectXMath.h>
-#include "Collider.h"
+#include <vector>
 #include <string>
+#include "Collider.h"
+
+class GameObject;
+class Component
+{
+private:
+	GameObject* gameObject;
+
+public:
+	// --------------------------------------------------------
+	//Construct a component
+	// --------------------------------------------------------
+	Component(GameObject* gameObject);
+	
+	// --------------------------------------------------------
+	// Destroy a component
+	// --------------------------------------------------------
+	virtual ~Component() { }
+
+	// --------------------------------------------------------
+	// Update this component
+	// --------------------------------------------------------
+	virtual void Update(float deltaTime) {};
+
+	// --------------------------------------------------------
+	// Get the GameObject this component is tied to
+	// --------------------------------------------------------
+	GameObject* GetGameObject() { return gameObject; }
+};
 
 // --------------------------------------------------------
 // A GameObject definition.
 //
-// An GameObject contains world data
+// A GameObject contains world data
 // --------------------------------------------------------
 class GameObject
 {
@@ -14,7 +43,6 @@ private:
 	//Transformations
 	DirectX::XMFLOAT4X4 world;
 	DirectX::XMFLOAT4X4 worldInvTrans;
-
 
 	DirectX::XMFLOAT3 forwardAxis;
 	DirectX::XMFLOAT3 rightAxis;
@@ -24,7 +52,9 @@ private:
 	DirectX::XMFLOAT4 rotationQuat;
 	DirectX::XMFLOAT3 scale;
 	bool worldDirty;
-	bool debug;
+
+	//Components
+	std::vector<Component*> components;
 
 	//Other data
 	Collider* collider;
@@ -39,6 +69,7 @@ protected:
 	std::string name;
 
 public:
+
 	// --------------------------------------------------------
 	// Constructor - Set up the gameobject.
 	// --------------------------------------------------------
@@ -52,17 +83,9 @@ public:
 	GameObject(std::string name);
 
 	// --------------------------------------------------------
-	// Collider Constructor - Set up the gameobject with a collider
-	//
-	// size - dimensions of bounding box
-	// offset - offset of collider from position of game object
-	// --------------------------------------------------------
-	/*GameObject(DirectX::XMFLOAT3 size, DirectX::XMFLOAT3 offset);*/
-
-	// --------------------------------------------------------
 	// Destructor for when an instance is deleted
 	// --------------------------------------------------------
-	virtual ~GameObject();
+	~GameObject();
 
 	// --------------------------------------------------------
 	// Get the enabled state of the gameobject
@@ -87,7 +110,20 @@ public:
 	std::string GetName();
 
 	// --------------------------------------------------------
-	// Update this entity
+	// Add a component of a specific type (must derive from component)
+	// --------------------------------------------------------
+	template <typename T>
+	T AddComponent(T type);
+	
+	// --------------------------------------------------------
+	// Remove a component of a specific type (must derive from component
+	//		and be in the gameobject's component list)
+	// --------------------------------------------------------
+	template <typename T>
+	T RemoveComponent(T type);
+
+	// --------------------------------------------------------
+	// Update all componenets in this gameObject
 	// --------------------------------------------------------
 	virtual void Update(float deltaTime);
 
@@ -236,15 +272,5 @@ public:
 	// offset - offset of collider from position of game object
 	// --------------------------------------------------------
 	void AddCollider(DirectX::XMFLOAT3 size, DirectX::XMFLOAT3 offset = DirectX::XMFLOAT3());
-
-	// --------------------------------------------------------
-	// Check if the collider is in debug mode (draw outline)
-	// --------------------------------------------------------
-	bool IsDebug();
-
-	// --------------------------------------------------------
-	// Set debug mode for this collider (draw outline)
-	// --------------------------------------------------------
-	void SetDebug(bool setting);
 };
 
