@@ -33,9 +33,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Entity.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)GameObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -76,12 +73,12 @@
       <Filter>Source Files\Materials</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)ExtendedMath.h" />
+    <ClCompile Include="D:\Documents\GitHub\Cpp-DirectX-Engine\Cpp-DirectX-Engine\Engine\MeshRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Entity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)GameObject.h">
@@ -125,6 +122,9 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)MAT_Skybox.h">
       <Filter>Header Files\Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\Documents\GitHub\Cpp-DirectX-Engine\Cpp-DirectX-Engine\Engine\MeshRenderer.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

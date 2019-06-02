@@ -150,14 +150,14 @@ public:
 	// Add a component of a specific type (must derive from component)
 	// --------------------------------------------------------
 	template <typename T, typename... Args>
-	T AddComponent(T type, Args... args);
+	T AddComponent(Args... args);
 	
 	// --------------------------------------------------------
 	// Remove a component of a specific type (must derive from component
 	//		and be in the gameobject's component list)
 	// --------------------------------------------------------
 	template <typename T>
-	T RemoveComponent(T type);
+	void RemoveComponent();
 
 	// --------------------------------------------------------
 	// Update all componenets in this gameObject

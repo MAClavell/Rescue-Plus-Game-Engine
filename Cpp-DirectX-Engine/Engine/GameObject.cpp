@@ -114,7 +114,7 @@ void GameObject::AddChild(GameObject* child)
 
 // Add a component of a specific type (must derive from component)
 template <typename T, typename... Args>
-T GameObject::AddComponent(T type, Args... args)
+T GameObject::AddComponent(Args... args)
 {
 	static_assert(std::is_base_of<Component, T>::value, "Can't add a component not derived from Component");
 
@@ -125,7 +125,7 @@ T GameObject::AddComponent(T type, Args... args)
 // Remove a component of a specific type (must derive from component
 //		and be in the gameobject's component list)
 template <typename T>
-T GameObject::RemoveComponent(T type)
+void GameObject::RemoveComponent()
 {
 	static_assert(std::is_base_of<Component, T>::value, "Can't remove a component not derived from Component");
 

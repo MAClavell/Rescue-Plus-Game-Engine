@@ -2,7 +2,7 @@
 #include <vector>
 #include <unordered_map>
 #include "SimpleShader.h"
-#include "Entity.h"
+#include "MeshRenderer.h"
 #include "Camera.h"
 #include "FXAA.h"
 
@@ -18,7 +18,7 @@ class Renderer
 private:
 	//Render list management
 	//renderMap uses Mat/Mesh identifiers to point to the correct list
-	std::unordered_map<std::string, std::vector<Entity*>> renderMap;
+	std::unordered_map<std::string, std::vector<MeshRenderer*>> renderMap;
 	Mesh* cubeMesh;
 
 	//Collider debugging
@@ -29,7 +29,7 @@ private:
 
 	//Water
 	Material* waterMat;
-	Entity* water;
+	GameObject* water;
 	ID3D11BlendState* waterBlendState;
 	ID3D11DepthStencilState* waterDepthState;
 
@@ -89,7 +89,7 @@ private:
 	// --------------------------------------------------------
 	// Draw transparent water
 	// --------------------------------------------------------
-	void DrawWater(ID3D11DeviceContext* context, Camera* camera);
+	void DrawTransparentObjects(ID3D11DeviceContext* context, Camera* camera);
 
 	// --------------------------------------------------------
 	// Draw debug colider rectangles
@@ -151,17 +151,12 @@ public:
 	// --------------------------------------------------------
 	// Add an entity to the render list
 	// --------------------------------------------------------
-	void AddEntityToRenderer(Entity* e);
+	void AddMeshRenderer(MeshRenderer* e);
 
 	// --------------------------------------------------------
 	// Remove an entity from the render list
 	// --------------------------------------------------------
-	void RemoveEntityFromRenderer(Entity* e);
-
-	// --------------------------------------------------------
-	// Check if an entity is in the render list. O(n) complexity
-	// --------------------------------------------------------
-	bool IsEntityInRenderer(Entity* e);
+	void RemoveMeshRenderer(MeshRenderer* e);
 
 	// --------------------------------------------------------
 	// Tell the renderer to render a collider this frame

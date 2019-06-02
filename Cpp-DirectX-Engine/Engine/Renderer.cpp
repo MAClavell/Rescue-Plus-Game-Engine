@@ -40,7 +40,7 @@ void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
 	device->CreateDepthStencilState(&skyDS, &skyDepthState);
 
 	// --------------------------------------------------------
-	//Set states for water
+	//Set states for transparency
 
 	// Depth state
 	D3D11_DEPTH_STENCIL_DESC ds = {};
@@ -65,10 +65,10 @@ void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
 	device->CreateBlendState(&bd, &waterBlendState);
 
 	//DEBUG water
-	water = new Entity(
+	water = new GameObject("Water");
+	water->AddComponent<MeshRenderer>(
 		ResourceManager::GetInstance()->GetMesh("Assets\\Models\\cube.obj"),
-		ResourceManager::GetInstance()->GetMaterial("water"), "water"
-	);
+		ResourceManager::GetInstance()->GetMaterial("water"));
 	water->SetScale(26, 0.1f, 26);
 
 	// --------------------------------------------------------
@@ -175,7 +175,7 @@ void Renderer::Draw(ID3D11DeviceContext* context,
 
 	DrawSky(context, camera);
 
-	DrawWater(context, camera);
+	DrawTransparentObjects(context, camera);
 
 	ApplyPostProcess(context, backBufferRTV, depthStencilView, fxaaRTV, fxaaSRV, sampler, width, height);
 
@@ -249,7 +249,7 @@ void Renderer::RenderShadowMaps(ID3D11DeviceContext* context,
 			if (mapPair.second.size() < 1)
 				return;
 
-			std::vector<Entity*> list = mapPair.second;
+			std::vector<MeshRenderer*> list = mapPair.second;
 
 			Mesh* mesh = list[0]->GetMesh();
 
@@ -264,10 +264,11 @@ void Renderer::RenderShadowMaps(ID3D11DeviceContext* context,
 			//Loop through each entity in the list
 			for (size_t i = 0; i < list.size(); i++)
 			{
-				// Grab the data from the first entity's mesh
-				Entity* e = list[i];
+				//Don't draw disabled entities
+				if (!list[i]->GetGameObject()->GetEnabled())
+					continue;
 
-				shadowVS->SetMatrix4x4("world", e->GetWorldMatrix());
+				shadowVS->SetMatrix4x4("world", list[i]->GetGameObject()->GetWorldMatrix());
 				shadowVS->CopyBufferData("perObject");
 
 				// Finally do the actual drawing
@@ -295,10 +296,7 @@ void Renderer::DrawOpaqueObjects(ID3D11DeviceContext* context, Camera* camera)
 			return;
 
 		//Get list, material, and mesh
-		std::vector<Entity*> list = mapPair.second;
-
-		//Get the first valid entity
-		Entity* firstValid = list[0];
+		std::vector<MeshRenderer*> list = mapPair.second;
 
 		Material* mat = list[0]->GetMaterial();
 		Mesh* mesh = list[0]->GetMesh();
@@ -308,7 +306,7 @@ void Renderer::DrawOpaqueObjects(ID3D11DeviceContext* context, Camera* camera)
 		mat->GetPixelShader()->SetShader();
 
 		//Prepare the material's combo specific variables
-		mat->PrepareMaterialCombo(list[0], camera);
+		mat->PrepareMaterialCombo(list[0]->GetGameObject(), camera);
 
 		// Set buffers in the input assembler
 		UINT stride = sizeof(Vertex);
@@ -322,15 +320,11 @@ void Renderer::DrawOpaqueObjects(ID3D11DeviceContext* context, Camera* camera)
 		for (size_t i = 0; i < list.size(); i++)
 		{
 			//Don't draw disabled entities
-			if (!list[i]->GetEnabled())
-				continue;
-
-			//Don't draw water
-			if (list[i]->GetName() == "water")
+			if (!list[i]->GetGameObject()->GetEnabled())
 				continue;
 
 			//Prepare the material's object specific variables
-			mat->PrepareMaterialObject(list[i]);
+			mat->PrepareMaterialObject(list[i]->GetGameObject());
 
 			// Finally do the actual drawing
 			//  - Do this ONCE PER OBJECT you intend to draw
@@ -346,7 +340,7 @@ void Renderer::DrawOpaqueObjects(ID3D11DeviceContext* context, Camera* camera)
 	context->OMSetDepthStencilState(0, 0);
 }
 
-void Renderer::DrawWater(ID3D11DeviceContext * context, Camera * camera)
+void Renderer::DrawTransparentObjects(ID3D11DeviceContext * context, Camera * camera)
 {
 	//Set render states
 	context->OMSetBlendState(waterBlendState, 0, 0xFFFFFFFF);
@@ -522,41 +516,41 @@ void Renderer::ApplyPostProcess(ID3D11DeviceContext* context,
 }
 
 // Add an entity to the render list
-void Renderer::AddEntityToRenderer(Entity* e)
+void Renderer::AddMeshRenderer(MeshRenderer* mr)
 {
 	//Get identifier
-	std::string identifier = e->GetMatMeshIdentifier();
+	std::string identifier = mr->GetMatMeshIdentifier();
 
 	//Check if we already have the mat/mesh combo in the map
 	if (renderMap.find(identifier) != renderMap.end())
 	{
 		//Get render list
-		std::vector<Entity*> list = renderMap[identifier];
+		std::vector<MeshRenderer*> list = renderMap[identifier];
 
 		//Check the iterator of the entity
-		if (std::find(list.begin(), list.end(), e) != list.end())
+		if (std::find(list.begin(), list.end(), mr) != list.end())
 		{
-			printf("Cannot add entity %s because it is already in renderer", e->GetName().c_str());
+			printf("Cannot add entity %s because it is already in renderer", mr->GetGameObject()->GetName().c_str());
 			return;
 		}
 
 		//Add to the list
-		renderMap[identifier].push_back(e);
+		renderMap[identifier].push_back(mr);
 	}
 	//else make a new entry
 	else
 	{
-		std::vector<Entity*> list;
-		list.push_back(e);
+		std::vector<MeshRenderer*> list;
+		list.push_back(mr);
 		renderMap.emplace(identifier, list);
 	}
 }
 
 // Remove an entity from the render list
-void Renderer::RemoveEntityFromRenderer(Entity* e)
+void Renderer::RemoveMeshRenderer(MeshRenderer* mr)
 {
 	//Get iterator
-	std::string identifier = e->GetMatMeshIdentifier();
+	std::string identifier = mr->GetMatMeshIdentifier();
 	auto mapIt = renderMap.find(identifier);
 
 	//Check if we are in the map
@@ -567,53 +561,30 @@ void Renderer::RemoveEntityFromRenderer(Entity* e)
 	}
 
 	//Get correct render list
-	std::vector<Entity*>* list = &renderMap[identifier];
+	std::vector<MeshRenderer*> list = renderMap[identifier];
 
 	//Get the iterator of the entity
-	std::vector<Entity*>::iterator listIt = std::find((*list).begin(), (*list).end(), e);
+	std::vector<MeshRenderer*>::iterator listIt = std::find(list.begin(), list.end(), mr);
 
 	//Check if we are in the list
-	if (listIt == (*list).end())
+	if (listIt == list.end())
 	{
 		printf("Cannot remove entity because it is not in renderer");
 		return;
 	}
 
 	//Swap it for the last one
-	std::swap(*listIt, (*list).back());
+	std::swap(*listIt, list.back());
 
 	//Pop the last one
-	(*list).pop_back();
+	list.pop_back();
 
 	//Check if the list is empty
-	if ((*list).size() == 0)
+	if (list.size() == 0)
 	{
 		//Erase
-		renderMap.erase(e->GetMatMeshIdentifier());
+		renderMap.erase(mr->GetMatMeshIdentifier());
 	}
-}
-
-// Check if an entity is in the render list. O(n) complexity
-//	(n is the amount of entities that share the material and mesh)
-bool Renderer::IsEntityInRenderer(Entity* e)
-{
-	//Early return if render list is empty and if the entity is in it
-	std::string identifier = e->GetMatMeshIdentifier();
-	if (renderMap.find(identifier) == renderMap.end())
-		return false;
-
-	//Get render list
-	std::vector<Entity*> list = renderMap[identifier];
-
-	//Early return if render list is empty
-	if (list.size() == 0)
-		return false;
-
-	//Check the iterator of the entity
-	if (std::find(list.begin(), list.end(), e) == list.end())
-		return false;
-
-	return true;
 }
 
 // Tell the renderer to render a collider this frame

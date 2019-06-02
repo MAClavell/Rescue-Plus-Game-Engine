@@ -1,12 +1,11 @@
 #include "Renderer.h"
-#include "EntityManager.h"
 #include <sstream> 
 
 // For the DirectX Math library
 using namespace DirectX;
 
-// Constructor - Set up the entity
-Entity::Entity(Mesh* mesh, Material* material)
+// Constructor - Set up the MeshRenderer
+MeshRenderer::MeshRenderer(Mesh* mesh, Material* material)
 {
 	this->mesh = mesh;
 	this->material = material;
@@ -21,37 +20,29 @@ Entity::Entity(Mesh* mesh, Material* material)
 	identifier = ss.str();
 
 
-	Renderer::GetInstance()->AddEntityToRenderer(this);
-	EntityManager::GetInstance()->AddEntity(this);
-}
-
-// Constructor - Set up the entity.
-Entity::Entity(Mesh * mesh, Material * material, std::string name)
-	: Entity(mesh, material)
-{
-	this->name = name;
+	Renderer::GetInstance()->AddMeshRenderer(this);
 }
 
 // Destructor for when an instance is deleted
-Entity::~Entity()
+MeshRenderer::~MeshRenderer()
 { 
-	Renderer::GetInstance()->RemoveEntityFromRenderer(this);
+	Renderer::GetInstance()->RemoveMeshRenderer(this);
 }
 
-// Get the material this entity uses
-Material* Entity::GetMaterial()
+// Get the material this MeshRenderer uses
+Material* MeshRenderer::GetMaterial()
 {
 	return material;
 }
 
-// Get the mesh this entity uses
-Mesh* Entity::GetMesh()
+// Get the mesh this MeshRenderer uses
+Mesh* MeshRenderer::GetMesh()
 {
 	return mesh;
 }
 
 // Get the material/mesh identifier
-std::string Entity::GetMatMeshIdentifier()
+std::string MeshRenderer::GetMatMeshIdentifier()
 {
 	return identifier;
 }
