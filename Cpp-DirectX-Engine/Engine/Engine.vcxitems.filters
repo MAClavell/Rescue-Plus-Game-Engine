@@ -72,9 +72,11 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)MAT_Skybox.cpp">
       <Filter>Source Files\Materials</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)ExtendedMath.h" />
-    <ClCompile Include="D:\Documents\GitHub\Cpp-DirectX-Engine\Cpp-DirectX-Engine\Engine\MeshRenderer.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)MeshRenderer.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)ExtendedMath.h">
+      <Filter>Header Files\Helpers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -123,7 +125,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)MAT_Skybox.h">
       <Filter>Header Files\Materials</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Documents\GitHub\Cpp-DirectX-Engine\Cpp-DirectX-Engine\Engine\MeshRenderer.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)MeshRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

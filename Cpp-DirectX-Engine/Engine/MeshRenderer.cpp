@@ -5,10 +5,11 @@
 using namespace DirectX;
 
 // Constructor - Set up the MeshRenderer
-MeshRenderer::MeshRenderer(Mesh* mesh, Material* material)
+MeshRenderer::MeshRenderer(Mesh* mesh, Material* material, bool transparent)
 {
 	this->mesh = mesh;
 	this->material = material;
+	this->transparent = transparent;
 
 	//Create a unique identifer (combination of the two addresses).
 	//	Used in the renderer
@@ -19,14 +20,13 @@ MeshRenderer::MeshRenderer(Mesh* mesh, Material* material)
 	std::string temp = ss.str();
 	identifier = ss.str();
 
-
-	Renderer::GetInstance()->AddMeshRenderer(this);
+	Renderer::GetInstance()->AddMeshRenderer(this, transparent);
 }
 
 // Destructor for when an instance is deleted
 MeshRenderer::~MeshRenderer()
 { 
-	Renderer::GetInstance()->RemoveMeshRenderer(this);
+	Renderer::GetInstance()->RemoveMeshRenderer(this, transparent);
 }
 
 // Get the material this MeshRenderer uses

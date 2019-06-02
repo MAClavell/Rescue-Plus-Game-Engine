@@ -19,26 +19,23 @@ private:
 	//Render list management
 	//renderMap uses Mat/Mesh identifiers to point to the correct list
 	std::unordered_map<std::string, std::vector<MeshRenderer*>> renderMap;
+	std::unordered_map<std::string, std::vector<MeshRenderer*>> transparentRenderMap;
 	Mesh* cubeMesh;
 
-	//Collider debugging
+	//Debugging
 	std::vector<DirectX::XMFLOAT4X4> debugCubes;
 	SimpleVertexShader* vs_debug;
 	SimplePixelShader* ps_debug;
 	ID3D11RasterizerState* RS_wireframe;
 
-	//Water
-	Material* waterMat;
-	GameObject* water;
-	ID3D11BlendState* waterBlendState;
-	ID3D11DepthStencilState* waterDepthState;
+	//Transparency
+	ID3D11BlendState* transparentBlendState;
+	ID3D11DepthStencilState* transparentDepthState;
 
 	//Skybox
 	Material* skyboxMat;
 	ID3D11RasterizerState* skyRasterState;
 	ID3D11DepthStencilState* skyDepthState;
-
-
 
 	//Shadows
 	ID3D11RasterizerState* shadowRasterizer;
@@ -151,12 +148,12 @@ public:
 	// --------------------------------------------------------
 	// Add an entity to the render list
 	// --------------------------------------------------------
-	void AddMeshRenderer(MeshRenderer* e);
+	void AddMeshRenderer(MeshRenderer* mr, bool transparent = false);
 
 	// --------------------------------------------------------
 	// Remove an entity from the render list
 	// --------------------------------------------------------
-	void RemoveMeshRenderer(MeshRenderer* e);
+	void RemoveMeshRenderer(MeshRenderer* mr, bool transparent);
 
 	// --------------------------------------------------------
 	// Tell the renderer to render a collider this frame

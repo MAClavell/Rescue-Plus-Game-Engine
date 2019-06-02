@@ -12,11 +12,12 @@ using namespace DirectX;
 // Initialize values in the renderer
 void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
 {
-	// Assign default clear color. We should pull this in from Game at some point.
+	// Assign default clear color
 	this->SetClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+
 	// --------------------------------------------------------
-	// Get collider shader information
+	// Get debug shader information
 	cubeMesh = ResourceManager::GetInstance()->GetMesh("Assets\\Models\\cube.obj");
 	vs_debug = ResourceManager::GetInstance()->GetVertexShader("VS_ColDebug.cso");
 	ps_debug = ResourceManager::GetInstance()->GetPixelShader("PS_ColDebug.cso");
@@ -25,7 +26,6 @@ void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
 	// --------------------------------------------------------
 	//Get skybox information
 	skyboxMat = ResourceManager::GetInstance()->GetMaterial("skybox");
-	waterMat = ResourceManager::GetInstance()->GetMaterial("water");
 
 	D3D11_RASTERIZER_DESC skyRD = {};
 	skyRD.CullMode = D3D11_CULL_FRONT;
@@ -39,14 +39,14 @@ void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
 	skyDS.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	device->CreateDepthStencilState(&skyDS, &skyDepthState);
 
+
 	// --------------------------------------------------------
 	//Set states for transparency
 
 	// Depth state
 	D3D11_DEPTH_STENCIL_DESC ds = {};
 	ds.DepthEnable = true;
-	device->CreateDepthStencilState(&ds, &waterDepthState);
-	//context->OMSetDepthStencilState(waterDepthState, 0);
+	device->CreateDepthStencilState(&ds, &transparentDepthState);
 
 	//blend
 	D3D11_BLEND_DESC bd = {};
@@ -62,14 +62,8 @@ void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
 	bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
 	bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 	bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-	device->CreateBlendState(&bd, &waterBlendState);
+	device->CreateBlendState(&bd, &transparentBlendState);
 
-	//DEBUG water
-	water = new GameObject("Water");
-	water->AddComponent<MeshRenderer>(
-		ResourceManager::GetInstance()->GetMesh("Assets\\Models\\cube.obj"),
-		ResourceManager::GetInstance()->GetMaterial("water"));
-	water->SetScale(26, 0.1f, 26);
 
 	// --------------------------------------------------------
 	//Get shadow information
@@ -134,10 +128,9 @@ Renderer::~Renderer()
 	skyDepthState->Release();
 	skyRasterState->Release();
 
-	//Clean up water
-	waterBlendState->Release();
-	if(waterDepthState != nullptr) waterDepthState->Release();
-	//delete water;
+	//Clean up transparency
+	transparentBlendState->Release();
+	transparentDepthState->Release();
 
 	//Clean up shadow map
 	shadowRasterizer->Release();
@@ -289,7 +282,7 @@ void Renderer::RenderShadowMaps(ID3D11DeviceContext* context,
 void Renderer::DrawOpaqueObjects(ID3D11DeviceContext* context, Camera* camera)
 {
 	//TODO: Apply attenuation
-	context->OMSetDepthStencilState(waterDepthState, 0);
+	//context->OMSetDepthStencilState(waterDepthState, 0);
 	for (auto const& mapPair : renderMap)
 	{
 		if (mapPair.second.size() < 1)
@@ -337,41 +330,66 @@ void Renderer::DrawOpaqueObjects(ID3D11DeviceContext* context, Camera* camera)
 				0);    // Offset to add to each index when looking up vertices
 		}
 	}
-	context->OMSetDepthStencilState(0, 0);
+	//context->OMSetDepthStencilState(0, 0);
 }
 
 void Renderer::DrawTransparentObjects(ID3D11DeviceContext * context, Camera * camera)
 {
 	//Set render states
-	context->OMSetBlendState(waterBlendState, 0, 0xFFFFFFFF);
-	context->OMSetDepthStencilState(waterDepthState, 0);
+	context->OMSetBlendState(transparentBlendState, 0, 0xFFFFFFFF);
+	context->OMSetDepthStencilState(transparentDepthState, 0);
 
-	// Turn shaders on
-	waterMat->GetVertexShader()->SetShader();
-	//waterMat->GetVertexShader()->SetMatrix4x4("world", water->GetWorldInvTransMatrix());
-	waterMat->GetPixelShader()->SetShader();
+	for (auto const& mapPair : transparentRenderMap)
+	{
+		if (mapPair.second.size() < 1)
+			return;
 
-	// Set up the shaders
-	waterMat->PrepareMaterialCombo(water, camera);
+		//Get list, material, and mesh
+		std::vector<MeshRenderer*> list = mapPair.second;
 
-	// Set buffers in the input assembler
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	ID3D11Buffer* vertexBuffer = cubeMesh->GetVertexBuffer();
-	ID3D11Buffer* indexBuffer = cubeMesh->GetIndexBuffer();
-	context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-	context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		Material* mat = list[0]->GetMaterial();
+		Mesh* mesh = list[0]->GetMesh();
 
-	//Prepare the material's object specific variables
-	waterMat->PrepareMaterialObject(water);
+		// Turn shaders on
+		mat->GetVertexShader()->SetShader();
+		mat->GetPixelShader()->SetShader();
 
-	// Draw
-	context->DrawIndexed(cubeMesh->GetIndexCount(), 0, 0);
+		//Prepare the material's combo specific variables
+		mat->PrepareMaterialCombo(list[0]->GetGameObject(), camera);
+
+		// Set buffers in the input assembler
+		UINT stride = sizeof(Vertex);
+		UINT offset = 0;
+		ID3D11Buffer* vertexBuffer = mesh->GetVertexBuffer();
+		ID3D11Buffer* indexBuffer = mesh->GetIndexBuffer();
+		context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+		context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+		//Loop through each entity in the list
+		for (size_t i = 0; i < list.size(); i++)
+		{
+			//Don't draw disabled entities
+			if (!list[i]->GetGameObject()->GetEnabled())
+				continue;
+
+			//Prepare the material's object specific variables
+			mat->PrepareMaterialObject(list[i]->GetGameObject());
+
+			// Finally do the actual drawing
+			//  - Do this ONCE PER OBJECT you intend to draw
+			//  - This will use all of the currently set DirectX "stuff" (shaders, buffers, etc)
+			//  - DrawIndexed() uses the currently set INDEX BUFFER to look up corresponding
+			//     vertices in the currently set VERTEX BUFFER
+			context->DrawIndexed(
+				mesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
+				0,     // Offset to the first index we want to use
+				0);    // Offset to add to each index when looking up vertices
+		}
+	}
 
 	// Reset states
 	context->OMSetDepthStencilState(0, 0);
 	context->OMSetBlendState(0, 0, 0xFFFFFFFF);
-
 }
 
 // Draw debug rectangles
@@ -516,16 +534,21 @@ void Renderer::ApplyPostProcess(ID3D11DeviceContext* context,
 }
 
 // Add an entity to the render list
-void Renderer::AddMeshRenderer(MeshRenderer* mr)
+void Renderer::AddMeshRenderer(MeshRenderer* mr, bool transparent)
 {
 	//Get identifier
 	std::string identifier = mr->GetMatMeshIdentifier();
 
+	//Get correct map (opaque or transparent)
+	auto map = &renderMap;
+	if (transparent)
+		map = &transparentRenderMap;
+
 	//Check if we already have the mat/mesh combo in the map
-	if (renderMap.find(identifier) != renderMap.end())
+	if ((*map).find(identifier) != (*map).end())
 	{
 		//Get render list
-		std::vector<MeshRenderer*> list = renderMap[identifier];
+		std::vector<MeshRenderer*> list = (*map)[identifier];
 
 		//Check the iterator of the entity
 		if (std::find(list.begin(), list.end(), mr) != list.end())
@@ -535,7 +558,7 @@ void Renderer::AddMeshRenderer(MeshRenderer* mr)
 		}
 
 		//Add to the list
-		renderMap[identifier].push_back(mr);
+		(*map)[identifier].push_back(mr);
 	}
 	//else make a new entry
 	else
@@ -547,21 +570,26 @@ void Renderer::AddMeshRenderer(MeshRenderer* mr)
 }
 
 // Remove an entity from the render list
-void Renderer::RemoveMeshRenderer(MeshRenderer* mr)
+void Renderer::RemoveMeshRenderer(MeshRenderer* mr, bool transparent)
 {
+	//Get correct map (opaque or transparent)
+	auto map = &renderMap;
+	if (transparent)
+		map = &transparentRenderMap;
+
 	//Get iterator
 	std::string identifier = mr->GetMatMeshIdentifier();
-	auto mapIt = renderMap.find(identifier);
+	auto mapIt = (*map).find(identifier);
 
 	//Check if we are in the map
-	if (mapIt == renderMap.end())
+	if (mapIt == (*map).end())
 	{
 		printf("Cannot remove entity because it is not in renderer");
 		return;
 	}
 
 	//Get correct render list
-	std::vector<MeshRenderer*> list = renderMap[identifier];
+	std::vector<MeshRenderer*> list = (*map)[identifier];
 
 	//Get the iterator of the entity
 	std::vector<MeshRenderer*>::iterator listIt = std::find(list.begin(), list.end(), mr);
@@ -583,7 +611,7 @@ void Renderer::RemoveMeshRenderer(MeshRenderer* mr)
 	if (list.size() == 0)
 	{
 		//Erase
-		renderMap.erase(mr->GetMatMeshIdentifier());
+		(*map).erase(mr->GetMatMeshIdentifier());
 	}
 }
 
