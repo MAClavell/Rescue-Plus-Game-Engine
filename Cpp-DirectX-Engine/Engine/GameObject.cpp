@@ -17,6 +17,7 @@ GameObject::GameObject()
 	parent = nullptr;
 	world = XMFLOAT4X4();
 	position = XMFLOAT3(0, 0, 0);
+	localPosition = XMFLOAT3(0, 0, 0);
 	SetRotation(0, 0, 0);
 	scale = XMFLOAT3(1, 1, 1);
 	worldDirty = false;
@@ -209,7 +210,7 @@ void GameObject::RebuildWorld()
 void GameObject::ParentPositionChanged()
 {
 	XMFLOAT3 newPos;
-	XMStoreFloat3(&newPos, XMVectorAdd(XMLoadFloat3(&parent->position), XMLoadFloat3(&position)));
+	XMStoreFloat3(&newPos, XMVectorAdd(XMLoadFloat3(&parent->position), XMLoadFloat3(&localPosition)));
 	SetPosition(newPos);
 }
 
@@ -252,6 +253,31 @@ void GameObject::SetPosition(XMFLOAT3 newPosition)
 void GameObject::SetPosition(float x, float y, float z)
 {
 	SetPosition(XMFLOAT3(x, y, z));
+}
+
+// Set the local position for this GameObject
+void GameObject::SetLocalPosition(XMFLOAT3 newLocalPosition)
+{
+	localPosition = newLocalPosition;
+
+	XMFLOAT3 newPos;
+	if (parent != nullptr)
+	{
+		XMStoreFloat3(&newPos,
+			XMVectorAdd(XMLoadFloat3(&parent->GetPosition()), XMLoadFloat3(&localPosition)));
+	}
+	else
+	{
+		XMStoreFloat3(&newPos,
+			XMVectorAdd(XMLoadFloat3(&position), XMLoadFloat3(&localPosition)));
+	}
+	this->SetPosition(newPos);
+}
+
+// Set the local position for this GameObject
+void GameObject::SetLocalPosition(float x, float y, float z)
+{
+	SetLocalPosition(XMFLOAT3(x, y, z));
 }
 
 // Moves this GameObject in absolute space by a given vector.

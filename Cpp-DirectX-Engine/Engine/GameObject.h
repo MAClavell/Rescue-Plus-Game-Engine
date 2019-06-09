@@ -53,6 +53,7 @@ private:
 	DirectX::XMFLOAT3 upAxis;
 
 	DirectX::XMFLOAT3 position;
+	DirectX::XMFLOAT3 localPosition;
 	DirectX::XMFLOAT4 rotationQuat;
 	DirectX::XMFLOAT3 scale;
 	bool worldDirty;
@@ -200,6 +201,22 @@ public:
 	// z - new z position
 	// --------------------------------------------------------
 	void SetPosition(float x, float y, float z);
+
+	// --------------------------------------------------------
+	// Set the local position for this GameObject
+	//
+	// newLocalPosition - The new local position to go to
+	// --------------------------------------------------------
+	void SetLocalPosition(DirectX::XMFLOAT3 newLocalPosition);
+
+	// --------------------------------------------------------
+	// Set the local position for this GameObject
+	//
+	// x - new x position
+	// y - new y position
+	// z - new z position
+	// --------------------------------------------------------
+	void SetLocalPosition(float x, float y, float z);
 
 	// --------------------------------------------------------
 	// Moves this GameObject in absolute space by a given vector.
