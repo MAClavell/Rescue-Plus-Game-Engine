@@ -19,7 +19,7 @@ private:
 	//Render list management
 	//renderMap uses Mat/Mesh identifiers to point to the correct list
 	std::unordered_map<std::string, std::vector<MeshRenderer*>> renderMap;
-	std::unordered_map<std::string, std::vector<MeshRenderer*>> transparentRenderMap;
+	std::vector<MeshRenderer*> transparentObjList;
 	Mesh* cubeMesh;
 
 	//Debugging
@@ -148,12 +148,12 @@ public:
 	// --------------------------------------------------------
 	// Add an entity to the render list
 	// --------------------------------------------------------
-	void AddMeshRenderer(MeshRenderer* mr, bool transparent = false);
+	void AddMeshRenderer(MeshRenderer* mr);
 
 	// --------------------------------------------------------
 	// Remove an entity from the render list
 	// --------------------------------------------------------
-	void RemoveMeshRenderer(MeshRenderer* mr, bool transparent);
+	void RemoveMeshRenderer(MeshRenderer* mr);
 
 	// --------------------------------------------------------
 	// Tell the renderer to render a collider this frame

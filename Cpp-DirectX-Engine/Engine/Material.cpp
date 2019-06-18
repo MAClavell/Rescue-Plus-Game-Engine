@@ -5,6 +5,7 @@ Material::Material(SimpleVertexShader * vertexShader, SimplePixelShader * pixelS
 {
 	this->vertexShader = vertexShader;
 	this->pixelShader = pixelShader;
+	SetAlpha(1);
 }
 
 // Release all data in the material
@@ -21,4 +22,16 @@ SimpleVertexShader* Material::GetVertexShader()
 SimplePixelShader* Material::GetPixelShader()
 {
 	return pixelShader;
+}
+
+// Set the alpha of this material
+void Material::SetAlpha(float newAlpha)
+{
+	alpha = newAlpha;
+}
+
+// Get the alpha of this material
+float Material::GetAlpha()
+{
+	return alpha;
 }

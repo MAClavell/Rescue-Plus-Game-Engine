@@ -120,7 +120,7 @@ T GameObject::AddComponent(Args... args)
 	static_assert(std::is_base_of<Component, T>::value, "Can't add a component not derived from Component");
 
 	//Push new T
-	components.push_back(new T(args...);
+	components.push_back(new T(this, args...);
 }
 
 // Remove a component of a specific type (must derive from component

@@ -14,6 +14,7 @@ class Material
 protected:
 	SimpleVertexShader* vertexShader;
 	SimplePixelShader* pixelShader;
+	float alpha;
 
 	// --------------------------------------------------------
 	// Constructor - Set up a material
@@ -48,5 +49,15 @@ public:
 	// Prepare this material's shader's per object variables
 	// --------------------------------------------------------
 	virtual void PrepareMaterialObject(GameObject* entityObj) = 0;
+	
+	// --------------------------------------------------------
+	// Set the alpha of this material
+	// --------------------------------------------------------
+	virtual void SetAlpha(float newAlpha);
+
+	// --------------------------------------------------------
+	// Get the alpha of this material
+	// --------------------------------------------------------
+	virtual float GetAlpha();
 };
 

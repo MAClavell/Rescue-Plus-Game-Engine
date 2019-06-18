@@ -16,7 +16,6 @@ private:
 	Mesh* mesh;
 	Material* material;
 	std::string identifier;
-	bool transparent;
 
 public:
 	// --------------------------------------------------------
@@ -26,7 +25,7 @@ public:
 	// mesh	- The mesh that this entity displays
 	// material - The material this entity uses.
 	// --------------------------------------------------------
-	MeshRenderer(Mesh* mesh, Material* material, bool transparent = false);
+	MeshRenderer(GameObject* gameObject, Mesh* mesh, Material* material);
 
 	// --------------------------------------------------------
 	// Destructor for when an instance is deleted

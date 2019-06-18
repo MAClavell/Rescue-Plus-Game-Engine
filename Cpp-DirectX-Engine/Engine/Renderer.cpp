@@ -294,6 +294,16 @@ void Renderer::DrawOpaqueObjects(ID3D11DeviceContext* context, Camera* camera)
 		Material* mat = list[0]->GetMaterial();
 		Mesh* mesh = list[0]->GetMesh();
 
+		//Since materials are shared, if the alpha is below 1 add them all to the transparency list
+		if (mat->GetAlpha() < 1)
+		{
+			for (size_t i = 0; i < list.size(); i++)
+			{
+				transparentObjList.push_back(list[0]);
+			}
+			continue;
+		}
+
 		// Turn shaders on
 		mat->GetVertexShader()->SetShader();
 		mat->GetPixelShader()->SetShader();
@@ -339,23 +349,22 @@ void Renderer::DrawTransparentObjects(ID3D11DeviceContext * context, Camera * ca
 	context->OMSetBlendState(transparentBlendState, 0, 0xFFFFFFFF);
 	context->OMSetDepthStencilState(transparentDepthState, 0);
 
-	for (auto const& mapPair : transparentRenderMap)
+	//Loop through each entity in the transparent list
+	for (size_t i = 0; i < transparentObjList.size(); i++)
 	{
-		if (mapPair.second.size() < 1)
-			return;
+		//Don't draw disabled entities
+		if (!transparentObjList[i]->GetGameObject()->GetEnabled())
+			continue;
 
-		//Get list, material, and mesh
-		std::vector<MeshRenderer*> list = mapPair.second;
-
-		Material* mat = list[0]->GetMaterial();
-		Mesh* mesh = list[0]->GetMesh();
+		Material* mat = transparentObjList[0]->GetMaterial();
+		Mesh* mesh = transparentObjList[0]->GetMesh();
 
 		// Turn shaders on
 		mat->GetVertexShader()->SetShader();
 		mat->GetPixelShader()->SetShader();
 
 		//Prepare the material's combo specific variables
-		mat->PrepareMaterialCombo(list[0]->GetGameObject(), camera);
+		mat->PrepareMaterialCombo(transparentObjList[0]->GetGameObject(), camera);
 
 		// Set buffers in the input assembler
 		UINT stride = sizeof(Vertex);
@@ -365,26 +374,18 @@ void Renderer::DrawTransparentObjects(ID3D11DeviceContext * context, Camera * ca
 		context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 		context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-		//Loop through each entity in the list
-		for (size_t i = 0; i < list.size(); i++)
-		{
-			//Don't draw disabled entities
-			if (!list[i]->GetGameObject()->GetEnabled())
-				continue;
+		//Prepare the material's object specific variables
+		mat->PrepareMaterialObject(transparentObjList[i]->GetGameObject());
 
-			//Prepare the material's object specific variables
-			mat->PrepareMaterialObject(list[i]->GetGameObject());
-
-			// Finally do the actual drawing
-			//  - Do this ONCE PER OBJECT you intend to draw
-			//  - This will use all of the currently set DirectX "stuff" (shaders, buffers, etc)
-			//  - DrawIndexed() uses the currently set INDEX BUFFER to look up corresponding
-			//     vertices in the currently set VERTEX BUFFER
-			context->DrawIndexed(
-				mesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
-				0,     // Offset to the first index we want to use
-				0);    // Offset to add to each index when looking up vertices
-		}
+		// Finally do the actual drawing
+		//  - Do this ONCE PER OBJECT you intend to draw
+		//  - This will use all of the currently set DirectX "stuff" (shaders, buffers, etc)
+		//  - DrawIndexed() uses the currently set INDEX BUFFER to look up corresponding
+		//     vertices in the currently set VERTEX BUFFER
+		context->DrawIndexed(
+			mesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
+			0,     // Offset to the first index we want to use
+			0);    // Offset to add to each index when looking up vertices
 	}
 
 	// Reset states
@@ -534,21 +535,16 @@ void Renderer::ApplyPostProcess(ID3D11DeviceContext* context,
 }
 
 // Add an entity to the render list
-void Renderer::AddMeshRenderer(MeshRenderer* mr, bool transparent)
+void Renderer::AddMeshRenderer(MeshRenderer* mr)
 {
 	//Get identifier
 	std::string identifier = mr->GetMatMeshIdentifier();
 
-	//Get correct map (opaque or transparent)
-	auto map = &renderMap;
-	if (transparent)
-		map = &transparentRenderMap;
-
 	//Check if we already have the mat/mesh combo in the map
-	if ((*map).find(identifier) != (*map).end())
+	if (renderMap.find(identifier) != renderMap.end())
 	{
 		//Get render list
-		std::vector<MeshRenderer*> list = (*map)[identifier];
+		std::vector<MeshRenderer*> list = renderMap[identifier];
 
 		//Check the iterator of the entity
 		if (std::find(list.begin(), list.end(), mr) != list.end())
@@ -558,7 +554,7 @@ void Renderer::AddMeshRenderer(MeshRenderer* mr, bool transparent)
 		}
 
 		//Add to the list
-		(*map)[identifier].push_back(mr);
+		renderMap[identifier].push_back(mr);
 	}
 	//else make a new entry
 	else
@@ -570,26 +566,21 @@ void Renderer::AddMeshRenderer(MeshRenderer* mr, bool transparent)
 }
 
 // Remove an entity from the render list
-void Renderer::RemoveMeshRenderer(MeshRenderer* mr, bool transparent)
+void Renderer::RemoveMeshRenderer(MeshRenderer* mr)
 {
-	//Get correct map (opaque or transparent)
-	auto map = &renderMap;
-	if (transparent)
-		map = &transparentRenderMap;
-
 	//Get iterator
 	std::string identifier = mr->GetMatMeshIdentifier();
-	auto mapIt = (*map).find(identifier);
+	auto mapIt = renderMap.find(identifier);
 
 	//Check if we are in the map
-	if (mapIt == (*map).end())
+	if (mapIt == renderMap.end())
 	{
 		printf("Cannot remove entity because it is not in renderer");
 		return;
 	}
 
 	//Get correct render list
-	std::vector<MeshRenderer*> list = (*map)[identifier];
+	std::vector<MeshRenderer*> list = renderMap[identifier];
 
 	//Get the iterator of the entity
 	std::vector<MeshRenderer*>::iterator listIt = std::find(list.begin(), list.end(), mr);
@@ -611,7 +602,7 @@ void Renderer::RemoveMeshRenderer(MeshRenderer* mr, bool transparent)
 	if (list.size() == 0)
 	{
 		//Erase
-		(*map).erase(mr->GetMatMeshIdentifier());
+		renderMap.erase(mr->GetMatMeshIdentifier());
 	}
 }
 
