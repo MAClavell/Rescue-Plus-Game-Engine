@@ -5,7 +5,7 @@
 // --------------------------------------------------------
 // A camera definition.
 // --------------------------------------------------------
-class Camera : public GameObject
+class Camera : public Component
 {
 private:
 	//Matrices
@@ -20,19 +20,12 @@ public:
 	// Constructor - Set up the camera
 	// (Remember to create the projection matrix right after!)
 	// --------------------------------------------------------
-	Camera();
+	Camera(GameObject* gameObject);
 
 	// --------------------------------------------------------
 	// Destructor for when an instance is deleted
 	// --------------------------------------------------------
 	~Camera();
-
-	// --------------------------------------------------------
-	// Update the camera (runs every frame)
-	//
-	// deltaTime - The time between frames
-	// --------------------------------------------------------
-	virtual void Update(float deltaTime);
 
 	// --------------------------------------------------------
 	// Create the camera's view matrix from fields

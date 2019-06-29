@@ -46,6 +46,7 @@ void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
 	// Depth state
 	D3D11_DEPTH_STENCIL_DESC ds = {};
 	ds.DepthEnable = true;
+	ds.DepthFunc = D3D11_COMPARISON_FUNC::D3D11_COMPARISON_LESS_EQUAL;
 	device->CreateDepthStencilState(&ds, &transparentDepthState);
 
 	//blend
@@ -80,37 +81,6 @@ void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
 	device->CreateRasterizerState(&shadowRastDesc, &shadowRasterizer);
 
 
-	// --------------------------------------------------------
-	// Set up the FXAA settings.
-	fxaaSettings = new FXAA_DESC();
-	fxaaSettings->Init();
-	fxaaSettings->LoadPreset(FXAA_PRESET);
-
-#if (FXAA_ENABLED == 0)
-	fxaaSettings->FXAA = OFF;
-#else
-	fxaaSettings->FXAA = ON;
-#endif
-
-#if (FXAA_DEBUG == 1)
-	// Toggle these on and off as necessary.
-	fxaaSettings->DEBUG_DISCARD = ON;
-	fxaaSettings->DEBUG_PASSTHROUGH = ON;
-	fxaaSettings->DEBUG_HORZVERT = ON;
-	fxaaSettings->DEBUG_PAIR = ON;
-	fxaaSettings->DEBUG_NEGPOS = ON;
-	fxaaSettings->DEBUG_OFFSET = ON;
-	fxaaSettings->DEBUG_HIGHLIGHT = ON;
-	fxaaSettings->DEBUG_GRAYSCALE = 1.0;
-	fxaaSettings->DEBUG_GRAYSCALE_CHANNEL = 1;
-#endif
-
-	CreatePostProcessingResources(device, width, height);
-
-	// Get fxaa shader information.
-	fxaaVS = ResourceManager::GetInstance()->GetVertexShader("FXAAShaderVS.cso");
-	fxaaPS = ResourceManager::GetInstance()->GetPixelShader("FXAAShaderPS.cso");
-
 	//Wireframe rasterizer state
 	D3D11_RASTERIZER_DESC RD_wireframe = {};
 	RD_wireframe.FillMode = D3D11_FILL_WIREFRAME;
@@ -134,11 +104,6 @@ Renderer::~Renderer()
 
 	//Clean up shadow map
 	shadowRasterizer->Release();
-
-	// Clean up post process.
-	fxaaRTV->Release();
-	fxaaSRV->Release();
-	delete fxaaSettings;
 }
 
 // Draw all entities in the render list
@@ -162,15 +127,11 @@ void Renderer::Draw(ID3D11DeviceContext* context,
 
 	RenderShadowMaps(context, device, camera, backBufferRTV, depthStencilView, width, height);
 
-	PreparePostProcess(context, fxaaRTV, depthStencilView);
-
 	DrawOpaqueObjects(context, camera);
 
 	DrawSky(context, camera);
 
 	DrawTransparentObjects(context, camera);
-
-	ApplyPostProcess(context, backBufferRTV, depthStencilView, fxaaRTV, fxaaSRV, sampler, width, height);
 
 	DrawDebugColliders(context, camera);
 
@@ -179,19 +140,6 @@ void Renderer::Draw(ID3D11DeviceContext* context,
 	// (Just unbinding all since we don't know which register its in)
 	ID3D11ShaderResourceView* nullSRVs[16] = {};
 	context->PSSetShaderResources(0, 16, nullSRVs);
-}
-
-// Prepare for post processsing.
-void Renderer::PreparePostProcess(ID3D11DeviceContext* context,
-	ID3D11RenderTargetView* ppRTV, ID3D11DepthStencilView* ppDSV)
-{
-	// POST PROCESS PRE-RENDER ///////////////
-
-	// Clear post process texture.
-	context->ClearRenderTargetView(ppRTV, this->clearColor);
-
-	// Set the post process RTV as the current render target.
-	context->OMSetRenderTargets(1, &ppRTV, ppDSV);
 }
 
 // Render shadow maps for all lights that cast shadows
@@ -258,10 +206,10 @@ void Renderer::RenderShadowMaps(ID3D11DeviceContext* context,
 			for (size_t i = 0; i < list.size(); i++)
 			{
 				//Don't draw disabled entities
-				if (!list[i]->GetGameObject()->GetEnabled())
+				if (!list[i]->gameObject()->GetEnabled())
 					continue;
 
-				shadowVS->SetMatrix4x4("world", list[i]->GetGameObject()->GetWorldMatrix());
+				shadowVS->SetMatrix4x4("world", list[i]->gameObject()->GetWorldMatrix());
 				shadowVS->CopyBufferData("perObject");
 
 				// Finally do the actual drawing
@@ -309,7 +257,7 @@ void Renderer::DrawOpaqueObjects(ID3D11DeviceContext* context, Camera* camera)
 		mat->GetPixelShader()->SetShader();
 
 		//Prepare the material's combo specific variables
-		mat->PrepareMaterialCombo(list[0]->GetGameObject(), camera);
+		mat->PrepareMaterialCombo(list[0]->gameObject(), camera);
 
 		// Set buffers in the input assembler
 		UINT stride = sizeof(Vertex);
@@ -323,11 +271,11 @@ void Renderer::DrawOpaqueObjects(ID3D11DeviceContext* context, Camera* camera)
 		for (size_t i = 0; i < list.size(); i++)
 		{
 			//Don't draw disabled entities
-			if (!list[i]->GetGameObject()->GetEnabled())
+			if (!list[i]->gameObject()->GetEnabled())
 				continue;
 
 			//Prepare the material's object specific variables
-			mat->PrepareMaterialObject(list[i]->GetGameObject());
+			mat->PrepareMaterialObject(list[i]->gameObject());
 
 			// Finally do the actual drawing
 			//  - Do this ONCE PER OBJECT you intend to draw
@@ -343,6 +291,8 @@ void Renderer::DrawOpaqueObjects(ID3D11DeviceContext* context, Camera* camera)
 	//context->OMSetDepthStencilState(0, 0);
 }
 
+// Draw transparent objects
+//TODO: Sort objects by distance from camera
 void Renderer::DrawTransparentObjects(ID3D11DeviceContext * context, Camera * camera)
 {
 	//Set render states
@@ -353,7 +303,7 @@ void Renderer::DrawTransparentObjects(ID3D11DeviceContext * context, Camera * ca
 	for (size_t i = 0; i < transparentObjList.size(); i++)
 	{
 		//Don't draw disabled entities
-		if (!transparentObjList[i]->GetGameObject()->GetEnabled())
+		if (!transparentObjList[i]->gameObject()->GetEnabled())
 			continue;
 
 		Material* mat = transparentObjList[0]->GetMaterial();
@@ -364,7 +314,7 @@ void Renderer::DrawTransparentObjects(ID3D11DeviceContext * context, Camera * ca
 		mat->GetPixelShader()->SetShader();
 
 		//Prepare the material's combo specific variables
-		mat->PrepareMaterialCombo(transparentObjList[0]->GetGameObject(), camera);
+		mat->PrepareMaterialCombo(transparentObjList[0]->gameObject(), camera);
 
 		// Set buffers in the input assembler
 		UINT stride = sizeof(Vertex);
@@ -375,7 +325,7 @@ void Renderer::DrawTransparentObjects(ID3D11DeviceContext * context, Camera * ca
 		context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 		//Prepare the material's object specific variables
-		mat->PrepareMaterialObject(transparentObjList[i]->GetGameObject());
+		mat->PrepareMaterialObject(transparentObjList[i]->gameObject());
 
 		// Finally do the actual drawing
 		//  - Do this ONCE PER OBJECT you intend to draw
@@ -463,77 +413,6 @@ void Renderer::DrawSky(ID3D11DeviceContext* context, Camera* camera)
 	context->OMSetDepthStencilState(0, 0);
 }
 
-// Apply the post process.
-void Renderer::ApplyPostProcess(ID3D11DeviceContext* context,
-	ID3D11RenderTargetView* backBufferRTV,
-	ID3D11DepthStencilView* depthStencilView,
-	ID3D11RenderTargetView* ppRTV,
-	ID3D11ShaderResourceView* ppSRV,
-	ID3D11SamplerState* sampler,
-	UINT width, UINT height)
-{
-
-	// Set target back to back buffer.
-	context->OMSetRenderTargets(1, &backBufferRTV, 0);
-
-	// Render a full-screen triangle using the post process vertex shader.
-	fxaaVS->SetShader();
-
-	// Send the pixel shader data.
-	fxaaPS->SetShader();
-
-	// Set $GLOBAL cbuffer data.
-	fxaaPS->SetShaderResourceView("g_RenderTextureView", fxaaSRV);
-	fxaaPS->SetSamplerState("g_Sampler", sampler);
-
-	// Set UniformData cbuffer data.
-	fxaaPS->SetFloat2("textureResolution", DirectX::XMFLOAT2((float)width, (float)height));
-	fxaaPS->CopyAllBufferData(); // Copy data to shader.
-
-	// Set FXAASettings cbuffer data.
-	fxaaPS->SetFloat("FXAA_EDGE_THRESHOLD", fxaaSettings->EDGE_THRESHOLD);
-	fxaaPS->SetFloat("FXAA_EDGE_THRESHOLD_MIN", fxaaSettings->EDGE_THRESHOLD_MIN);
-	fxaaPS->SetFloat("FXAA_SEARCH_THRESHOLD", fxaaSettings->SEARCH_THRESHOLD);
-	fxaaPS->SetFloat("FXAA_SUBPIX_CAP", fxaaSettings->SUBPIX_CAP);
-	fxaaPS->SetFloat("FXAA_SUBPIX_TRIM", fxaaSettings->SUBPIX_TRIM);
-	fxaaPS->SetFloat("FXAA_DEBUG_GRAYSCALE", fxaaSettings->DEBUG_GRAYSCALE);
-
-	fxaaPS->SetInt("FXAA_ENABLED", fxaaSettings->FXAA);
-	fxaaPS->SetInt("FXAA_SEARCH_STEPS", fxaaSettings->SEARCH_STEPS);
-	fxaaPS->SetInt("FXAA_SEARCH_ACCELERATION", fxaaSettings->SEARCH_ACCELERATION);
-	fxaaPS->SetInt("FXAA_SUBPIX", fxaaSettings->SUBPIX);
-	fxaaPS->SetInt("FXAA_SUBPIX_FASTER", fxaaSettings->SUBPIX_FASTER);
-	fxaaPS->SetInt("FXAA_LUMINANCE_METHOD", fxaaSettings->LUMINANCE_METHOD);
-
-	fxaaPS->SetInt("FXAA_DEBUG_DISCARD", fxaaSettings->DEBUG_DISCARD);
-	fxaaPS->SetInt("FXAA_DEBUG_PASSTHROUGH", fxaaSettings->DEBUG_PASSTHROUGH);
-	fxaaPS->SetInt("FXAA_DEBUG_HORZVERT", fxaaSettings->DEBUG_HORZVERT);
-	fxaaPS->SetInt("FXAA_DEBUG_PAIR", fxaaSettings->DEBUG_PAIR);
-	fxaaPS->SetInt("FXAA_DEBUG_NEGPOS", fxaaSettings->DEBUG_NEGPOS);
-	fxaaPS->SetInt("FXAA_DEBUG_OFFSET", fxaaSettings->DEBUG_OFFSET);
-	fxaaPS->SetInt("FXAA_DEBUG_HIGHLIGHT", fxaaSettings->DEBUG_HIGHLIGHT);
-	fxaaPS->SetInt("FXAA_DEBUG_GRAYSCALE_CHANNEL", fxaaSettings->DEBUG_GRAYSCALE_CHANNEL);
-
-	fxaaPS->CopyAllBufferData(); // Copy data to shader.
-
-	// Deactivate vertex and index buffers.
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	ID3D11Buffer* nothing = 0;
-	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-
-	// Draw a set number of vertices.
-	context->Draw(3, 0);
-
-	// Unbind all pixel shader SRVs.
-	ID3D11ShaderResourceView* nullSRVs[16] = {};
-	context->PSSetShaderResources(0, 16, nullSRVs);
-
-	// Reset depth stencil view.
-	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
-}
-
 // Add an entity to the render list
 void Renderer::AddMeshRenderer(MeshRenderer* mr)
 {
@@ -549,7 +428,7 @@ void Renderer::AddMeshRenderer(MeshRenderer* mr)
 		//Check the iterator of the entity
 		if (std::find(list.begin(), list.end(), mr) != list.end())
 		{
-			printf("Cannot add entity %s because it is already in renderer", mr->GetGameObject()->GetName().c_str());
+			printf("Cannot add entity %s because it is already in renderer", mr->gameObject()->GetName().c_str());
 			return;
 		}
 
@@ -651,45 +530,4 @@ void Renderer::SetClearColor(float r, float g, float b, float a)
 	clearColor[1] = g;
 	clearColor[2] = b;
 	clearColor[3] = a;
-}
-
-// Create the post-processing texture
-void Renderer::CreatePostProcessingResources(ID3D11Device* device, UINT width, UINT height)
-{
-	// Create post-process resources.
-	D3D11_TEXTURE2D_DESC textureDesc = {};
-	textureDesc.Width = width;
-	textureDesc.Height = height;
-	textureDesc.ArraySize = 1;
-	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-	textureDesc.CPUAccessFlags = 0;
-	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	textureDesc.MipLevels = 1;
-	textureDesc.MiscFlags = 0;
-	textureDesc.SampleDesc.Count = 1;
-	textureDesc.SampleDesc.Quality = 0;
-	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-
-	ID3D11Texture2D* ppTexture;
-	device->CreateTexture2D(&textureDesc, 0, &ppTexture);
-
-	// Create the Render Target View
-	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-	rtvDesc.Format = textureDesc.Format;
-	rtvDesc.Texture2D.MipSlice = 0;
-	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-
-	device->CreateRenderTargetView(ppTexture, &rtvDesc, &fxaaRTV);
-
-	// Create the Shader Resource View
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = textureDesc.Format;
-	srvDesc.Texture2D.MipLevels = 1;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-
-	device->CreateShaderResourceView(ppTexture, &srvDesc, &fxaaSRV);
-
-	// We don't need the texture reference itself no mo'
-	ppTexture->Release();
 }

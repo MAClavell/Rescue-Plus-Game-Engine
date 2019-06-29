@@ -37,7 +37,7 @@ void MAT_PBRTexture::PrepareMaterialCombo(GameObject* entityObj, Camera* cam)
 	vertexShader->SetMatrix4x4("shadowProj", lights[0]->GetProjectionMatrix());
 
 	//Pixel shader data
-	pixelShader->SetFloat3("CameraPosition", cam->GetPosition());
+	pixelShader->SetFloat3("CameraPosition", cam->gameObject()->GetPosition());
 	//Set lights
 	int amnt = lightManager->GetLightAmnt();
 	LightStruct* arr = lightManager->GetLightStructArray();

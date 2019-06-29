@@ -1,10 +1,10 @@
 #pragma once
 #include <vector>
-#include <Entity.h>
+#include <GameObject.h>
 #include <string>
 
 struct EntityRemoval {
-	Entity* e;
+	GameObject* e;
 	bool release;
 };
 
@@ -17,13 +17,13 @@ private:
 	EntityManager() { }
 	~EntityManager();
 
-	std::vector<Entity*> entities;       //A vector of entities
+	std::vector<GameObject*> entities;       //A vector of entities
 	std::vector<EntityRemoval> remove_entities;       //A vector of entities
 
 	// --------------------------------------------------------
 	// Remove an entity by its object
 	// --------------------------------------------------------
-	void RemoveEntityFromList(Entity* entity, bool release);
+	void RemoveEntityFromList(GameObject* entity, bool release);
 
 public:
 
@@ -44,12 +44,12 @@ public:
 	// Add an entity to the entity manager
 	// (checks if it is already in it)
 	// --------------------------------------------------------
-	void AddEntity(Entity* entity);
+	void AddEntity(GameObject* entity);
 
 	// --------------------------------------------------------
 	// Get an entity by its name
 	// --------------------------------------------------------
-	Entity* GetEntity(std::string name);
+	GameObject* GetEntity(std::string name);
 
 	// --------------------------------------------------------
 	// Remove an entity by its name
@@ -59,7 +59,7 @@ public:
 	// --------------------------------------------------------
 	// Remove an entity by its object
 	// --------------------------------------------------------
-	void RemoveEntity(Entity* entity, bool deleteEntity = true);
+	void RemoveEntity(GameObject* entity, bool deleteEntity = true);
 
 	// --------------------------------------
 

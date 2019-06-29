@@ -43,7 +43,7 @@ struct AmbientLightStruct
 //
 // Base light to be inherited by other classes
 // --------------------------------------------------------
-class Light : public GameObject
+class Light : public Component
 {
 private:
 
@@ -80,7 +80,7 @@ public:
 	//
 	// type - the type of light this is
 	// --------------------------------------------------------
-	Light(LightType type, bool castShadows);
+	Light(GameObject* gameObject, LightType type, bool castShadows);
 
 	// --------------------------------------------------------
 	// Constructor - Set up a light
@@ -89,7 +89,7 @@ public:
 	// color - Diffuse color of the light
 	// intensity - how intense the light is
 	// --------------------------------------------------------
-	Light(LightType type, bool castShadows, DirectX::XMFLOAT3 color, float intensity);
+	Light(GameObject* gameObject, LightType type, bool castShadows, DirectX::XMFLOAT3 color, float intensity);
 
 	// --------------------------------------------------------
 	// Destructor for when an instance is deleted
@@ -194,7 +194,7 @@ public:
 	// --------------------------------------------------------
 	// Constructor - Set up a directional light with default values.
 	// --------------------------------------------------------
-	DirectionalLight(bool castShadows);
+	DirectionalLight(GameObject* gameObject, bool castShadows);
 
 	// --------------------------------------------------------
 	// Constructor - Set up a directional light
@@ -202,7 +202,7 @@ public:
 	// color - Diffuse color of the light
 	// intensity - how intense the light is
 	// --------------------------------------------------------
-	DirectionalLight(bool castShadows, DirectX::XMFLOAT3 color, float intensity);
+	DirectionalLight(GameObject* gameObject, bool castShadows, DirectX::XMFLOAT3 color, float intensity);
 
 	// --------------------------------------------------------
 	// Destructor for when an instance is deleted
@@ -247,7 +247,7 @@ public:
 	// --------------------------------------------------------
 	// Constructor - Set up a point light with default values.
 	// --------------------------------------------------------
-	PointLight(bool castShadows);
+	PointLight(GameObject* gameObject, bool castShadows);
 
 	// --------------------------------------------------------
 	// Constructor - Set up a point light
@@ -256,7 +256,7 @@ public:
 	// color - Diffuse color of the light
 	// intensity - how intense the light is
 	// --------------------------------------------------------
-	PointLight(bool castShadows, float radius, DirectX::XMFLOAT3 color, float intensity);
+	PointLight(GameObject* gameObject, bool castShadows, float radius, DirectX::XMFLOAT3 color, float intensity);
 
 	// --------------------------------------------------------
 	// Destructor for when an instance is deleted
@@ -306,7 +306,7 @@ public:
 	// --------------------------------------------------------
 	// Constructor - Set up a spot light with default values.
 	// --------------------------------------------------------
-	SpotLight(bool castShadows);
+	SpotLight(GameObject* gameObject, bool castShadows);
 
 	// --------------------------------------------------------
 	// Constructor - Set up a spot light
@@ -316,7 +316,7 @@ public:
 	// color - Diffuse color of the light
 	// intensity - how intense the light is
 	// --------------------------------------------------------
-	SpotLight(bool castShadows, float range, float spotFalloff, DirectX::XMFLOAT3 color, float intensity);
+	SpotLight(GameObject* gameObject, bool castShadows, float range, float spotFalloff, DirectX::XMFLOAT3 color, float intensity);
 
 	// --------------------------------------------------------
 	// Destructor for when an instance is deleted

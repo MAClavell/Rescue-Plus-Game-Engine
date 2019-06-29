@@ -8,7 +8,7 @@ class GameObject;
 class Component
 {
 private:
-	GameObject* gameObject;
+	GameObject* attatchedGameObject;
 
 public:
 	// --------------------------------------------------------
@@ -29,7 +29,7 @@ public:
 	// --------------------------------------------------------
 	// Get the GameObject this component is tied to
 	// --------------------------------------------------------
-	GameObject* GetGameObject() { return gameObject; }
+	GameObject* gameObject() { return attatchedGameObject; }
 };
 
 // --------------------------------------------------------
@@ -151,14 +151,50 @@ public:
 	// Add a component of a specific type (must derive from component)
 	// --------------------------------------------------------
 	template <typename T, typename... Args>
-	T AddComponent(Args... args);
-	
+	T* AddComponent(Args... args)
+	{
+		static_assert(std::is_base_of<Component, T>::value, "Can't add a component not derived from Component");
+
+		//Push new T
+		T* component = new T(this, args...);
+		components.push_back(component);
+		return component;
+	}
+
 	// --------------------------------------------------------
 	// Remove a component of a specific type (must derive from component
 	//		and be in the gameobject's component list)
 	// --------------------------------------------------------
 	template <typename T>
-	void RemoveComponent();
+	void RemoveComponent()
+	{
+		static_assert(std::is_base_of<Component, T>::value, "Can't remove a component not derived from Component");
+
+		//Try to find it
+		bool found = false;
+		for (auto iter = components.begin(); iter != components.end(); iter++)
+		{
+			try
+			{
+				T& c = dynamic_cast<T&>(**iter); // try to cast
+				found = true;
+
+				//Swap with the last and pop
+				std::iter_swap(iter, components.end());
+				components.pop_back();
+
+				//Delete
+				delete c;
+				break;
+			}
+			catch (...)
+			{
+			}
+		}
+
+		if (!found)
+			printf("Could not find a component of type '%s' in %s", typeid(T).name(), name.c_str());
+	}
 
 	// --------------------------------------------------------
 	// Update all componenets in this gameObject

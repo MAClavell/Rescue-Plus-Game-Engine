@@ -1,5 +1,6 @@
 #include "GameObject.h"
 #include "Renderer.h"
+#include "EntityManager.h"
 
 // For the DirectX Math library
 using namespace DirectX;
@@ -7,7 +8,7 @@ using namespace DirectX;
 //Construct a component
 Component::Component(GameObject* gameObject)
 {
-	this->gameObject = gameObject;
+	this->attatchedGameObject = gameObject;
 }
 
 // Constructor - Set up the gameobject.
@@ -25,6 +26,8 @@ GameObject::GameObject()
 
 	enabled = true;
 	name = "GameObject";
+
+	EntityManager::GetInstance()->AddEntity(this);
 }
 
 // Constructor - Set up the gameobject.
@@ -38,10 +41,10 @@ GameObject::GameObject(std::string name)
 // Destroys all children too
 GameObject::~GameObject()
 { 
-	//Delete all children
-	for (auto go : children)
+	//Delete all components
+	for (auto c : components)
 	{
-		delete go;
+		delete c;
 	}
 }
 
@@ -111,48 +114,6 @@ void GameObject::RemoveChild(GameObject* child)
 void GameObject::AddChild(GameObject* child)
 {
 	children.push_back(child);
-}
-
-// Add a component of a specific type (must derive from component)
-template <typename T, typename... Args>
-T GameObject::AddComponent(Args... args)
-{
-	static_assert(std::is_base_of<Component, T>::value, "Can't add a component not derived from Component");
-
-	//Push new T
-	components.push_back(new T(this, args...);
-}
-
-// Remove a component of a specific type (must derive from component
-//		and be in the gameobject's component list)
-template <typename T>
-void GameObject::RemoveComponent()
-{
-	static_assert(std::is_base_of<Component, T>::value, "Can't remove a component not derived from Component");
-
-	//Try to find it
-	bool found = false;
-	for (auto iter = components.begin(); iter != components.end(); iter++) 
-	{
-		try
-		{
-			T& c = dynamic_cast<T&>(**iter); // try to cast
-			found = true;
-
-			//Swap with the last and pop
-			std::iter_swap(iter, components.end());
-			components.pop_back();
-
-			//Delete
-			delete c;
-			break;
-		}
-		catch (...)
-		{ }
-	}
-
-	if(!found)
-		printf("Could not find a component of type '%s' in %s", typeid(T).name(), name.c_str());
 }
 
 // Update this entity
@@ -288,7 +249,7 @@ void GameObject::MoveAbsolute(XMFLOAT3 moveAmnt)
 	XMFLOAT3 newPos;
 	XMStoreFloat3(&newPos, XMVectorAdd(XMLoadFloat3(&position),
 		XMLoadFloat3(&moveAmnt)));
-	SetRotation(newPos);
+	SetPosition(newPos);
 }
 
 // Moves this GameObject in relative space by a given vector.

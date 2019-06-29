@@ -3,7 +3,7 @@
 using namespace DirectX;
 
 // Constructor - Set up the camera
-Camera::Camera()
+Camera::Camera(GameObject* gameObject) : Component(gameObject)
 {
 	//Default transformation values
 	up = XMFLOAT3(0, 1, 0);
@@ -14,30 +14,25 @@ Camera::Camera()
 Camera::~Camera()
 { }
 
-// Update the camera (runs every frame)
-void Camera::Update(float deltaTime)
-{
-	CreateViewMatrix();
-}
-
 // Create the camera's view matrix from fields
 void Camera::CreateViewMatrix()
 {
 	//Rotate the forward vector
-	XMVECTOR forward = XMLoadFloat3(&GetForwardAxis());
+	XMVECTOR forward = XMLoadFloat3(&gameObject()->GetForwardAxis());
 
 	//Create the up vector from the forward
 	XMVECTOR up = XMVector3Cross(XMVector3Cross(forward, XMLoadFloat3(&(this->up))), forward);
 
 	//Create view matrix (transpose for HLSL)
 	XMStoreFloat4x4(&view, XMMatrixTranspose(
-		XMMatrixLookToLH(XMLoadFloat3(&GetPosition()), 
+		XMMatrixLookToLH(XMLoadFloat3(&gameObject()->GetPosition()),
 		forward, up)));
 }
 
 // Get the camera's view matrix
 XMFLOAT4X4 Camera::GetViewMatrix()
 {
+	CreateViewMatrix();
 	return view;
 }
 
