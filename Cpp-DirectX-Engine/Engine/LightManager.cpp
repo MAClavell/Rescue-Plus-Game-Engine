@@ -1,4 +1,5 @@
 #include "LightManager.h"
+#include "EntityManager.h"
 #include <algorithm>
 
 using namespace DirectX;
@@ -6,10 +7,6 @@ using namespace DirectX;
 LightManager::~LightManager()
 {
 	if (ambientLight) { delete ambientLight; }
-	for (int i = 0; i < lightList.size(); i++)
-	{
-		if (lightList[i]) { delete lightList[i]; }
-	}
 	if (lightStructArr) { delete[] lightStructArr; }
 }
 
@@ -59,7 +56,8 @@ DirectionalLight* LightManager::CreateDirectionalLight(bool castShadows)
 	}
 
 	listDirty = true;
-	DirectionalLight* light = new DirectionalLight(castShadows);
+	GameObject* go = new GameObject("Directional Light");
+	DirectionalLight* light = go->AddComponent<DirectionalLight>(castShadows);
 	SetInLightManager(light, true);
 	lightList.push_back(light);
 	return light;
@@ -75,7 +73,8 @@ DirectionalLight* LightManager::CreateDirectionalLight(bool castShadows, XMFLOAT
 	}
 
 	listDirty = true;
-	DirectionalLight* light = new DirectionalLight(castShadows, color, intensity);
+	GameObject* go = new GameObject("Directional Light");
+	DirectionalLight* light = go->AddComponent<DirectionalLight>(castShadows, color, intensity);
 	SetInLightManager(light, true);
 	lightList.push_back(light);
 	return light;
@@ -91,7 +90,8 @@ PointLight* LightManager::CreatePointLight(bool castShadows)
 	}
 
 	listDirty = true;
-	PointLight* light = new PointLight(castShadows);
+	GameObject* go = new GameObject("Point Light");
+	PointLight* light = go->AddComponent<PointLight>(castShadows);
 	SetInLightManager(light, true);
 	lightList.push_back(light);
 	return light;
@@ -107,7 +107,8 @@ PointLight* LightManager::CreatePointLight(bool castShadows, float radius, XMFLO
 	}
 
 	listDirty = true;
-	PointLight* light = new PointLight(castShadows, radius, color, intensity);
+	GameObject* go = new GameObject("Point Light");
+	PointLight* light = go->AddComponent<PointLight>(castShadows, radius, color, intensity);
 	SetInLightManager(light, true);
 	lightList.push_back(light);
 	return light;
@@ -123,7 +124,8 @@ SpotLight* LightManager::CreateSpotLight(bool castShadows)
 	}
 
 	listDirty = true;
-	SpotLight* light = new SpotLight(castShadows);
+	GameObject* go = new GameObject("Spot Light");
+	SpotLight* light = go->AddComponent<SpotLight>(castShadows);
 	SetInLightManager(light, true);
 	lightList.push_back(light);
 	return light;
@@ -139,7 +141,8 @@ SpotLight* LightManager::CreateSpotLight(bool castShadows, float range, float sp
 	}
 
 	listDirty = true;
-	SpotLight* light = new SpotLight(castShadows, range, spotFalloff, color, intensity);
+	GameObject* go = new GameObject("Spot Light");
+	SpotLight* light = go->AddComponent<SpotLight>(castShadows, range, spotFalloff, color, intensity);
 	SetInLightManager(light, true);
 	lightList.push_back(light);
 	return light;
@@ -166,7 +169,7 @@ void LightManager::AddLight(Light* light)
 }
 
 // Remomve a light from the light manager
-void LightManager::RemoveLight(Light* light, bool deleteLight)
+void LightManager::RemoveLight(Light* light, bool deleteGameObject)
 {
 	//Get iterator
 	std::vector<Light*>::iterator it = std::find(lightList.begin(), lightList.end(), light);
@@ -174,7 +177,7 @@ void LightManager::RemoveLight(Light* light, bool deleteLight)
 	if (it != lightList.end())
 	{
 		listDirty = true;
-		Light* light = *it;
+		Light* lightObj = *it;
 
 		//Swap it for the last one
 		std::swap(*it, lightList[lightList.size() - 1]);
@@ -183,9 +186,9 @@ void LightManager::RemoveLight(Light* light, bool deleteLight)
 		lightList.pop_back();
 
 		//Delete instance if user wants to
-		if (deleteLight)
+		if (deleteGameObject)
 		{
-			delete light;
+			EntityManager::GetInstance()->RemoveEntity(lightObj->gameObject(), true);
 		}
 		else SetInLightManager(light, false);
 	}

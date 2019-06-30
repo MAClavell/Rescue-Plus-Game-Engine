@@ -1,33 +1,90 @@
 #pragma once
 #include <DirectXMath.h>
-#include "Collider.h"
+#include <vector>
 #include <string>
+#include "Collider.h"
+
+class GameObject;
+class Component
+{
+private:
+	GameObject* attatchedGameObject;
+
+public:
+	// --------------------------------------------------------
+	//Construct a component
+	// --------------------------------------------------------
+	Component(GameObject* gameObject);
+	
+	// --------------------------------------------------------
+	// Destroy a component
+	// --------------------------------------------------------
+	virtual ~Component() { }
+
+	// --------------------------------------------------------
+	// Update this component
+	// --------------------------------------------------------
+	virtual void Update(float deltaTime) {};
+
+	// --------------------------------------------------------
+	// Get the GameObject this component is tied to
+	// --------------------------------------------------------
+	GameObject* gameObject() { return attatchedGameObject; }
+};
 
 // --------------------------------------------------------
 // A GameObject definition.
 //
-// An GameObject contains world data
+// A GameObject contains world data
 // --------------------------------------------------------
 class GameObject
 {
 private:
+	//Parenting
+	GameObject* parent;
+	std::vector<GameObject*> children;
+
 	//Transformations
 	DirectX::XMFLOAT4X4 world;
 	DirectX::XMFLOAT4X4 worldInvTrans;
-
 
 	DirectX::XMFLOAT3 forwardAxis;
 	DirectX::XMFLOAT3 rightAxis;
 	DirectX::XMFLOAT3 upAxis;
 
 	DirectX::XMFLOAT3 position;
+	DirectX::XMFLOAT3 localPosition;
 	DirectX::XMFLOAT4 rotationQuat;
 	DirectX::XMFLOAT3 scale;
 	bool worldDirty;
-	bool debug;
 
-	//Other data
-	Collider* collider;
+	//Components
+	std::vector<Component*> components;
+
+	// --------------------------------------------------------
+	// Remove a child from a gameobject
+	// --------------------------------------------------------
+	void RemoveChild(GameObject* child);
+
+	// --------------------------------------------------------
+	// Add a child to a gameobject
+	// --------------------------------------------------------
+	void AddChild(GameObject* child);
+	
+	// --------------------------------------------------------
+	// Update transformations after parent's transformations changed
+	// --------------------------------------------------------
+	void ParentPositionChanged();
+
+	// --------------------------------------------------------
+	// Update transformations after parent's transformations changed
+	// --------------------------------------------------------
+	void ParentRotationChanged();
+	
+	// --------------------------------------------------------
+	// Update transformations after parent's transformations changed
+	// --------------------------------------------------------
+	void ParentScaleChanged();
 
 	// --------------------------------------------------------
 	// Calculate the local axis for the gameobject
@@ -39,6 +96,7 @@ protected:
 	std::string name;
 
 public:
+
 	// --------------------------------------------------------
 	// Constructor - Set up the gameobject.
 	// --------------------------------------------------------
@@ -52,17 +110,10 @@ public:
 	GameObject(std::string name);
 
 	// --------------------------------------------------------
-	// Collider Constructor - Set up the gameobject with a collider
-	//
-	// size - dimensions of bounding box
-	// offset - offset of collider from position of game object
+	// Destructor for when an instance is deleted.
+	// Destroys all children too
 	// --------------------------------------------------------
-	/*GameObject(DirectX::XMFLOAT3 size, DirectX::XMFLOAT3 offset);*/
-
-	// --------------------------------------------------------
-	// Destructor for when an instance is deleted
-	// --------------------------------------------------------
-	virtual ~GameObject();
+	~GameObject();
 
 	// --------------------------------------------------------
 	// Get the enabled state of the gameobject
@@ -87,7 +138,66 @@ public:
 	std::string GetName();
 
 	// --------------------------------------------------------
-	// Update this entity
+	// Set the parent of this GameObject
+	// --------------------------------------------------------
+	void SetParent(GameObject* parent);
+	
+	// --------------------------------------------------------
+	// Get the parent of this GameObject
+	// --------------------------------------------------------
+	GameObject* GetParent();
+
+	// --------------------------------------------------------
+	// Add a component of a specific type (must derive from component)
+	// --------------------------------------------------------
+	template <typename T, typename... Args>
+	T* AddComponent(Args... args)
+	{
+		static_assert(std::is_base_of<Component, T>::value, "Can't add a component not derived from Component");
+
+		//Push new T
+		T* component = new T(this, args...);
+		components.push_back(component);
+		return component;
+	}
+
+	// --------------------------------------------------------
+	// Remove a component of a specific type (must derive from component
+	//		and be in the gameobject's component list)
+	// --------------------------------------------------------
+	template <typename T>
+	void RemoveComponent()
+	{
+		static_assert(std::is_base_of<Component, T>::value, "Can't remove a component not derived from Component");
+
+		//Try to find it
+		bool found = false;
+		for (auto iter = components.begin(); iter != components.end(); iter++)
+		{
+			try
+			{
+				T& c = dynamic_cast<T&>(**iter); // try to cast
+				found = true;
+
+				//Swap with the last and pop
+				std::iter_swap(iter, components.end());
+				components.pop_back();
+
+				//Delete
+				delete c;
+				break;
+			}
+			catch (...)
+			{
+			}
+		}
+
+		if (!found)
+			printf("Could not find a component of type '%s' in %s", typeid(T).name(), name.c_str());
+	}
+
+	// --------------------------------------------------------
+	// Update all componenets in this gameObject
 	// --------------------------------------------------------
 	virtual void Update(float deltaTime);
 
@@ -129,6 +239,22 @@ public:
 	void SetPosition(float x, float y, float z);
 
 	// --------------------------------------------------------
+	// Set the local position for this GameObject
+	//
+	// newLocalPosition - The new local position to go to
+	// --------------------------------------------------------
+	void SetLocalPosition(DirectX::XMFLOAT3 newLocalPosition);
+
+	// --------------------------------------------------------
+	// Set the local position for this GameObject
+	//
+	// x - new x position
+	// y - new y position
+	// z - new z position
+	// --------------------------------------------------------
+	void SetLocalPosition(float x, float y, float z);
+
+	// --------------------------------------------------------
 	// Moves this GameObject in absolute space by a given vector.
 	// Does not take rotation into account
 	//
@@ -165,6 +291,13 @@ public:
 	DirectX::XMFLOAT4 GetRotation();
 
 	// --------------------------------------------------------
+	// Set the rotation for this GameObject (Quaternion)
+	//
+	// newQuatRotation - The new rotation to rotate to
+	// --------------------------------------------------------
+	void SetRotation(DirectX::XMFLOAT4 newQuatRotation);
+
+	// --------------------------------------------------------
 	// Set the rotation for this GameObject (Angles)
 	//
 	// newRotation - The new rotation to rotate to
@@ -179,13 +312,6 @@ public:
 	// z - z angle
 	// --------------------------------------------------------
 	void SetRotation(float x, float y, float z);
-
-	// --------------------------------------------------------
-	// Set the rotation for this GameObject (Quaternion)
-	//
-	// newQuatRotation - The new rotation to rotate to
-	// --------------------------------------------------------
-	void SetRotation(DirectX::XMFLOAT4 newQuatRotation);
 
 	// --------------------------------------------------------
 	// Rotate this GameObject (Angles)
@@ -223,28 +349,5 @@ public:
 	// z - new z scale
 	// --------------------------------------------------------
 	void SetScale(float x, float y, float z);
-
-	// --------------------------------------------------------
-	// Get this object's collider
-	// --------------------------------------------------------
-	Collider* GetCollider();
-
-	// --------------------------------------------------------
-	// Add a collider to this object if it has none
-	//
-	// size - dimensions of bounding box
-	// offset - offset of collider from position of game object
-	// --------------------------------------------------------
-	void AddCollider(DirectX::XMFLOAT3 size, DirectX::XMFLOAT3 offset = DirectX::XMFLOAT3());
-
-	// --------------------------------------------------------
-	// Check if the collider is in debug mode (draw outline)
-	// --------------------------------------------------------
-	bool IsDebug();
-
-	// --------------------------------------------------------
-	// Set debug mode for this collider (draw outline)
-	// --------------------------------------------------------
-	void SetDebug(bool setting);
 };
 

@@ -36,7 +36,7 @@ void MAT_Basic::PrepareMaterialCombo(GameObject* entityObj, Camera* cam)
 	vertexShader->SetMatrix4x4("shadowProj", lights[0]->GetProjectionMatrix());
 
 	//Pixel shader data
-	pixelShader->SetFloat3("CameraPosition", cam->GetPosition());
+	pixelShader->SetFloat3("CameraPosition", cam->gameObject()->GetPosition());
 	pixelShader->SetFloat("Shininess", shininess);
 	pixelShader->SetFloat("Roughness", roughness);
 

@@ -8,7 +8,8 @@ using namespace DirectX;
 // ----------------------------------------------------------------------------
 
 // Constructor - Set up a light with default values.
-Light::Light(LightType type, bool castShadows)
+Light::Light(GameObject* gameObject, LightType type, bool castShadows)
+	: Component(gameObject)
 {
 	inLightManager = false;
 	SetCastsShadows(castShadows);
@@ -28,7 +29,8 @@ Light::Light(LightType type, bool castShadows)
 }
 
 // Constructor - Set up a light
-Light::Light(LightType type, bool castShadows, XMFLOAT3 color, float intensity)
+Light::Light(GameObject* gameObject, LightType type, bool castShadows, XMFLOAT3 color, float intensity)
+	: Component(gameObject)
 {
 	inLightManager = false;
 	SetCastsShadows(castShadows);
@@ -58,10 +60,10 @@ Light::~Light()
 LightStruct* Light::GetLightStruct()
 {
 	//Set direction
-	lightStruct->Direction = GetForwardAxis();
+	lightStruct->Direction = gameObject()->GetForwardAxis();
 
 	//Set position
-	lightStruct->Position = GetPosition();
+	lightStruct->Position = gameObject()->GetPosition();
 
 	return lightStruct;
 }
@@ -168,15 +170,16 @@ void Light::InitShadowMap(ID3D11Device* device)
 
 // Constructor - Set up a directional light with default values.
 // White ambient and diffuse color.
-DirectionalLight::DirectionalLight(bool castShadows) : Light::Light(LightType::DirectionalLight, castShadows)
+DirectionalLight::DirectionalLight(GameObject* gameObject, bool castShadows) 
+	: Light::Light(gameObject, LightType::DirectionalLight, castShadows)
 { 
 	CalculateViewMatrix();
 	CalculateProjMatrix();
 }
 
 // Constructor - Set up a directional light
-DirectionalLight::DirectionalLight(bool castShadows, XMFLOAT3 color, float intensity) :
-	Light::Light(LightType::DirectionalLight, castShadows, color, intensity)
+DirectionalLight::DirectionalLight(GameObject* gameObject, bool castShadows, XMFLOAT3 color, float intensity) :
+	Light::Light(gameObject, LightType::DirectionalLight, castShadows, color, intensity)
 { 
 	CalculateViewMatrix();
 	CalculateProjMatrix();
@@ -189,16 +192,17 @@ DirectionalLight::~DirectionalLight()
 // Get the direction of this light
 XMFLOAT3 DirectionalLight::GetDirection()
 {
-	return GetForwardAxis();
+	return gameObject()->GetForwardAxis();
 }
 
 // Calculate view for shadow rendering
 void DirectionalLight::CalculateViewMatrix()
 {
 	XMMATRIX view = XMMatrixTranspose(XMMatrixLookToLH(
-		XMVectorSubtract(XMLoadFloat3(&GetPosition()), XMVectorScale(XMLoadFloat3(&GetForwardAxis()), 50)),
-		XMLoadFloat3(&GetForwardAxis()),
-		XMLoadFloat3(&GetUpAxis())));
+		XMVectorSubtract(XMLoadFloat3(&gameObject()->GetPosition()),
+			XMVectorScale(XMLoadFloat3(&gameObject()->GetForwardAxis()), 50)),
+		XMLoadFloat3(&gameObject()->GetForwardAxis()),
+		XMLoadFloat3(&gameObject()->GetUpAxis())));
 	XMStoreFloat4x4(&shadowView, view);
 }
 
@@ -237,14 +241,15 @@ DirectX::XMFLOAT4X4 DirectionalLight::GetProjectionMatrix()
 // ----------------------------------------------------------------------------
 
 // Constructor - Set up a point light with default values.
-PointLight::PointLight(bool castShadows) : Light::Light(LightType::PointLight, castShadows)
+PointLight::PointLight(GameObject* gameObject, bool castShadows) 
+	: Light::Light(gameObject, LightType::PointLight, castShadows)
 { 
 	lightStruct->Range = 5;
 }
 
 // Constructor - Set up a point light
-PointLight::PointLight(bool castShadows, float radius, XMFLOAT3 color, float intensity) :
-	Light::Light(LightType::PointLight, castShadows, color, intensity)
+PointLight::PointLight(GameObject* gameObject, bool castShadows, float radius, XMFLOAT3 color, float intensity) :
+	Light::Light(gameObject, LightType::PointLight, castShadows, color, intensity)
 { 
 	lightStruct->Range = radius;
 }
@@ -308,15 +313,16 @@ DirectX::XMFLOAT4X4 PointLight::GetProjectionMatrix()
 // ----------------------------------------------------------------------------
 
 // Constructor - Set up a spot light with default values.
-SpotLight::SpotLight(bool castShadows) : Light::Light(LightType::SpotLight, castShadows)
+SpotLight::SpotLight(GameObject* gameObject, bool castShadows) 
+	: Light::Light(gameObject, LightType::SpotLight, castShadows)
 {
 	lightStruct->SpotFalloff = 5;
 	lightStruct->Range = 5;
 }
 
 // Constructor - Set up a spot light
-SpotLight::SpotLight(bool castShadows, float range, float spotFalloff, XMFLOAT3 color, float intensity) :
-	Light::Light(LightType::SpotLight, castShadows, color, intensity)
+SpotLight::SpotLight(GameObject* gameObject, bool castShadows, float range, float spotFalloff, XMFLOAT3 color, float intensity) :
+	Light::Light(gameObject, LightType::SpotLight, castShadows, color, intensity)
 {
 	lightStruct->SpotFalloff = spotFalloff;
 	lightStruct->Range = range;
@@ -359,7 +365,7 @@ float SpotLight::GetRange()
 // Get the direction of this light
 XMFLOAT3 SpotLight::GetDirection()
 {
-	return GetForwardAxis();
+	return gameObject()->GetForwardAxis();
 }
 
 // Calculate view for shadow rendering

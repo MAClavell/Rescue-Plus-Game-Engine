@@ -5,12 +5,12 @@ EntityManager::~EntityManager()
 {
 	for (auto i = 0; i < entities.size(); i++)
 	{
-		if (entities[i]) { delete[] entities[i]; }
+		if (entities[i]) { delete entities[i]; }
 	}
 }
 
 //Adds an entity to the Entity Manager with a unique ID.
-void EntityManager::AddEntity(Entity* e)
+void EntityManager::AddEntity(GameObject* e)
 {
 	//Check the iterator of the entity
 	if (std::find(entities.begin(), entities.end(), e) != entities.end())
@@ -24,7 +24,7 @@ void EntityManager::AddEntity(Entity* e)
 }
 
 //Gets an entity from the Entity Manager with a certain name.
-Entity* EntityManager::GetEntity(std::string id)
+GameObject* EntityManager::GetEntity(std::string id)
 {
 	for (auto i = 0; i < entities.size(); i++)
 	{
@@ -37,10 +37,10 @@ Entity* EntityManager::GetEntity(std::string id)
 }
 
 // Remove an entity by its object
-void EntityManager::RemoveEntityFromList(Entity* entity, bool release)
+void EntityManager::RemoveEntityFromList(GameObject* entity, bool release)
 {
-	Entity* org = entity;
-	std::vector<Entity*>::iterator it = std::find(entities.begin(), entities.end(), entity);
+	GameObject* org = entity;
+	std::vector<GameObject*>::iterator it = std::find(entities.begin(), entities.end(), entity);
 
 	//Erase entity
 	entities.erase(it);
@@ -69,10 +69,10 @@ void EntityManager::RemoveEntity(std::string name, bool deleteEntity)
 }
 
 // Remove an entity by its object
-void EntityManager::RemoveEntity(Entity* entity, bool deleteEntity)
+void EntityManager::RemoveEntity(GameObject* entity, bool deleteEntity)
 {
 	//Get the iterator of the entity
-	std::vector<Entity*>::iterator it = std::find(entities.begin(), entities.end(), entity);
+	std::vector<GameObject*>::iterator it = std::find(entities.begin(), entities.end(), entity);
 	if (it == entities.end())
 	{
 		printf("Cannot remove entity %s because it is not in entity manager\n", entity->GetName().c_str());
@@ -92,7 +92,6 @@ void EntityManager::Update(float deltaTime)
 	{
 		if (entities[i] && entities[i]->GetEnabled())
 		{
-			entities[i]->GameObject::Update(deltaTime);
 			entities[i]->Update(deltaTime);
 		}
 	}
