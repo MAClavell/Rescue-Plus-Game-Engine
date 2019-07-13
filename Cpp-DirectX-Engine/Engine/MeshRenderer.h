@@ -5,9 +5,9 @@
 #include "Material.h"
 
 // --------------------------------------------------------
-// A entity definition.
+// A mesh renderer definition.
 //
-// An entity is a game object that renders a model
+// Allows a mesh to be rendered
 // --------------------------------------------------------
 class MeshRenderer : public Component
 {

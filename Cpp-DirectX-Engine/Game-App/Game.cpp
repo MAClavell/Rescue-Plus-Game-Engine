@@ -5,6 +5,7 @@
 #include "MAT_Skybox.h"
 #include "MAT_Basic.h"
 #include "DebugMovement.h"
+#include "PhysicsHelper.h"
 
 // For the DirectX Math library
 using namespace DirectX;
@@ -60,6 +61,8 @@ void Game::Init()
 	renderer = Renderer::GetInstance();
 	renderer->Init(device, width, height);
 	entityManager = EntityManager::GetInstance();
+	physicsManager = PhysicsManager::GetInstance();
+	physicsManager->Init();
 
 	//Initialize singleton data
 	inputManager->Init(hWnd);
@@ -112,7 +115,7 @@ void Game::LoadAssets()
 	resourceManager->LoadMesh("Assets\\Models\\cube.obj", device);
 
 	//Load textures
-	resourceManager->LoadTexture2D("Assets/Textures/blue.png", device, context);
+	resourceManager->LoadTexture2D("Assets/Textures/white.png", device, context);
 	resourceManager->LoadTexture2D("Assets/Textures/normals_flat.png", device, context);
 
 	//Load cubemaps
@@ -152,12 +155,12 @@ void Game::LoadAssets()
 	);
 	resourceManager->AddMaterial("skybox", mat_skybox);
 
-	//Blue material
-	Material* mat_blue = new MAT_Basic(vs, ps_basic, XMFLOAT2(1, 1), samplerState,
-		resourceManager->GetTexture2D("Assets/Textures/blue.png"),
+	//White material
+	Material* mat_white = new MAT_Basic(vs, ps_basic, XMFLOAT2(1, 1), samplerState,
+		resourceManager->GetTexture2D("Assets/Textures/white.png"),
 		resourceManager->GetTexture2D("Assets/Textures/normals_flat.png"), 0, 52, shadowSampler
 	);
-	resourceManager->AddMaterial("blue", mat_blue);
+	resourceManager->AddMaterial("white", mat_white);
 
 }
 
@@ -173,19 +176,21 @@ void Game::CreateEntities()
 	GameObject* floor = new GameObject();
 	floor->AddComponent<MeshRenderer>(
 		resourceManager->GetMesh("Assets\\Models\\cube.obj"),
-		resourceManager->GetMaterial("blue")
+		resourceManager->GetMaterial("white")
 	);
 	floor->MoveAbsolute(XMFLOAT3(0, -2, 0));
 	floor->SetScale(30, 1, 30);
+	floor->AddComponent<RigidBody>(new btBoxShape(PhysicsHelper::XMVec3ToBtVec3(floor->GetScale())), 0.0f);
 
-	//Create wall1
-	GameObject* wall1 = new GameObject();
-	wall1->AddComponent<MeshRenderer>(
+	//Create box1
+	GameObject* box1 = new GameObject();
+	box1->AddComponent<MeshRenderer>(
 		resourceManager->GetMesh("Assets\\Models\\cube.obj"),
-		resourceManager->GetMaterial("blue")
+		resourceManager->GetMaterial("white")
 	);
-	wall1->MoveAbsolute(XMFLOAT3(0, -1, 8));
-	wall1->SetScale(1, 2, 2);
+	box1->MoveAbsolute(XMFLOAT3(0, 3, 8));
+	box1->SetScale(1, 2, 2);
+	floor->AddComponent<RigidBody>(new btBoxShape(PhysicsHelper::XMVec3ToBtVec3(floor->GetScale())), 1.0f);
 }
 
 // --------------------------------------------------------

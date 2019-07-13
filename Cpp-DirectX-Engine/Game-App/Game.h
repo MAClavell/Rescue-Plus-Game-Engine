@@ -6,6 +6,7 @@
 #include "InputManager.h"
 #include "EntityManager.h"
 #include "ResourceManager.h"
+#include "PhysicsManager.h"
 
 class Game 
 	: public DXCore
@@ -36,6 +37,7 @@ private:
 	InputManager* inputManager;
 	ResourceManager* resourceManager;
 	EntityManager* entityManager;
+	PhysicsManager* physicsManager;
 
 	//Sampler states
 	ID3D11SamplerState* samplerState;
