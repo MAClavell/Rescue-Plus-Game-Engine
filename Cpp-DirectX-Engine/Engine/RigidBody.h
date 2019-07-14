@@ -1,6 +1,6 @@
 #pragma once
 #include "GameObject.h"
-#include "btBulletDynamicsCommon.h"
+#include "Bullet3\src\btBulletCollisionCommon.h"
 
 enum class CollisionShapes { Box, Capsule, Cone, Cylinder, Sphere};
 
@@ -20,11 +20,6 @@ private:
 public:
 	RigidBody(GameObject* gameObject, btCollisionShape* shape, float mass);
 	~RigidBody();
-
-	// --------------------------------------------------------
-	// Set the mass of this rigid body (a mass of 0 is not dynamic)
-	// --------------------------------------------------------
-	void SetMass(float newMass);
 
 	// --------------------------------------------------------
 	// Get the mass of this rigid body (a mass of 0 is not dynamic)

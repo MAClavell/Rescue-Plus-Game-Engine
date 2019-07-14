@@ -1,8 +1,5 @@
 #include "PhysicsManager.h"
 
-PhysicsManager::PhysicsManager()
-{ }
-
 PhysicsManager::~PhysicsManager()
 { 
 	delete world;

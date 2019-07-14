@@ -62,7 +62,6 @@ void Game::Init()
 	renderer->Init(device, width, height);
 	entityManager = EntityManager::GetInstance();
 	physicsManager = PhysicsManager::GetInstance();
-	physicsManager->Init();
 
 	//Initialize singleton data
 	inputManager->Init(hWnd);
@@ -180,7 +179,7 @@ void Game::CreateEntities()
 	);
 	floor->MoveAbsolute(XMFLOAT3(0, -2, 0));
 	floor->SetScale(30, 1, 30);
-	floor->AddComponent<RigidBody>(new btBoxShape(PhysicsHelper::XMVec3ToBtVec3(floor->GetScale())), 0.0f);
+	//floor->AddComponent<RigidBody>(new btBoxShape(PhysicsHelper::XMVec3ToBtVec3(floor->GetScale())), 0.0f);
 
 	//Create box1
 	GameObject* box1 = new GameObject();
@@ -190,7 +189,7 @@ void Game::CreateEntities()
 	);
 	box1->MoveAbsolute(XMFLOAT3(0, 3, 8));
 	box1->SetScale(1, 2, 2);
-	floor->AddComponent<RigidBody>(new btBoxShape(PhysicsHelper::XMVec3ToBtVec3(floor->GetScale())), 1.0f);
+	//floor->AddComponent<RigidBody>(new btBoxShape(PhysicsHelper::XMVec3ToBtVec3(floor->GetScale())), 1.0f);
 }
 
 // --------------------------------------------------------

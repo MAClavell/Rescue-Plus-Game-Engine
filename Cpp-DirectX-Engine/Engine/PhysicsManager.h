@@ -1,7 +1,7 @@
 #pragma once
 #include <DirectXMath.h>
-#include "btBulletDynamicsCommon.h"
-#include "btBulletCollisionCommon.h"
+#include "Bullet3\src\btBulletDynamicsCommon.h"
+#include "Bullet3\src\btBulletCollisionCommon.h"
 #include "RigidBody.h"
 
 class PhysicsManager
@@ -19,14 +19,15 @@ private:
 	// --------------------------------------------------------
 	// Singleton Constructor - Set up the singleton instance of the Physics
 	// --------------------------------------------------------
-	PhysicsManager();
+	PhysicsManager() { Init(); }
 	~PhysicsManager();
 
-public:
 	// --------------------------------------------------------
 	// Initialize values and start the physics world
 	// --------------------------------------------------------
 	void Init();
+
+public:
 
 	// --------------------------------------------------------
 	// Get the singleton instance of the PhysicsManager

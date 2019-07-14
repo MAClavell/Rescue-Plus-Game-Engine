@@ -1,6 +1,6 @@
 #pragma once
 #include <DirectXMath.h>
-#include "btBulletDynamicsCommon.h"
+#include "Bullet3\src\btBulletDynamicsCommon.h"
 
 class PhysicsHelper
 {
