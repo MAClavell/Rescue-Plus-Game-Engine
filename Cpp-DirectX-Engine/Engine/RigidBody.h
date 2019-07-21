@@ -1,6 +1,5 @@
 #pragma once
 #include "GameObject.h"
-#include "Bullet3\src\btBulletCollisionCommon.h"
 
 enum class CollisionShapes { Box, Capsule, Cone, Cylinder, Sphere};
 
@@ -12,13 +11,15 @@ enum class CollisionShapes { Box, Capsule, Cone, Cylinder, Sphere};
 class RigidBody : public Component
 {
 private:
+	/*
 	btRigidBody* rigidBody;
 	btCollisionShape* shape;
 	btDefaultMotionState* motionState;
+	*/
 	float mass;
 
 public:
-	RigidBody(GameObject* gameObject, btCollisionShape* shape, float mass);
+	RigidBody(GameObject* gameObject, float mass);
 	~RigidBody();
 
 	// --------------------------------------------------------
@@ -29,6 +30,6 @@ public:
 	// --------------------------------------------------------
 	// Get the actual bullet3 rigid body
 	// --------------------------------------------------------
-	btRigidBody* GetRigidBody();
+	//btRigidBody* GetRigidBody();
 };
 

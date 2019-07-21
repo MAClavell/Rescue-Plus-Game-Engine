@@ -2,8 +2,9 @@
 #include "PhysicsHelper.h"
 #include "PhysicsManager.h"
 
-RigidBody::RigidBody(GameObject* gameObject, btCollisionShape* shape, float mass) : Component::Component(gameObject)
+RigidBody::RigidBody(GameObject* gameObject, float mass) : Component::Component(gameObject)
 {
+	/*
 	btTransform groundTransform;
 	groundTransform.setRotation(PhysicsHelper::XMQuatToBtQuat(gameObject->GetRotation()));
 	groundTransform.setOrigin(PhysicsHelper::XMVec3ToBtVec3(gameObject->GetPosition()));
@@ -21,18 +22,21 @@ RigidBody::RigidBody(GameObject* gameObject, btCollisionShape* shape, float mass
 	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, shape, localInertia);
 	rigidBody = new btRigidBody(rbInfo);
 	PhysicsManager::GetInstance()->AddRigidBody(this);
+	*/
 }
 
 RigidBody::~RigidBody()
 {
 	PhysicsManager::GetInstance()->RemoveRigidBody(this);
 
+	/*
 	if (motionState)
 		delete motionState;
 	if (shape)
 		delete shape;
 	if (rigidBody)
 		delete rigidBody;
+		*/
 }
 
 // Get the mass of this rigid body (a mass of 0 is not dynamic)
@@ -40,10 +44,10 @@ float RigidBody::GetMass()
 {
 	return mass;
 }
-
+/*
 // Get the actual bullet3 rigid body
 btRigidBody* RigidBody::GetRigidBody()
 {
 	return rigidBody;
 }
-
+*/

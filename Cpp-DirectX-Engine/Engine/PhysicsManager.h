@@ -1,18 +1,17 @@
 #pragma once
 #include <DirectXMath.h>
-#include "Bullet3\src\btBulletDynamicsCommon.h"
-#include "Bullet3\src\btBulletCollisionCommon.h"
 #include "RigidBody.h"
 
 class PhysicsManager
 {
 private:
+	/*
 	btDiscreteDynamicsWorld* world;
 	btDefaultCollisionConfiguration* collisionConfiguration;
 	btCollisionDispatcher* dispatcher;
 	btBroadphaseInterface* overlappingPairCache;
 	btSequentialImpulseConstraintSolver* solver;
-
+	*/
 	//Values
 	DirectX::XMFLOAT3 gravity;
 
