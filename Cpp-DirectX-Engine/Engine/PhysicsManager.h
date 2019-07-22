@@ -1,10 +1,14 @@
 #pragma once
 #include <DirectXMath.h>
 #include "RigidBody.h"
+#include <PxPhysicsAPI.h>
 
 class PhysicsManager
 {
 private:
+
+	physx::PxFoundation* foundation;
+
 	/*
 	btDiscreteDynamicsWorld* world;
 	btDefaultCollisionConfiguration* collisionConfiguration;

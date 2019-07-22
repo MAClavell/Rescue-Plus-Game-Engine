@@ -1,12 +1,11 @@
 #include "PhysicsManager.h"
-#include "PxPhysics.h"
-#include "PxScene.h"
-#include "PxRigidDynamic.h"
-#include "PxShape.h"
-#include "PxPhysicsAPI.h"
+
+using namespace physx;
 
 PhysicsManager::~PhysicsManager()
 { 
+	if(foundation)
+		foundation->release();
 	/*
 	delete world;
 	delete solver;
@@ -19,13 +18,15 @@ PhysicsManager::~PhysicsManager()
 // Initialize values and start the physics world
 void PhysicsManager::Init()
 {
+	
 	static PxDefaultErrorCallback gDefaultErrorCallback;
 	static PxDefaultAllocator gDefaultAllocatorCallback;
 
-	mFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gDefaultAllocatorCallback,
+	foundation = PxCreateFoundation(PX_PHYSICS_VERSION, gDefaultAllocatorCallback,
 		gDefaultErrorCallback);
-	if (!mFoundation)
-		fatalError("PxCreateFoundation failed!");
+	if (!foundation)
+		printf("Error starting PhysX Foundation!");
+	
 }
 
 // Set the gravity of the physics engine
