@@ -1,53 +1,65 @@
 #include "RigidBody.h"
-#include "PhysicsHelper.h"
 #include "PhysicsManager.h"
+#include "PhysicsHelper.h"
 
-RigidBody::RigidBody(GameObject* gameObject, float mass) : Component::Component(gameObject)
+using namespace physx;
+
+RigidBody::RigidBody(GameObject* gameObject, PxBoxGeometry geometry, float mass) : Component::Component(gameObject)
 {
-	/*
-	btTransform groundTransform;
-	groundTransform.setRotation(PhysicsHelper::XMQuatToBtQuat(gameObject->GetRotation()));
-	groundTransform.setOrigin(PhysicsHelper::XMVec3ToBtVec3(gameObject->GetPosition()));
+	PxPhysics* physics = PhysicsManager::GetInstance()->GetPhysics();
+	PxMaterial* material = physics->createMaterial(0.5f, 0.5f, 0.6f);
 
-	btVector3 localInertia(0, 0, 0);
-	if (mass != 0)
-		shape->calculateLocalInertia(mass, localInertia);
+	//Create body
+	body = physics->createRigidDynamic(PxTransform(PxVec3(0.f, 2.5f, 0.f)));
 
-	motionState = new btDefaultMotionState(groundTransform);
-	this->mass = mass;
-	this->shape = shape;
+	//Attatch shape
+	PxShape* shape = physics->createShape(geometry, *material, true);
+	body->attachShape(*shape);
+	shape->release();
 
-	btScalar massSc(mass);
+	body->setMass(mass);
 
-	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, shape, localInertia);
-	rigidBody = new btRigidBody(rbInfo);
+	//Add to the scene
+	body->userData = this;
 	PhysicsManager::GetInstance()->AddRigidBody(this);
-	*/
 }
 
 RigidBody::~RigidBody()
 {
 	PhysicsManager::GetInstance()->RemoveRigidBody(this);
-
-	/*
-	if (motionState)
-		delete motionState;
-	if (shape)
-		delete shape;
-	if (rigidBody)
-		delete rigidBody;
-		*/
 }
 
-// Get the mass of this rigid body (a mass of 0 is not dynamic)
+// Update the gameobject after the sim ticks
+bool RigidBody::UpdatePhysicsPosition()
+{
+	try
+	{
+		PxTransform tr = body->getGlobalPose();
+		gameObject()->SetPosition(PhysicsHelper::Vec3ToFloat3(tr.p));
+		gameObject()->SetRotation(PhysicsHelper::QuatToFloat4(tr.q));
+		return true;
+	}
+	catch(std::exception e)
+	{
+		return false;
+	}
+}
+
+// Set the mass of this rigid body
+void RigidBody::SetMass(float mass)
+{
+	body->setMass(mass);
+}
+
+// Get the mass of this rigid body
 float RigidBody::GetMass()
 {
-	return mass;
+	return body->getMass();
 }
-/*
+
 // Get the actual bullet3 rigid body
-btRigidBody* RigidBody::GetRigidBody()
+PxRigidDynamic* RigidBody::GetRigidBody()
 {
-	return rigidBody;
+	return body;
 }
-*/
+

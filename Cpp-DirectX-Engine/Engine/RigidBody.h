@@ -1,5 +1,6 @@
 #pragma once
 #include "GameObject.h"
+#include <PxPhysicsAPI.h>
 
 enum class CollisionShapes { Box, Capsule, Cone, Cylinder, Sphere};
 
@@ -11,16 +12,21 @@ enum class CollisionShapes { Box, Capsule, Cone, Cylinder, Sphere};
 class RigidBody : public Component
 {
 private:
-	/*
-	btRigidBody* rigidBody;
-	btCollisionShape* shape;
-	btDefaultMotionState* motionState;
-	*/
-	float mass;
+	physx::PxRigidDynamic* body;
 
 public:
-	RigidBody(GameObject* gameObject, float mass);
+	RigidBody(GameObject* gameObject, physx::PxBoxGeometry geometry, float mass);
 	~RigidBody();
+
+	// --------------------------------------------------------
+	// Update the gameobject after the sim ticks
+	// --------------------------------------------------------
+	bool UpdatePhysicsPosition();
+
+	// --------------------------------------------------------
+	// Set the mass of this rigid body
+	// --------------------------------------------------------
+	void SetMass(float mass);
 
 	// --------------------------------------------------------
 	// Get the mass of this rigid body (a mass of 0 is not dynamic)
@@ -28,8 +34,8 @@ public:
 	float GetMass();
 
 	// --------------------------------------------------------
-	// Get the actual bullet3 rigid body
+	// Get the actual physx rigid body
 	// --------------------------------------------------------
-	//btRigidBody* GetRigidBody();
+	physx::PxRigidDynamic* GetRigidBody();
 };
 

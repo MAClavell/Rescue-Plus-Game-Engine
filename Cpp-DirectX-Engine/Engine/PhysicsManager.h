@@ -1,13 +1,15 @@
 #pragma once
 #include <DirectXMath.h>
 #include "RigidBody.h"
-#include <PxPhysicsAPI.h>
 
 class PhysicsManager
 {
 private:
-
 	physx::PxFoundation* foundation;
+	physx::PxPhysics* physics;
+
+	physx::PxDefaultCpuDispatcher*	dispatcher;
+	physx::PxScene* scene;
 
 	/*
 	btDiscreteDynamicsWorld* world;
@@ -47,9 +49,24 @@ public:
 	void operator=(PhysicsManager const&) = delete;
 
 	// --------------------------------------------------------
+	// Simulate a step in the physics sim
+	// --------------------------------------------------------
+	bool Simulate(float deltaTime);
+
+	// --------------------------------------------------------
+	// Get the physx Physics of this world
+	// --------------------------------------------------------
+	physx::PxPhysics* GetPhysics();
+
+	// --------------------------------------------------------
 	// Set the gravity of the physics engine
 	// --------------------------------------------------------
 	void SetGravity(float y);
+
+	// --------------------------------------------------------
+	// Get the gravity of the physics engine
+	// --------------------------------------------------------
+	float GetGravity();
 	
 	// --------------------------------------------------------
 	// Add a rigidbody to the sim

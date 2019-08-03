@@ -189,7 +189,7 @@ void Game::CreateEntities()
 	);
 	box1->MoveAbsolute(XMFLOAT3(0, 3, 8));
 	box1->SetScale(1, 2, 2);
-	//floor->AddComponent<RigidBody>(new btBoxShape(PhysicsHelper::XMVec3ToBtVec3(floor->GetScale())), 1.0f);
+	box1->AddComponent<RigidBody>(physx::PxBoxGeometry(PhysicsHelper::Float3ToVec3(box1->GetScale())), 1.0f);
 }
 
 // --------------------------------------------------------
@@ -235,6 +235,9 @@ void Game::Update(float deltaTime, float totalTime)
 	
 	//All game code goes above
 	// --------------------------------------------------------
+	//Update physics
+	physicsManager->Simulate(deltaTime);
+
 	//The only call to Update() for the InputManager
 	//Update for next frame
 	inputManager->UpdateStates();
