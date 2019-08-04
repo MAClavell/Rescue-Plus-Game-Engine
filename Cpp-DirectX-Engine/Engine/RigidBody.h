@@ -19,14 +19,24 @@ public:
 	~RigidBody();
 
 	// --------------------------------------------------------
-	// Update the gameobject after the sim ticks
+	// Update the gameobject's world position from it's rigidbody
 	// --------------------------------------------------------
-	bool UpdatePhysicsPosition();
+	void UpdateWorldPosition();
+
+	// --------------------------------------------------------
+	// Update the gameobject's rigidbody from it's world position
+	// --------------------------------------------------------
+	void UpdateRigidbodyPosition();
 
 	// --------------------------------------------------------
 	// Set the mass of this rigid body
 	// --------------------------------------------------------
 	void SetMass(float mass);
+
+	// --------------------------------------------------------
+	// If an object is kinematic, no forces will act on it
+	// --------------------------------------------------------
+	void SetKinematic(bool kinematic);
 
 	// --------------------------------------------------------
 	// Get the mass of this rigid body (a mass of 0 is not dynamic)

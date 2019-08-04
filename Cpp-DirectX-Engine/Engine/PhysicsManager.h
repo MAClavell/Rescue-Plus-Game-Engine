@@ -10,16 +10,10 @@ private:
 
 	physx::PxDefaultCpuDispatcher*	dispatcher;
 	physx::PxScene* scene;
-
-	/*
-	btDiscreteDynamicsWorld* world;
-	btDefaultCollisionConfiguration* collisionConfiguration;
-	btCollisionDispatcher* dispatcher;
-	btBroadphaseInterface* overlappingPairCache;
-	btSequentialImpulseConstraintSolver* solver;
-	*/
-	//Values
-	DirectX::XMFLOAT3 gravity;
+	
+#ifdef DEBUG_PHYSICS
+	physx::PxPvd* pvd;
+#endif
 
 	// --------------------------------------------------------
 	// Singleton Constructor - Set up the singleton instance of the Physics

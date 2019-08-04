@@ -9,6 +9,16 @@ PhysicsManager::~PhysicsManager()
 	PX_RELEASE(scene);
 	PX_RELEASE(dispatcher);
 	PX_RELEASE(physics);
+	
+#ifdef DEBUG_PHYSICS
+	if (pvd)
+	{
+		PxPvdTransport* transport = pvd->getTransport();
+		pvd->release();	pvd = NULL;
+		PX_RELEASE(transport);
+	}
+#endif
+
 	PX_RELEASE(foundation);
 }
 
@@ -24,8 +34,19 @@ void PhysicsManager::Init()
 	if (!foundation)
 		printf("Error starting PhysX Foundation!");
 	
+#ifdef DEBUG_PHYSICS
+	//The Physics Visual Debugger should only start in a certain debug configuration
+	pvd = PxCreatePvd(*foundation);
+	PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
+	pvd->connect(*transport, PxPvdInstrumentationFlag::eALL);
+#endif
+
 	//Create physics
-	physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale(), true);
+	physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale(), true
+#ifdef DEBUG_PHYSICS
+		, pvd
+#endif
+	);
 	if (!physics)
 		printf("Error starting PhysX Physics!");
 
@@ -37,6 +58,17 @@ void PhysicsManager::Init()
 	sceneDesc.filterShader = PxDefaultSimulationFilterShader;
 	sceneDesc.flags.set(PxSceneFlag::eENABLE_ACTIVE_ACTORS);
 	scene = physics->createScene(sceneDesc);
+	
+#ifdef DEBUG_PHYSICS
+	//Start debugger
+	PxPvdSceneClient* pvdClient = scene->getScenePvdClient();
+	if (pvdClient)
+	{
+		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
+		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
+		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
+	}
+#endif
 }
 
 
@@ -64,8 +96,7 @@ bool PhysicsManager::Simulate(float deltaTime)
 		RigidBody* rigidBody = static_cast<RigidBody*>(activeActors[i]->userData);
 		if (rigidBody)
 		{
-			if (!rigidBody->UpdatePhysicsPosition())
-				printf("Failed to update physics rigidbody on gameobject '%s'", rigidBody->gameObject()->GetName().c_str());
+			rigidBody->UpdateWorldPosition();
 		}
 	}
 

@@ -18,6 +18,7 @@ public:
 
 	//Camera
 	Camera* camera;
+	GameObject* floor;
 
 	// Overridden setup and game loop methods, which
 	// will be called automatically

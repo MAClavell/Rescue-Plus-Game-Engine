@@ -45,4 +45,12 @@ class PhysicsHelper
 		{
 			return DirectX::XMFLOAT4(quat.x, quat.y, quat.z, quat.w);
 		}
+
+		// --------------------------------------------------------
+		// Convert a DirectX XMFLOAT4 to a PhysX Quat
+		// --------------------------------------------------------
+		static physx::PxQuat Float4ToQuat(DirectX::XMFLOAT4 float4)
+		{
+			return physx::PxQuat(float4.x, float4.y, float4.z, float4.w);
+		}
 };
