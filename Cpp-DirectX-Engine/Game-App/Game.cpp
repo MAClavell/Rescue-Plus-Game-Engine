@@ -190,6 +190,16 @@ void Game::CreateEntities()
 	box1->MoveAbsolute(XMFLOAT3(0, 3, 8));
 	box1->SetScale(1, 2, 2);
 	box1->AddComponent<RigidBody>(physx::PxBoxGeometry(PhysicsHelper::Float3ToVec3(box1->GetScale()) / 2), 1.0f);
+
+	//Create box12
+	GameObject* box2 = new GameObject("Box2");
+	box2->AddComponent<MeshRenderer>(
+		resourceManager->GetMesh("Assets\\Models\\cube.obj"),
+		resourceManager->GetMaterial("white")
+		);
+	box2->MoveAbsolute(XMFLOAT3(0, 3.5, 8));
+	box2->SetScale(1, 2, 2);
+	box2->AddComponent<RigidBody>(physx::PxBoxGeometry(PhysicsHelper::Float3ToVec3(box2->GetScale()) / 2), 1.0f);
 }
 
 // --------------------------------------------------------
@@ -231,9 +241,6 @@ void Game::Update(float deltaTime, float totalTime)
 
 	//Update all entities
 	entityManager->Update(deltaTime);
-
-	floor->MoveAbsolute(XMFLOAT3(2 * deltaTime, 0, 0));
-
 
 	//All game code goes above
 	// --------------------------------------------------------
