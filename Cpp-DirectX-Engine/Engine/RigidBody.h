@@ -15,7 +15,8 @@ private:
 	physx::PxRigidDynamic* body;
 
 public:
-	RigidBody(GameObject* gameObject, physx::PxBoxGeometry geometry, float mass);
+	RigidBody(GameObject* gameObject, physx::PxPhysics* physics, float mass);
+
 	~RigidBody();
 
 	// --------------------------------------------------------
@@ -47,5 +48,50 @@ public:
 	// Get the actual physx rigid body
 	// --------------------------------------------------------
 	physx::PxRigidDynamic* GetRigidBody();
+
+	// --------------------------------------------------------
+	// Add a force to this rigidbody
+	//
+	// force - the force vector to add
+	// mode - the way to apply this force
+	// --------------------------------------------------------
+	void AddForce(DirectX::XMFLOAT3 force, physx::PxForceMode::Enum mode = physx::PxForceMode::eFORCE);
+
+	// --------------------------------------------------------
+	// Add a force to this rigidbody
+	//
+	// x - x component of the force
+	// y - y component of the force
+	// z - z component of the force
+	// mode - the way to apply this force
+	// --------------------------------------------------------
+	void AddForce(float x, float y, float z, physx::PxForceMode::Enum mode = physx::PxForceMode::eFORCE);
+
+	// --------------------------------------------------------
+	// Get the current linear velocity for this rigidbody
+	// --------------------------------------------------------
+	DirectX::XMFLOAT3 GetLinearVelocity();
+
+	// --------------------------------------------------------
+	// Set the current linear velocity for this rigidbody
+	// --------------------------------------------------------
+	void SetLinearVelocity(DirectX::XMFLOAT3 velocity);
+
+	// --------------------------------------------------------
+	// Set the current linear velocity for this rigidbody
+	// --------------------------------------------------------
+	void SetLinearVelocity(float x, float y, float z);
+
+	// --------------------------------------------------------
+	// Get the maximum linear velocity for this rigidbody
+	// --------------------------------------------------------
+	float GetMaxLinearVelocity();
+
+	// --------------------------------------------------------
+	// Set the maximum linear velocity for this rigidbody
+	// --------------------------------------------------------
+	void SetMaxLinearVelocity(float max);
+
+	void AddShape(PxBoxGeometry geometry, PxMaterial* material)
 };
 
