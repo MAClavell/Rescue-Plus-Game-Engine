@@ -72,6 +72,22 @@ private:
 	void AddChild(GameObject* child);
 	
 	// --------------------------------------------------------
+	// Set the position for this GameObject
+	//
+	// newPosition - The new position to go to
+	// fromRigidBody - If this position setting is from a rigidbody
+	// --------------------------------------------------------
+	void SetPosition(DirectX::XMFLOAT3 newPosition, bool fromRigidBody);
+
+	// --------------------------------------------------------
+	// Set the rotation for this GameObject (Quaternion)
+	//
+	// newQuatRotation - The new rotation to rotate to
+	// fromRigidBody - If this position setting is from a rigidbody
+	// --------------------------------------------------------
+	void SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool fromRigidBody);
+
+	// --------------------------------------------------------
 	// Update transformations after parent's transformations changed
 	// --------------------------------------------------------
 	void ParentPositionChanged();
@@ -153,12 +169,37 @@ public:
 	template <typename T, typename... Args>
 	T* AddComponent(Args... args)
 	{
-		static_assert(std::is_base_of<Component, T>::value, "Can't add a component not derived from Component");
+		static_assert(std::is_base_of<Component, T>::value, "Can't add a component not derived from Component\n");
 
 		//Push new T
 		T* component = new T(this, args...);
 		components.push_back(component);
 		return component;
+	}
+
+	// --------------------------------------------------------
+	// Get a component of a specific type (must derive from component
+	//		and be in the gameobject's component list)
+	// --------------------------------------------------------
+	template <typename T>
+	T* GetComponent()
+	{
+		static_assert(std::is_base_of<Component, T>::value, "Can't remove a component not derived from Component\n");
+
+		//Try to find it
+		for (auto iter = components.begin(); iter != components.end(); iter++)
+		{
+			try
+			{
+				T* c = dynamic_cast<T*>(*iter); // try to cast
+				if(c)
+					return c;
+			}
+			catch (...)
+			{	}
+		}
+
+		return nullptr;
 	}
 
 	// --------------------------------------------------------
@@ -168,7 +209,7 @@ public:
 	template <typename T>
 	void RemoveComponent()
 	{
-		static_assert(std::is_base_of<Component, T>::value, "Can't remove a component not derived from Component");
+		static_assert(std::is_base_of<Component, T>::value, "Can't remove a component not derived from Component\n");
 
 		//Try to find it
 		bool found = false;
@@ -193,7 +234,7 @@ public:
 		}
 
 		if (!found)
-			printf("Could not find a component of type '%s' in %s", typeid(T).name(), name.c_str());
+			printf("Could not find a component of type '%s' in %s\n", typeid(T).name(), name.c_str());
 	}
 
 	// --------------------------------------------------------
@@ -221,6 +262,13 @@ public:
 	// Get the position for this GameObject
 	// --------------------------------------------------------
 	DirectX::XMFLOAT3 GetPosition();
+
+	// --------------------------------------------------------
+	// Set the position for this GameObject from a rigidbody
+	//
+	// newPosition - The new position to go to
+	// --------------------------------------------------------
+	void SetPositionFromRigidBody(DirectX::XMFLOAT3 newPosition);
 
 	// --------------------------------------------------------
 	// Set the position for this GameObject
@@ -289,6 +337,13 @@ public:
 	// Get the rotation for this GameObject (Quaternion)
 	// --------------------------------------------------------
 	DirectX::XMFLOAT4 GetRotation();
+
+	// --------------------------------------------------------
+	// Set the rotation for this GameObject (Quaternion) from a rigidbody
+	//
+	// newQuatRotation - The new rotation to rotate to
+	// --------------------------------------------------------
+	void SetRotationFromRigidBody(DirectX::XMFLOAT4 newQuatRotation);
 
 	// --------------------------------------------------------
 	// Set the rotation for this GameObject (Quaternion)

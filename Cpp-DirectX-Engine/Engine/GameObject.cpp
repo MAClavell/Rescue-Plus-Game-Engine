@@ -1,6 +1,7 @@
 #include "GameObject.h"
 #include "Renderer.h"
 #include "EntityManager.h"
+#include "RigidBody.h"
 
 // For the DirectX Math library
 using namespace DirectX;
@@ -198,10 +199,19 @@ XMFLOAT3 GameObject::GetPosition()
 }
 
 // Set the position for this GameObject
-void GameObject::SetPosition(XMFLOAT3 newPosition)
+void GameObject::SetPosition(XMFLOAT3 newPosition, bool fromRigidBody)
 {
 	worldDirty = true;
 	position = newPosition;
+
+	//TODO: Implement a better way to update the rigidbody's position
+	//Events and delegates?
+	if (!fromRigidBody)
+	{
+		RigidBody* rb = this->GetComponent<RigidBody>();
+		if (rb)
+			rb->UpdateRigidbodyPosition();
+	}
 
 	//Update transforms of all children
 	for (auto c : children)
@@ -210,10 +220,22 @@ void GameObject::SetPosition(XMFLOAT3 newPosition)
 	}
 }
 
+// Set the position for this GameObject from a rigidbody
+void GameObject::SetPositionFromRigidBody(XMFLOAT3 newPosition)
+{
+	SetPosition(newPosition, true);
+}
+
+// Set the position for this GameObject
+void GameObject::SetPosition(XMFLOAT3 newPosition)
+{
+	SetPosition(newPosition, false);
+}
+
 // Set the position for this GameObject
 void GameObject::SetPosition(float x, float y, float z)
 {
-	SetPosition(XMFLOAT3(x, y, z));
+	SetPosition(XMFLOAT3(x, y, z), false);
 }
 
 // Set the local position for this GameObject
@@ -232,7 +254,7 @@ void GameObject::SetLocalPosition(XMFLOAT3 newLocalPosition)
 		XMStoreFloat3(&newPos,
 			XMVectorAdd(XMLoadFloat3(&position), XMLoadFloat3(&localPosition)));
 	}
-	this->SetPosition(newPos);
+	this->SetPosition(newPos, false);
 }
 
 // Set the local position for this GameObject
@@ -249,7 +271,7 @@ void GameObject::MoveAbsolute(XMFLOAT3 moveAmnt)
 	XMFLOAT3 newPos;
 	XMStoreFloat3(&newPos, XMVectorAdd(XMLoadFloat3(&position),
 		XMLoadFloat3(&moveAmnt)));
-	SetPosition(newPos);
+	SetPosition(newPos, false);
 }
 
 // Moves this GameObject in relative space by a given vector.
@@ -263,7 +285,7 @@ void GameObject::MoveRelative(XMFLOAT3 moveAmnt)
 	//Add to position
 	XMFLOAT3 newPos;
 	XMStoreFloat3(&newPos, XMVectorAdd(XMLoadFloat3(&position), move));
-	SetPosition(newPos);
+	SetPosition(newPos, false);
 }
 
 // Get the rotated forward axis of this gameobject
@@ -291,18 +313,39 @@ DirectX::XMFLOAT4 GameObject::GetRotation()
 }
 
 // Set the rotation for this GameObject (Quaternion)
-void GameObject::SetRotation(DirectX::XMFLOAT4 newQuatRotation)
+void GameObject::SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool fromRigidBody)
 {
 	worldDirty = true;
 	rotationQuat = newQuatRotation;
 
 	CalculateAxis();
 
+	//TODO: Implement a better way to update the rigidbody's rotation
+	//Events and delegates?
+	if (!fromRigidBody)
+	{
+		RigidBody* rb = this->GetComponent<RigidBody>();
+		if (rb)
+			rb->UpdateRigidbodyPosition();
+	}
+
 	//Update transforms of all children
 	for (auto c : children)
 	{
 		c->ParentRotationChanged();
 	}
+}
+
+// Set the rotation for this GameObject (Quaternion) from a rigidbody
+void GameObject::SetRotationFromRigidBody(DirectX::XMFLOAT4 newQuatRotation)
+{
+	SetRotation(newQuatRotation, true);
+}
+
+// Set the rotation for this GameObject (Quaternion)
+void GameObject::SetRotation(DirectX::XMFLOAT4 newQuatRotation)
+{
+	SetRotation(newQuatRotation, false);
 }
 
 // Set the rotation for this GameObject (Quaternion)
@@ -312,7 +355,7 @@ void GameObject::SetRotation(XMFLOAT3 newRotation)
 	XMVECTOR angles = XMVectorScale(XMLoadFloat3(&newRotation), XM_PI / 180.0f);
 	XMFLOAT4 newRot;
 	XMStoreFloat4(&newRot, XMQuaternionRotationRollPitchYawFromVector(angles));
-	SetRotation(newRot);
+	SetRotation(newRot, false);
 }
 
 // Set the rotation for this GameObject using euler angles (Quaternion)
@@ -322,7 +365,7 @@ void GameObject::SetRotation(float x, float y, float z)
 	XMVECTOR angles = XMVectorScale(XMVectorSet(x, y, z, 0), XM_PI / 180.0f);
 	XMFLOAT4 newRot;
 	XMStoreFloat4(&newRot, XMQuaternionRotationRollPitchYawFromVector(angles));
-	SetRotation(newRot);
+	SetRotation(newRot, false);
 }
 
 // Rotate this GameObject (Angles)
@@ -333,7 +376,7 @@ void GameObject::Rotate(DirectX::XMFLOAT3 newRotation)
 
 	XMFLOAT4 rot;
 	XMStoreFloat4(&rot, XMQuaternionMultiply(XMLoadFloat4(&rotationQuat), quat));
-	SetRotation(rot);
+	SetRotation(rot, false);
 }
 
 // Rotate this GameObject using angles
@@ -344,7 +387,7 @@ void GameObject::Rotate(float x, float y, float z)
 
 	XMFLOAT4 rot;
 	XMStoreFloat4(&rot, XMQuaternionMultiply(XMLoadFloat4(&rotationQuat), quat));
-	SetRotation(rot);
+	SetRotation(rot, false);
 }
 
 // Calculate the local axis for the gameobject

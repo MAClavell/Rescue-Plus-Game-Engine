@@ -6,6 +6,7 @@
 #include "InputManager.h"
 #include "EntityManager.h"
 #include "ResourceManager.h"
+#include "PhysicsManager.h"
 
 class Game 
 	: public DXCore
@@ -17,6 +18,7 @@ public:
 
 	//Camera
 	Camera* camera;
+	GameObject* floor;
 
 	// Overridden setup and game loop methods, which
 	// will be called automatically
@@ -36,6 +38,7 @@ private:
 	InputManager* inputManager;
 	ResourceManager* resourceManager;
 	EntityManager* entityManager;
+	PhysicsManager* physicsManager;
 
 	//Sampler states
 	ID3D11SamplerState* samplerState;
