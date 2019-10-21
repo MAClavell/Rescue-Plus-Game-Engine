@@ -18,7 +18,8 @@ protected:
 	// --------------------------------------------------------
 	// Create a collider and try to find a rigidbody
 	// --------------------------------------------------------
-	Collider(GameObject* gameObject, ColliderType type, PhysicsMaterial* physicsMaterial = nullptr);
+	Collider(GameObject* gameObject, ColliderType type, 
+		PhysicsMaterial* physicsMaterial, DirectX::XMFLOAT3 center);
 
 	// --------------------------------------------------------
 	// Abstract function for generating the collider's physx shape
@@ -59,7 +60,8 @@ private:
 	physx::PxShape* GenerateShape(physx::PxPhysics* physics);
 
 public:
-	BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size = DirectX::XMFLOAT3(1, 1, 1), PhysicsMaterial* physicsMaterial = nullptr);
+	BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size = DirectX::XMFLOAT3(1, 1, 1), 
+		PhysicsMaterial* physicsMaterial = nullptr, DirectX::XMFLOAT3 center = DirectX::XMFLOAT3(0, 0, 0));
 
 };
 
@@ -76,7 +78,8 @@ private:
 	physx::PxShape* GenerateShape(physx::PxPhysics* physics);
 
 public:
-	SphereCollider(GameObject* gameObject, float radius = 1.0f, PhysicsMaterial* physicsMaterial = nullptr);
+	SphereCollider(GameObject* gameObject, float radius = 1.0f, 
+		PhysicsMaterial* physicsMaterial = nullptr, DirectX::XMFLOAT3 center = DirectX::XMFLOAT3(0, 0, 0));
 
 };
 
@@ -98,6 +101,7 @@ private:
 
 public:
 	CapsuleCollider(GameObject* gameObject, float radius = 1.0f, float height = 2.0f,
-		CapsuleDirection dir = CapsuleDirection::X, PhysicsMaterial* physicsMaterial = nullptr);
+		CapsuleDirection dir = CapsuleDirection::X, 
+		PhysicsMaterial* physicsMaterial = nullptr, DirectX::XMFLOAT3 center = DirectX::XMFLOAT3(0, 0, 0));
 
 };

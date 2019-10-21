@@ -214,7 +214,7 @@ void Game::CreateEntities()
 		);
 	sphere->MoveAbsolute(XMFLOAT3(3, 3.5f, 4));
 	sphere->SetScale(2, 2, 2);
-	sphereRB = sphere->AddComponent<RigidBody>(1.0f);
+	sphere->AddComponent<RigidBody>(1.0f);
 	sphere->AddComponent<SphereCollider>(1.0f);
 
 	//Create Capsule
@@ -225,8 +225,8 @@ void Game::CreateEntities()
 		);
 	capsule->MoveAbsolute(XMFLOAT3(-3, 3.5f, 4));
 	capsule->SetScale(1.0f, 2.0f, 1.0f);
-	capsuleRB = capsule->AddComponent<RigidBody>(1.0f);
-	capsule->AddComponent<CapsuleCollider>(1.0f, 2.0f, CapsuleDirection::Z);
+	capsule->AddComponent<RigidBody>(1.0f);
+	capsule->AddComponent<CapsuleCollider>(1.0f, 2.0f, CapsuleDirection::Y);
 }
 
 // --------------------------------------------------------

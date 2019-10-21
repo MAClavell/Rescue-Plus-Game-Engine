@@ -13,11 +13,13 @@ using namespace physx;
 // ----------------------------------------------------------------------------
 
 // Create a collider and try to find a rigidbody
-Collider::Collider(GameObject* gameObject, ColliderType type, PhysicsMaterial* physicsMaterial) : Component(gameObject)
+Collider::Collider(GameObject* gameObject, ColliderType type,
+	PhysicsMaterial* physicsMaterial, XMFLOAT3 center)
+	: Component(gameObject)
 {
 	this->type = type;
 	this->physicsMaterial = physicsMaterial;
-	center = XMFLOAT3(0, 0, 0);
+	this->center = center;
 }
 
 // Get the rigidbody this collider is attached to (null if none)
@@ -56,8 +58,9 @@ void Collider::Attach(RigidBody* rigidBody)
 //									BOX COLLIDER
 // ----------------------------------------------------------------------------
 
-BoxCollider::BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size, PhysicsMaterial* physicsMaterial)
-	: Collider(gameObject, ColliderType::Box, physicsMaterial)
+BoxCollider::BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size, 
+	PhysicsMaterial* physicsMaterial, XMFLOAT3 center)
+	: Collider(gameObject, ColliderType::Box, physicsMaterial, center)
 {
 	this->size = size;
 	FindInitialRigidBody(gameObject); //has to be in derived constructor because of GenerateShape pure virtual
@@ -75,7 +78,9 @@ physx::PxShape* BoxCollider::GenerateShape(PxPhysics* physics)
 		mat = DEFAULT_PHYSICS_MAT;
 	else mat = physicsMaterial->GetMaterial();
 
-	return physics->createShape(box, *mat, true);
+	PxShape* shape = physics->createShape(box, *mat, true);
+	shape->setLocalPose(PxTransform(PhysicsHelper::Float3ToVec3(center)));
+	return shape;
 }
 #pragma endregion
 
@@ -84,8 +89,9 @@ physx::PxShape* BoxCollider::GenerateShape(PxPhysics* physics)
 //									SPHERE COLLIDER
 // ----------------------------------------------------------------------------
 
-SphereCollider::SphereCollider(GameObject* gameObject, float radius, PhysicsMaterial* physicsMaterial)
-	: Collider(gameObject, ColliderType::Sphere, physicsMaterial)
+SphereCollider::SphereCollider(GameObject* gameObject, float radius, 
+	PhysicsMaterial* physicsMaterial, XMFLOAT3 center)
+	: Collider(gameObject, ColliderType::Sphere, physicsMaterial, center)
 {
 	this->radius = radius;
 	FindInitialRigidBody(gameObject);
@@ -101,7 +107,9 @@ physx::PxShape* SphereCollider::GenerateShape(physx::PxPhysics * physics)
 		mat = DEFAULT_PHYSICS_MAT;
 	else mat = physicsMaterial->GetMaterial();
 
-	return physics->createShape(sphere, *mat, true);
+	PxShape* shape = physics->createShape(sphere, *mat, true);
+	shape->setLocalPose(PxTransform(PhysicsHelper::Float3ToVec3(center)));
+	return shape;
 }
 
 #pragma endregion
@@ -112,8 +120,9 @@ physx::PxShape* SphereCollider::GenerateShape(physx::PxPhysics * physics)
 // ----------------------------------------------------------------------------
 
 CapsuleCollider::CapsuleCollider(GameObject* gameObject, float radius, float height, 
-	CapsuleDirection dir, PhysicsMaterial* physicsMaterial)
-	: Collider(gameObject, ColliderType::Capsule, physicsMaterial)
+	CapsuleDirection dir, 
+	PhysicsMaterial* physicsMaterial, XMFLOAT3 center)
+	: Collider(gameObject, ColliderType::Capsule, physicsMaterial, center)
 {
 	this->radius = radius;
 	this->height = height;
@@ -139,11 +148,13 @@ physx::PxShape* CapsuleCollider::GenerateShape(physx::PxPhysics * physics)
 	switch (dir)
 	{
 		case CapsuleDirection::Y:
-			shape->setLocalPose(PxTransform(PxQuat(PxHalfPi, PxVec3(0, 0, 1))));
+			shape->setLocalPose(PxTransform(
+				PhysicsHelper::Float3ToVec3(center), PxQuat(PxHalfPi, PxVec3(0, 0, 1))));
 			break;
 
 		case CapsuleDirection::Z:
-			shape->setLocalPose(PxTransform(PxQuat(PxHalfPi, PxVec3(0, 1, 0))));
+			shape->setLocalPose(PxTransform(
+				PhysicsHelper::Float3ToVec3(center), PxQuat(PxHalfPi, PxVec3(0, 1, 0))));
 			break;
 
 		default:
