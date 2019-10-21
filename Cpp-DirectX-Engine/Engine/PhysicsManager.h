@@ -1,6 +1,6 @@
 #pragma once
 #include <DirectXMath.h>
-#include "RigidBody.h"
+#include "Collider.h"
 
 class PhysicsManager
 {

@@ -2,8 +2,6 @@
 #include "GameObject.h"
 #include <PxPhysicsAPI.h>
 
-enum class CollisionShapes { Box, Capsule, Cone, Cylinder, Sphere};
-
 // --------------------------------------------------------
 // A rigid body definition.
 //
@@ -15,7 +13,7 @@ private:
 	physx::PxRigidDynamic* body;
 
 public:
-	RigidBody(GameObject* gameObject, physx::PxPhysics* physics, float mass);
+	RigidBody(GameObject* gameObject, float mass);
 
 	~RigidBody();
 
@@ -91,7 +89,5 @@ public:
 	// Set the maximum linear velocity for this rigidbody
 	// --------------------------------------------------------
 	void SetMaxLinearVelocity(float max);
-
-	void AddShape(PxBoxGeometry geometry, PxMaterial* material)
 };
 

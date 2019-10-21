@@ -179,7 +179,8 @@ void Game::CreateEntities()
 	);
 	floor->MoveAbsolute(XMFLOAT3(0, -2, 0));
 	floor->SetScale(30, 1, 30);
-	floor->AddComponent<RigidBody>(physx::PxBoxGeometry(PhysicsHelper::Float3ToVec3(floor->GetScale()) / 2), 0.0f)->SetKinematic(true);
+	floor->AddComponent<RigidBody>(0.0f)->SetKinematic(true);
+	floor->AddComponent<BoxCollider>(floor->GetScale());
 
 	//Create box1
 	GameObject* box1 = new GameObject("Box1");
@@ -189,17 +190,19 @@ void Game::CreateEntities()
 	);
 	box1->MoveAbsolute(XMFLOAT3(0, 3, 8));
 	box1->SetScale(1, 2, 2);
-	box1->AddComponent<RigidBody>(physx::PxBoxGeometry(PhysicsHelper::Float3ToVec3(box1->GetScale()) / 2), 1.0f);
+	box1->AddComponent<RigidBody>(1.0f);
+	box1->AddComponent<BoxCollider>(box1->GetScale());
 
-	//Create box12
+	//Create box2
 	GameObject* box2 = new GameObject("Box2");
 	box2->AddComponent<MeshRenderer>(
 		resourceManager->GetMesh("Assets\\Models\\cube.obj"),
 		resourceManager->GetMaterial("white")
 		);
-	box2->MoveAbsolute(XMFLOAT3(0, 3.5, 8));
+	box2->MoveAbsolute(XMFLOAT3(0, 3.5f, 8));
 	box2->SetScale(1, 2, 2);
-	box2->AddComponent<RigidBody>(physx::PxBoxGeometry(PhysicsHelper::Float3ToVec3(box2->GetScale()) / 2), 1.0f);
+	box2->AddComponent<RigidBody>(1.0f);
+	box2->AddComponent<BoxCollider>(box2->GetScale());
 }
 
 // --------------------------------------------------------

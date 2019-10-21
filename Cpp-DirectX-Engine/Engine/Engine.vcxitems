@@ -27,6 +27,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)MAT_Skybox.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Mesh.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)PhysicsManager.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)PhysicsMaterial.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Renderer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)ResourceManager.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)RigidBody.cpp" />
@@ -46,6 +47,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Mesh.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsHelper.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsManager.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsMaterial.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Renderer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ResourceManager.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)RigidBody.h" />

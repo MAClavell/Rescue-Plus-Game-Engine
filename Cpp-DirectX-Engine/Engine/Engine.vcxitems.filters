@@ -87,6 +87,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)RigidBody.cpp">
       <Filter>Source Files\Physics</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)PhysicsMaterial.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Camera.h">
@@ -142,6 +145,9 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsHelper.h">
       <Filter>Header Files\Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsMaterial.h">
+      <Filter>Header Files\Physics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
