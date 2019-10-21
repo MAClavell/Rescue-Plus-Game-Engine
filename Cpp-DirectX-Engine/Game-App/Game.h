@@ -32,6 +32,7 @@ public:
 	void OnMouseUp	 (WPARAM buttonState, int x, int y, int button);
 	void OnMouseMove (WPARAM buttonState, int x, int y);
 	void OnMouseWheel(float wheelDelta,   int x, int y);
+
 private:
 	//Singletons
 	Renderer* renderer;

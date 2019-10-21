@@ -18,7 +18,7 @@ void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
 
 	// --------------------------------------------------------
 	// Get debug shader information
-	cubeMesh = ResourceManager::GetInstance()->GetMesh("Assets\\Models\\cube.obj");
+	cubeMesh = ResourceManager::GetInstance()->GetMesh("Assets\\Models\\Basic\\cube.obj");
 	vs_debug = ResourceManager::GetInstance()->GetVertexShader("VS_ColDebug.cso");
 	ps_debug = ResourceManager::GetInstance()->GetPixelShader("PS_ColDebug.cso");
 

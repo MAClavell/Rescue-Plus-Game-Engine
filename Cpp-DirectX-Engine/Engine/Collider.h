@@ -13,6 +13,7 @@ class Collider : public Component
 {
 protected:
 	PhysicsMaterial* physicsMaterial;
+	DirectX::XMFLOAT3 center;
 
 	// --------------------------------------------------------
 	// Create a collider and try to find a rigidbody
@@ -48,7 +49,7 @@ public:
 // --------------------------------------------------------
 // The box collider class
 //
-// Adds a box shaped collider around the rigidbody
+// Adds a box shaped collider to the world
 // --------------------------------------------------------
 class BoxCollider : public Collider
 {
@@ -58,6 +59,45 @@ private:
 	physx::PxShape* GenerateShape(physx::PxPhysics* physics);
 
 public:
-	BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size, PhysicsMaterial* physicsMaterial = nullptr);
+	BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size = DirectX::XMFLOAT3(1, 1, 1), PhysicsMaterial* physicsMaterial = nullptr);
+
+};
+
+// --------------------------------------------------------
+// The sphere collider class
+//
+// Adds a sphere shaped collider to the world
+// --------------------------------------------------------
+class SphereCollider : public Collider
+{
+private:
+	float radius;
+
+	physx::PxShape* GenerateShape(physx::PxPhysics* physics);
+
+public:
+	SphereCollider(GameObject* gameObject, float radius = 1.0f, PhysicsMaterial* physicsMaterial = nullptr);
+
+};
+
+
+enum class CapsuleDirection { X = 0, Y = 1, Z = 2 };
+// --------------------------------------------------------
+// The capsule collider class
+//
+// Adds a capsule shaped collider to the world
+// --------------------------------------------------------
+class CapsuleCollider : public Collider
+{
+private:
+	float radius;
+	float height;
+	CapsuleDirection dir;
+
+	physx::PxShape* GenerateShape(physx::PxPhysics* physics);
+
+public:
+	CapsuleCollider(GameObject* gameObject, float radius = 1.0f, float height = 2.0f,
+		CapsuleDirection dir = CapsuleDirection::X, PhysicsMaterial* physicsMaterial = nullptr);
 
 };

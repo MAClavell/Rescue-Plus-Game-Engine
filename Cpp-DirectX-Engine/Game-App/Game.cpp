@@ -111,7 +111,9 @@ void Game::LoadAssets()
 	resourceManager->LoadVertexShader("VS_Shadow.cso", device, context);
 
 	//Create meshes
-	resourceManager->LoadMesh("Assets\\Models\\cube.obj", device);
+	resourceManager->LoadMesh("Assets\\Models\\Basic\\cube.obj", device);
+	resourceManager->LoadMesh("Assets\\Models\\Basic\\sphere.obj", device);
+	resourceManager->LoadMesh("Assets\\Models\\Basic\\cylinder.obj", device);
 
 	//Load textures
 	resourceManager->LoadTexture2D("Assets/Textures/white.png", device, context);
@@ -168,13 +170,13 @@ void Game::CreateEntities()
 	//Create the camera and initialize matrices
 	GameObject* cameraGO = new GameObject();
 	camera = cameraGO->AddComponent<Camera>();
-	camera->CreateProjectionMatrix(0.25f * XM_PI, (float)width / height, 0.1f, 100.0f);
+	camera->CreateProjectionMatrix(0.25f * XM_PI, (float)width / height, 0.1f, 1000.0f);
 	cameraGO->AddComponent<DebugMovement>();
 
 	//Create the floor
 	floor = new GameObject("Floor");
 	floor->AddComponent<MeshRenderer>(
-		resourceManager->GetMesh("Assets\\Models\\cube.obj"),
+		resourceManager->GetMesh("Assets\\Models\\Basic\\cube.obj"),
 		resourceManager->GetMaterial("white")
 	);
 	floor->MoveAbsolute(XMFLOAT3(0, -2, 0));
@@ -185,7 +187,7 @@ void Game::CreateEntities()
 	//Create box1
 	GameObject* box1 = new GameObject("Box1");
 	box1->AddComponent<MeshRenderer>(
-		resourceManager->GetMesh("Assets\\Models\\cube.obj"),
+		resourceManager->GetMesh("Assets\\Models\\Basic\\cube.obj"),
 		resourceManager->GetMaterial("white")
 	);
 	box1->MoveAbsolute(XMFLOAT3(0, 3, 8));
@@ -196,13 +198,35 @@ void Game::CreateEntities()
 	//Create box2
 	GameObject* box2 = new GameObject("Box2");
 	box2->AddComponent<MeshRenderer>(
-		resourceManager->GetMesh("Assets\\Models\\cube.obj"),
+		resourceManager->GetMesh("Assets\\Models\\Basic\\cube.obj"),
 		resourceManager->GetMaterial("white")
 		);
 	box2->MoveAbsolute(XMFLOAT3(0, 3.5f, 8));
 	box2->SetScale(1, 2, 2);
 	box2->AddComponent<RigidBody>(1.0f);
 	box2->AddComponent<BoxCollider>(box2->GetScale());
+
+	//Create sphere
+	GameObject* sphere = new GameObject("Sphere");
+	sphere->AddComponent<MeshRenderer>(
+		resourceManager->GetMesh("Assets\\Models\\Basic\\sphere.obj"),
+		resourceManager->GetMaterial("white")
+		);
+	sphere->MoveAbsolute(XMFLOAT3(3, 3.5f, 4));
+	sphere->SetScale(2, 2, 2);
+	sphereRB = sphere->AddComponent<RigidBody>(1.0f);
+	sphere->AddComponent<SphereCollider>(1.0f);
+
+	//Create Capsule
+	GameObject* capsule = new GameObject("Capsule");
+	capsule->AddComponent<MeshRenderer>(
+		resourceManager->GetMesh("Assets\\Models\\Basic\\cylinder.obj"),
+		resourceManager->GetMaterial("white")
+		);
+	capsule->MoveAbsolute(XMFLOAT3(-3, 3.5f, 4));
+	capsule->SetScale(1.0f, 2.0f, 1.0f);
+	capsuleRB = capsule->AddComponent<RigidBody>(1.0f);
+	capsule->AddComponent<CapsuleCollider>(1.0f, 2.0f, CapsuleDirection::Z);
 }
 
 // --------------------------------------------------------
