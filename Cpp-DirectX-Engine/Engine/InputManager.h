@@ -46,7 +46,7 @@ private:
 	// --------------------------------------------------------
 	// Destructor for when the singleton instance is deleted
 	// --------------------------------------------------------
-	~InputManager();
+	~InputManager() { };
 
 public:
 	// --------------------------------------------------------
@@ -54,6 +54,11 @@ public:
 	// (CALL ONLY ONCE AT THE VERY START OF THE GAME)
 	// --------------------------------------------------------
 	void Init(HWND hWnd);
+
+	// --------------------------------------------------------
+	// Deinitialize values
+	// --------------------------------------------------------
+	void Release();
 
 	// --------------------------------------------------------
 	// Get the singleton instance of the renderer

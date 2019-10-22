@@ -11,8 +11,8 @@ private:
 	// --------------------------------------------------------
 	// Singleton Constructor - Set up the singleton instance of the ResourceManager
 	// --------------------------------------------------------
-	ResourceManager() {}
-	~ResourceManager();
+	ResourceManager() { }
+	~ResourceManager() { };
 
 	//Resource maps
 	std::unordered_map<std::string, ID3D11ShaderResourceView*> texture2DMap;
@@ -32,6 +32,11 @@ public:
 
 		return &instance;
 	}
+
+	// --------------------------------------------------------
+	// Deinitialize values
+	// --------------------------------------------------------
+	void Release();
 
 	//Delete this
 	ResourceManager(ResourceManager const&) = delete;

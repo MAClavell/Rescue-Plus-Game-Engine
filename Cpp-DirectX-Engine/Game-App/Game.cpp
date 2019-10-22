@@ -1,11 +1,8 @@
 #include "Game.h"
-#include "LightManager.h"
-#include "Vertex.h"
 #include "MAT_PBRTexture.h"
 #include "MAT_Skybox.h"
 #include "MAT_Basic.h"
 #include "DebugMovement.h"
-#include "PhysicsHelper.h"
 
 // For the DirectX Math library
 using namespace DirectX;
@@ -41,6 +38,14 @@ Game::Game(HINSTANCE hInstance)
 // --------------------------------------------------------
 Game::~Game()
 {
+	//Release singletons
+	entityManager->Release();
+	lightManager->Release();
+	physicsManager->Release();
+	resourceManager->Release();
+	inputManager->Release();
+	renderer->Release();
+
 	//Delete sampler states
 	samplerState->Release();
 	shadowSampler->Release();
@@ -80,7 +85,7 @@ void Game::Init()
 
 	//Initialize lights
 	//Set ambient light
-	LightManager* lightManager = LightManager::GetInstance();
+	lightManager = LightManager::GetInstance();
 	lightManager->SetAmbientColor(0.35f, 0.19f, 0.02f);
 
 	//Directional lights
@@ -204,7 +209,8 @@ void Game::CreateEntities()
 	box2->MoveAbsolute(XMFLOAT3(0, 3.5f, 8));
 	box2->SetScale(1, 2, 2);
 	box2->AddComponent<RigidBody>(1.0f);
-	box2->AddComponent<BoxCollider>(box2->GetScale());
+	col = box2->AddComponent<BoxCollider>(box2->GetScale());
+	col->SetSize(3, 5, 5);
 
 	//Create sphere
 	GameObject* sphere = new GameObject("Sphere");
@@ -268,6 +274,23 @@ void Game::Update(float deltaTime, float totalTime)
 
 	//Update all entities
 	entityManager->Update(deltaTime);
+
+	if(inputManager->GetKey('F'))
+		col->SetSize(1, 1, 1);
+
+	if (inputManager->GetKey('G'))
+	{
+		GameObject* box2 = new GameObject("Box2");
+		box2->AddComponent<MeshRenderer>(
+			resourceManager->GetMesh("Assets\\Models\\Basic\\cube.obj"),
+			resourceManager->GetMaterial("white")
+			);
+		box2->MoveAbsolute(XMFLOAT3(0, 8, 8));
+		box2->SetScale(1, 2, 2);
+		box2->AddComponent<RigidBody>(1.0f);
+		box2->AddComponent<BoxCollider>(box2->GetScale());
+	}
+
 
 	//All game code goes above
 	// --------------------------------------------------------

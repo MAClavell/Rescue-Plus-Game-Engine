@@ -1,7 +1,7 @@
 #include "EntityManager.h"
 
-//Releases the entities in the Entity Manager.
-EntityManager::~EntityManager()
+// Releases the entities in the Entity Manager
+void EntityManager::Release()
 {
 	for (auto i = 0; i < entities.size(); i++)
 	{

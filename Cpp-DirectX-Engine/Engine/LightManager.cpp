@@ -4,7 +4,8 @@
 
 using namespace DirectX;
 
-LightManager::~LightManager()
+// Deinitialize values
+void LightManager::Release()
 {
 	if (ambientLight) { delete ambientLight; }
 	if (lightStructArr) { delete[] lightStructArr; }

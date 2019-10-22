@@ -46,12 +46,12 @@ private:
 	// --------------------------------------------------------
 	// Singleton Constructor - Set up the singleton instance of the renderer
 	// --------------------------------------------------------
-	Renderer() {}
+	Renderer() { }
 
 	// --------------------------------------------------------
 	// Destructor for when the singleton instance is deleted
 	// --------------------------------------------------------
-	~Renderer();
+	~Renderer() { };
 
 	// --------------------------------------------------------
 	// Render shadow maps for all lights that cast shadows
@@ -93,6 +93,11 @@ public:
 
 		return &instance;
 	}
+
+	// --------------------------------------------------------
+	// Deinitialize values
+	// --------------------------------------------------------
+	void Release();
 
 	// --------------------------------------------------------
 	// Initialize values in the renderer

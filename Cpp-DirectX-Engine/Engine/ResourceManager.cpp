@@ -3,7 +3,7 @@
 
 using namespace DirectX;
 
-ResourceManager::~ResourceManager()
+void ResourceManager::Release()
 {
 	//Delete Texture2Ds
 	for (auto const& pair : texture2DMap)

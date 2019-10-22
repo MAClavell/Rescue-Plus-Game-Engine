@@ -19,7 +19,7 @@ private:
 	// Singleton Constructor - Set up the singleton instance of the Physics
 	// --------------------------------------------------------
 	PhysicsManager() { Init(); }
-	~PhysicsManager();
+	~PhysicsManager() { };
 
 	// --------------------------------------------------------
 	// Initialize values and start the physics world
@@ -37,6 +37,11 @@ public:
 
 		return &instance;
 	}
+
+	// --------------------------------------------------------
+	// Deinitialize values
+	// --------------------------------------------------------
+	void Release();
 
 	//Delete this
 	PhysicsManager(PhysicsManager const&) = delete;

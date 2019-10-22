@@ -89,7 +89,7 @@ void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
 }
 
 // Destructor for when the singleton instance is deleted
-Renderer::~Renderer()
+void Renderer::Release()
 {
 	// Clean up rasterizer state.
 	RS_wireframe->Release();

@@ -18,8 +18,11 @@ void InputManager::Init(HWND hWnd)
 	prevMousePos = mousePos;
 }
 
-InputManager::~InputManager()
-{ }
+// Deinitialize values
+void InputManager::Release()
+{
+
+}
 
 //Update the focus state of the window
 void InputManager::UpdateFocus()

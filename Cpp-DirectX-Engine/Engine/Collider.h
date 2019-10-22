@@ -31,11 +31,27 @@ protected:
 	// --------------------------------------------------------
 	void FindInitialRigidBody(GameObject* gameObject);
 
+	// --------------------------------------------------------
+	// Re-calculate the shape and re-attach this collider to a rigidbody
+	// --------------------------------------------------------
+	void ReAttach();
+
 private:
 	ColliderType type;
 	RigidBody* attachedRigidBody;
+	physx::PxShape* shape;
+
+	// --------------------------------------------------------
+	// DeAttach this collider from it's rigidbody
+	// --------------------------------------------------------
+	void DeAttach();
 
 public:
+	// --------------------------------------------------------
+	// Clean up the collider instance
+	// --------------------------------------------------------
+	~Collider();
+
 	// --------------------------------------------------------
 	// Get the rigidbody this collider is attached to (null if none)
 	// --------------------------------------------------------
@@ -45,6 +61,29 @@ public:
 	// Attach this collider to a rigidbody
 	// --------------------------------------------------------
 	void Attach(RigidBody* rigidBody);
+
+	// --------------------------------------------------------
+	// Get the center of the Collider
+	// --------------------------------------------------------
+	DirectX::XMFLOAT3 GetCenter();
+	// --------------------------------------------------------
+	// Set the center of the Collider
+	// --------------------------------------------------------
+	void SetCenter(DirectX::XMFLOAT3 center);
+	// --------------------------------------------------------
+	// Set the center of the Collider
+	// --------------------------------------------------------
+	void SetCenter(float x, float y, float z);
+
+	// --------------------------------------------------------
+	// Get the physics material of the Collider
+	// --------------------------------------------------------
+	PhysicsMaterial* GetPhysicsMaterial();
+	// --------------------------------------------------------
+	// Set the physics material of the Collider
+	// --------------------------------------------------------
+	void SetPhysicsMaterial(PhysicsMaterial* physicsMaterial);
+
 };
 
 // --------------------------------------------------------
@@ -63,6 +102,18 @@ public:
 	BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size = DirectX::XMFLOAT3(1, 1, 1), 
 		PhysicsMaterial* physicsMaterial = nullptr, DirectX::XMFLOAT3 center = DirectX::XMFLOAT3(0, 0, 0));
 
+	// --------------------------------------------------------
+	// Get the size of the BoxCollider
+	// --------------------------------------------------------
+	DirectX::XMFLOAT3 GetSize();
+	// --------------------------------------------------------
+	// Set the size of the BoxCollider
+	// --------------------------------------------------------
+	void SetSize(DirectX::XMFLOAT3 size);
+	// --------------------------------------------------------
+	// Set the size of the BoxCollider
+	// --------------------------------------------------------
+	void SetSize(float x, float y, float z);
 };
 
 // --------------------------------------------------------
@@ -81,6 +132,14 @@ public:
 	SphereCollider(GameObject* gameObject, float radius = 1.0f, 
 		PhysicsMaterial* physicsMaterial = nullptr, DirectX::XMFLOAT3 center = DirectX::XMFLOAT3(0, 0, 0));
 
+	// --------------------------------------------------------
+	// Get the radius of the SphereCollider
+	// --------------------------------------------------------
+	float GetRadius();
+	// --------------------------------------------------------
+	// Set the radius of the SphereCollider
+	// --------------------------------------------------------
+	void SetRadius(float radius);
 };
 
 
@@ -104,4 +163,30 @@ public:
 		CapsuleDirection dir = CapsuleDirection::X, 
 		PhysicsMaterial* physicsMaterial = nullptr, DirectX::XMFLOAT3 center = DirectX::XMFLOAT3(0, 0, 0));
 
+	// --------------------------------------------------------
+	// Get the radius of the CapsuleCollider
+	// --------------------------------------------------------
+	float GetRadius();
+	// --------------------------------------------------------
+	// Set the radius of the CapsuleCollider
+	// --------------------------------------------------------
+	void SetRadius(float radius);
+
+	// --------------------------------------------------------
+	// Get the height of the CapsuleCollider
+	// --------------------------------------------------------
+	float GetHeight();
+	// --------------------------------------------------------
+	// Set the height of the CapsuleCollider
+	// --------------------------------------------------------
+	void SetHeight(float height);
+
+	// --------------------------------------------------------
+	// Get the direction of the CapsuleCollider
+	// --------------------------------------------------------
+	CapsuleDirection GetCapsuleDirection();
+	// --------------------------------------------------------
+	// Set the direction of the CapsuleCollider
+	// --------------------------------------------------------
+	void SetCapsuleDirection(CapsuleDirection dir);
 };

@@ -4,7 +4,7 @@ using namespace physx;
 
 #define PX_RELEASE(x)	if(x)	{ x->release(); x = NULL;	}
 
-PhysicsManager::~PhysicsManager()
+void PhysicsManager::Release()
 { 
 	PX_RELEASE(scene);
 	PX_RELEASE(dispatcher);

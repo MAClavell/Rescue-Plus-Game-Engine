@@ -7,6 +7,7 @@
 #include "EntityManager.h"
 #include "ResourceManager.h"
 #include "PhysicsManager.h"
+#include "LightManager.h"
 
 class Game 
 	: public DXCore
@@ -40,10 +41,13 @@ private:
 	ResourceManager* resourceManager;
 	EntityManager* entityManager;
 	PhysicsManager* physicsManager;
+	LightManager* lightManager;
 
 	//Sampler states
 	ID3D11SamplerState* samplerState;
 	ID3D11SamplerState* shadowSampler;
+
+	BoxCollider* col;
 
 	//Transformation modifiers
 	float position;

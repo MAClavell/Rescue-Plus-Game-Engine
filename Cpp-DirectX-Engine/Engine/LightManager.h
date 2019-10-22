@@ -11,7 +11,7 @@ private:
 	// Singleton Constructor - Set up the singleton instance of the LightManager
 	// --------------------------------------------------------
 	LightManager() { Init(); }
-	~LightManager();
+	~LightManager() { };
 
 	// --------------------------------------------------------
 	// Initialize values in the LightManager
@@ -64,6 +64,11 @@ public:
 
 		return &instance;
 	}
+
+	// --------------------------------------------------------
+	// Deinitialize values
+	// --------------------------------------------------------
+	void Release();
 
 	//Delete this
 	LightManager(LightManager const&) = delete;

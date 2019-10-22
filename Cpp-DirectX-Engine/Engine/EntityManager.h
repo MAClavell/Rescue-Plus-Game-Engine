@@ -15,7 +15,7 @@ private:
 	// Singleton Constructor - Set up the singleton instance of the EntityManager
 	// --------------------------------------------------------
 	EntityManager() { }
-	~EntityManager();
+	~EntityManager() { };
 
 	std::vector<GameObject*> entities;       //A vector of entities
 	std::vector<EntityRemoval> remove_entities;       //A vector of entities
@@ -33,6 +33,11 @@ public:
 		static EntityManager instance;
 		return &instance;
 	}
+
+	// --------------------------------------------------------
+	// Releases the entities in the Entity Manager
+	// --------------------------------------------------------
+	void Release();
 
 	//Delete this
 	EntityManager(EntityManager const&) = delete;
