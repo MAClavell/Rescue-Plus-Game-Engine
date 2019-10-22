@@ -168,6 +168,9 @@ void Game::LoadAssets()
 	);
 	resourceManager->AddMaterial("white", mat_white);
 
+	//Bouncy PhysicsMaterial
+	PhysicsMaterial* pMat_bouncy = new PhysicsMaterial(0.1f, 0.1f, 1.0f);
+	resourceManager->AddPhysicsMaterial("bouncy", pMat_bouncy);
 }
 
 void Game::CreateEntities()
@@ -198,7 +201,8 @@ void Game::CreateEntities()
 	box1->MoveAbsolute(XMFLOAT3(0, 3, 8));
 	box1->SetScale(1, 2, 2);
 	box1->AddComponent<RigidBody>(1.0f);
-	box1->AddComponent<BoxCollider>(box1->GetScale());
+	box1->AddComponent<BoxCollider>(box1->GetScale(), 
+		resourceManager->GetPhysicsMaterial("bouncy"));
 
 	//Create box2
 	GameObject* box2 = new GameObject("Box2");
@@ -207,10 +211,9 @@ void Game::CreateEntities()
 		resourceManager->GetMaterial("white")
 		);
 	box2->MoveAbsolute(XMFLOAT3(0, 3.5f, 8));
-	box2->SetScale(1, 2, 2);
+	box2->SetScale(3, 3, 3);
 	box2->AddComponent<RigidBody>(1.0f);
 	col = box2->AddComponent<BoxCollider>(box2->GetScale());
-	col->SetSize(3, 5, 5);
 
 	//Create sphere
 	GameObject* sphere = new GameObject("Sphere");
@@ -230,7 +233,7 @@ void Game::CreateEntities()
 		resourceManager->GetMaterial("white")
 		);
 	capsule->MoveAbsolute(XMFLOAT3(-3, 3.5f, 4));
-	capsule->SetScale(1.0f, 2.0f, 1.0f);
+	capsule->SetScale(2.0f, 4.0f, 2.0f);
 	capsule->AddComponent<RigidBody>(1.0f);
 	capsule->AddComponent<CapsuleCollider>(1.0f, 2.0f, CapsuleDirection::Y);
 }
@@ -275,8 +278,12 @@ void Game::Update(float deltaTime, float totalTime)
 	//Update all entities
 	entityManager->Update(deltaTime);
 
-	if(inputManager->GetKey('F'))
+	if (inputManager->GetKey('F'))
+	{
 		col->SetSize(1, 1, 1);
+		col->gameObject()->SetScale(1, 1, 1);
+		col->SetPhysicsMaterial(resourceManager->GetPhysicsMaterial("bouncy"));
+	}
 
 	if (inputManager->GetKey('G'))
 	{

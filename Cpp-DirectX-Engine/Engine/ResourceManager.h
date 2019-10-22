@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "Mesh.h"
 #include "Material.h"
+#include "PhysicsMaterial.h"
 
 class ResourceManager
 {
@@ -21,6 +22,7 @@ private:
 	std::unordered_map<std::string, Material*> materialMap;
 	std::unordered_map<std::string, SimplePixelShader*> pixelShaderMap;
 	std::unordered_map<std::string, SimpleVertexShader*> vertexShaderMap;
+	std::unordered_map<std::string, PhysicsMaterial*> physicsMatMap;
 
 public:
 	// --------------------------------------------------------
@@ -83,6 +85,11 @@ public:
 	bool LoadVertexShader(const char* name, ID3D11Device* device, ID3D11DeviceContext* context);
 
 	// --------------------------------------------------------
+	// Add an existing Physics Material to the manager
+	// --------------------------------------------------------
+	bool AddPhysicsMaterial(const char* name, PhysicsMaterial* material);
+
+	// --------------------------------------------------------
 	// Get a loaded Texture2D
 	//
 	// address - The file address of the Texture2D
@@ -104,7 +111,7 @@ public:
 	Mesh* GetMesh(std::string address);
 
 	// --------------------------------------------------------
-	// Get a added Material
+	// Get an added Material
 	//
 	// name - The name of the Material
 	// --------------------------------------------------------
@@ -123,5 +130,10 @@ public:
 	// name - The name of the Vertex Shader file
 	// --------------------------------------------------------
 	SimpleVertexShader* GetVertexShader(std::string name);
+
+	// --------------------------------------------------------
+	// Get an added Physics Material
+	// --------------------------------------------------------
+	PhysicsMaterial* GetPhysicsMaterial(std::string name);
 };
 

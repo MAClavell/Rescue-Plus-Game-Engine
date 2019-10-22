@@ -151,7 +151,7 @@ physx::PxShape* BoxCollider::GenerateShape(PxPhysics* physics)
 	PxMaterial* mat;
 	if (physicsMaterial == nullptr)
 		mat = DEFAULT_PHYSICS_MAT;
-	else mat = physicsMaterial->GetMaterial();
+	else mat = physicsMaterial->GetPxMaterial();
 
 	PxShape* shape = physics->createShape(box, *mat, true);
 	shape->setLocalPose(PxTransform(PhysicsHelper::Float3ToVec3(center)));
@@ -180,7 +180,7 @@ physx::PxShape* SphereCollider::GenerateShape(physx::PxPhysics * physics)
 	PxMaterial* mat;
 	if (physicsMaterial == nullptr)
 		mat = DEFAULT_PHYSICS_MAT;
-	else mat = physicsMaterial->GetMaterial();
+	else mat = physicsMaterial->GetPxMaterial();
 
 	PxShape* shape = physics->createShape(sphere, *mat, true);
 	shape->setLocalPose(PxTransform(PhysicsHelper::Float3ToVec3(center)));
@@ -224,7 +224,7 @@ physx::PxShape* CapsuleCollider::GenerateShape(physx::PxPhysics * physics)
 	PxMaterial* mat;
 	if (physicsMaterial == nullptr)
 		mat = DEFAULT_PHYSICS_MAT;
-	else mat = physicsMaterial->GetMaterial();
+	else mat = physicsMaterial->GetPxMaterial();
 
 	//Create shape
 	PxShape* shape = physics->createShape(capsule, *mat, true);

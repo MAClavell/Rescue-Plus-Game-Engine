@@ -46,6 +46,13 @@ void ResourceManager::Release()
 		if (pair.second) { delete pair.second; }
 	}
 	materialMap.clear();
+
+	//Delete Physics Materials
+	for (auto const& pair : physicsMatMap)
+	{
+		if (pair.second) { delete pair.second; }
+	}
+	physicsMatMap.clear();
 }
 
 // Load a Texture2D from the specified address with MipMaps
@@ -277,6 +284,26 @@ bool ResourceManager::LoadVertexShader(const char* name, ID3D11Device* device, I
 	return false;
 }
 
+// Add an existing Physics Material to the manager
+bool ResourceManager::AddPhysicsMaterial(const char* name, PhysicsMaterial* material)
+{
+	//Create a string
+	std::stringstream ss;
+	ss << name;
+	std::string str = ss.str();
+
+	//Check if the Physics Material is already in the map
+	if (materialMap.find(str) != materialMap.end())
+	{
+		printf("Physics Material of name \"%s\" already exists in the resource manager\n", name);
+		return false;
+	}
+
+	//Add to map
+	physicsMatMap.emplace(str, material);
+	return true;
+}
+
 // Get a loaded Texture2D
 ID3D11ShaderResourceView* ResourceManager::GetTexture2D(std::string address)
 {
@@ -353,4 +380,16 @@ SimpleVertexShader* ResourceManager::GetVertexShader(std::string name)
 	}
 
 	return vertexShaderMap[name];
+}
+
+PhysicsMaterial* ResourceManager::GetPhysicsMaterial(std::string name)
+{
+	//Check if the Physics Material is in the map
+	if (physicsMatMap.find(name) == physicsMatMap.end())
+	{
+		printf("Physics Material of name \"%s\" does not exist in the resource manager\n", name.c_str());
+		return nullptr;
+	}
+
+	return physicsMatMap[name];
 }
