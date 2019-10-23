@@ -10,7 +10,10 @@ RigidBody::RigidBody(GameObject* gameObject, float mass) : Component::Component(
 	PxPhysics* physics = PhysicsManager::GetInstance()->GetPhysics();
 	
 	//Create body
-	body = physics->createRigidDynamic(PxTransform(PhysicsHelper::Float3ToVec3(gameObject->GetPosition())));
+	PxTransform tr;
+	tr.p = PhysicsHelper::Float3ToVec3(gameObject->GetPosition());
+	tr.q = PhysicsHelper::Float4ToQuat(gameObject->GetRotation());
+	body = physics->createRigidDynamic(tr);
 	body->setMass(mass);
 
 	//See if there is already a collider attached to this gameobject

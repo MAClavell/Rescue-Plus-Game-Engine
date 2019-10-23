@@ -187,6 +187,7 @@ void Game::CreateEntities()
 		resourceManager->GetMesh("Assets\\Models\\Basic\\cube.obj"),
 		resourceManager->GetMaterial("white")
 	);
+	floor->SetRotation(15, 0, 0);
 	floor->MoveAbsolute(XMFLOAT3(0, -2, 0));
 	floor->SetScale(30, 1, 30);
 	floor->AddComponent<RigidBody>(0.0f)->SetKinematic(true);

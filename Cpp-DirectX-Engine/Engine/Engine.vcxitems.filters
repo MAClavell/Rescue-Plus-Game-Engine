@@ -96,9 +96,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)PhysicsMaterial.cpp">
       <Filter>Source Files\Physics</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Job.cpp">
-      <Filter>Source Files\Threading</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)JobSystem.cpp">
       <Filter>Source Files\Threading</Filter>
     </ClCompile>

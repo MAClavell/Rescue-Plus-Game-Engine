@@ -2,6 +2,59 @@
 
 using namespace std;
 
+JobSystem::JobSystem()
+{
+	// only create number_of_cores - 1 threads
+	workerThreadCount = thread::hardware_concurrency() - 1;
+	if (workerThreadCount < 1)
+		workerThreadCount = 1;
+	
+	//Create queues
+	jobQueues = new WorkStealingQueue*[workerThreadCount];
+	for (int i = 0; i < workerThreadCount; i++)
+	{
+		jobQueues[i] = new WorkStealingQueue();
+	}
+
+	//Create threads
+	for (int i = 0; i < workerThreadCount; i++)
+	{
+		std::thread t1(&JobSystem::WorkerThreadLoop, this);
+	}
+}
+
+JobSystem::~JobSystem()
+{
+	delete[] jobQueues;
+}
+
+// The main loop that worker threads run to run jobs
+void JobSystem::WorkerThreadLoop()
+{
+	bool workerThreadActive = true;
+	while (workerThreadActive)
+	{
+		Job* job = GetJob();
+		if (job)
+		{
+			Execute(job);
+		}
+	}
+}
+
+// Check to see if this job is empty
+bool JobSystem::IsEmptyJob(Job* job)
+{
+	return job == nullptr || job->function == nullptr;
+}
+
+// Check to see if a job is finished
+bool JobSystem::HasJobCompleted(const Job* job)
+{
+	return job.
+}
+
+// Allocate a new job
 Job* JobSystem::AllocateJob()
 {
 	return new Job();
@@ -29,12 +82,13 @@ Job* JobSystem::CreateJobAsChild(Job* parent, JobFunction function)
 	return job;
 }
 
-void JobSystem::Run(Job * job)
+void JobSystem::Run(Job* job)
 {
 	WorkStealingQueue* queue = GetWorkerThreadQueue();
 	queue->Push(job);
 }
 
+// Get a job that needs to be run
 Job* JobSystem::GetJob()
 {
 	WorkStealingQueue* queue = GetWorkerThreadQueue();
@@ -43,7 +97,7 @@ Job* JobSystem::GetJob()
 	if (IsEmptyJob(job))
 	{
 		// this is not a valid job because our own queue is empty, so try stealing from some other queue
-		unsigned int randomIndex = GenerateRandomNumber(0, g_workerThreadCount + 1);
+		unsigned int randomIndex = GenerateRandomNumber(0, workerThreadCount + 1);
 		WorkStealingQueue* stealQueue = jobQueues[randomIndex];
 		if (stealQueue == queue)
 		{
@@ -66,13 +120,14 @@ Job* JobSystem::GetJob()
 	return job;
 }
 
+// Execute a job
 void JobSystem::Execute(Job* job)
 {
 	(job->function)(job, job->data);
 	Finish(job);
 }
 
-void JobSystem::Wait(const Job * job)
+void JobSystem::Wait(const Job* job)
 {
 	// wait until the job has completed. in the meantime, work on any other job.
 	while (!HasJobCompleted(job))
@@ -85,6 +140,7 @@ void JobSystem::Wait(const Job * job)
 	}
 }
 
+// Finish executing a job
 void JobSystem::Finish(Job* job)
 {
 	const int32_t unfinishedJobs = job->unfinishedJobs--;

@@ -16,7 +16,6 @@
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Camera.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Collider.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)Job.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)JobSystem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)MeshRenderer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)EntityManager.cpp" />
