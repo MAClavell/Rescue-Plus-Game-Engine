@@ -1,5 +1,4 @@
 #pragma once
-#include <thread>
 #include "Job.h"
 #include "WorkStealingQueue.h"
 
@@ -21,15 +20,24 @@ private:
 	// --------------------------------------------------------
 	// The main loop that worker threads run to run jobs
 	// --------------------------------------------------------
-	void WorkerThreadLoop();
+	void WorkerThreadLoop(unsigned i);
 
 	// --------------------------------------------------------
 	// Check to see if this job is empty
 	// --------------------------------------------------------
 	bool IsEmptyJob(Job* job);
 
+	// --------------------------------------------------------
+	// Get the queue associated with this worker thread
+	// --------------------------------------------------------
 	WorkStealingQueue* GetWorkerThreadQueue();
 	
+	// --------------------------------------------------------
+	// Generate a random number
+	// --------------------------------------------------------
+	unsigned int GenerateRandomNumber(unsigned int inclusiveMin,
+		unsigned int exclusiveMax);
+
 	// --------------------------------------------------------
 	// Check to see if a job is finished
 	// --------------------------------------------------------
@@ -59,7 +67,9 @@ public:
 	JobSystem();
 	~JobSystem();
 
-	Job* CreateJob(JobFunction function);
+	//TODO: memcpy data
+	//TODO: delete jobs
+	Job* CreateJob(JobFunction function); 
 	Job* CreateJobAsChild(Job* parent, JobFunction function);
 	void Run(Job* job);
 	void Wait(const Job* job);

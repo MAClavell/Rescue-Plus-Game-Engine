@@ -3,10 +3,13 @@
 #include "MAT_Skybox.h"
 #include "MAT_Basic.h"
 #include "DebugMovement.h"
+#include "JobSystem.h"
 
 // For the DirectX Math library
 using namespace DirectX;
-
+void empty_job(Job*, const void*)
+{
+}
 // --------------------------------------------------------
 // Constructor
 //
@@ -96,6 +99,18 @@ void Game::Init()
 	// geometric primitives (points, lines or triangles) we want to draw.
 	// Essentially: "What kind of shape should the GPU draw with our data?"
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	int N = 1300;
+	JobSystem* jobSystem = new JobSystem();
+	Job* root = jobSystem->CreateJob(&empty_job);
+	for (unsigned int i = 0; i < N; ++i)
+	{
+		Job* job = jobSystem->CreateJobAsChild(root, &empty_job);
+		jobSystem->Run(job);
+	}
+	jobSystem->Run(root);
+	jobSystem->Wait(root);
+	delete jobSystem;
 }
 
 // --------------------------------------------------------

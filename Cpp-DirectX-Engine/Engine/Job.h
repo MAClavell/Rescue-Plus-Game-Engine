@@ -13,5 +13,5 @@ struct Job
 	JobFunction function;
 	Job* parent;
 	std::atomic_int32_t unfinishedJobs;
-	char data[52];
+	char data[12];
 };
