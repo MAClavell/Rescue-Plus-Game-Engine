@@ -5,8 +5,6 @@
 #include <mutex>
 #include "RigidBody.h"
 
-#define MAX_JOBS 6144
-
 using namespace std;
 
 //Job management
@@ -23,7 +21,7 @@ static bool running = true;
 static std::atomic_bool workerThreadsActive = true;
 
 //Job deletion
-static std::atomic_int32_t jobsToDeleteCount;
+static std::atomic_uint32_t jobsToDeleteCount;
 static Job* jobsToDelete[MAX_JOBS];
 
 //Thread local queue
@@ -106,6 +104,10 @@ static void Finish(Job* job)
 	if (unfinishedJobs == 0)
 	{
 		const int32_t index = ++jobsToDeleteCount;
+
+		if (index >= MAX_JOBS)
+			throw length_error("Allocated too many jobs! Max job count is: " + MAX_JOBS);
+
 		jobsToDelete[index - 1] = job;
 
 		if (job->parent)
@@ -135,7 +137,6 @@ static void WorkerThreadLoop(unsigned i)
 	Yield();
 	
 	//Run
-	int tries;
 	while (workerThreadsActive)
 	{
 		Job* job = GetJob();
@@ -285,7 +286,7 @@ void JobSystem::Wait(const Job* job)
 
 void JobSystem::DeleteFinishedJobs()
 {
-	for(int i = 0; i < jobsToDeleteCount; i++)
+	for(unsigned i = 0; i < jobsToDeleteCount; i++)
 	{
 		Job* job = jobsToDelete[i];
 		if (job)
