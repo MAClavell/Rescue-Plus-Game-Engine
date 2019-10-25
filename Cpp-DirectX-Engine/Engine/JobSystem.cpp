@@ -1,87 +1,74 @@
 #include "JobSystem.h"
-#include <random>
 #include <thread>
+#include <random>
+#include <condition_variable>
+#include <mutex>
+#include "RigidBody.h"
+
+#define MAX_JOBS 6144
 
 using namespace std;
 
+//Job management
+static thread* workerThreads;
+static WorkStealingQueue** jobQueues;
+static unsigned workerThreadCount;
+
+//Condition variable management
+// YES this is a lock in a lockless pool, but we need it for
+//	when there's nothing in the queues and when the program terminates
+static condition_variable threadCondition;
+static mutex mtx;
+static bool running = true;
+static std::atomic_bool workerThreadsActive = true;
+
+//Job deletion
+static std::atomic_int32_t jobsToDeleteCount;
+static Job* jobsToDelete[MAX_JOBS];
+
+//Thread local queue
 thread_local static WorkStealingQueue* workQueue = nullptr;
 
-JobSystem::JobSystem()
+// Yield time to another thread
+static void Yield()
 {
-	// only create number_of_cores - 1 threads
-	workerThreadCount = thread::hardware_concurrency() - 1;
-	if (workerThreadCount < 1)
-		workerThreadCount = 1;
-	
-	//Create threads
-	jobQueues = new WorkStealingQueue*[workerThreadCount];
-	for (unsigned i = 0; i < workerThreadCount; i++)
-	{
-		std::thread t(&JobSystem::WorkerThreadLoop, this, i);
-	}
-}
-
-JobSystem::~JobSystem()
-{
-	delete[] jobQueues;
-}
-
-// The main loop that worker threads run to run jobs
-void JobSystem::WorkerThreadLoop(unsigned i)
-{
-	//Create the queue
-	workQueue = new WorkStealingQueue();
-	jobQueues[i] = workQueue;
-
-	//Yield at first
-	//TODO FIND A YIELD THAT WORKS
-
-	//Run
-	bool workerThreadActive = true;
-	while (workerThreadActive)
-	{
-		Job* job = GetJob();
-		if (job)
-		{
-			Execute(job);
-		}
-	}
+	this_thread::yield();
 }
 
 // Check to see if this job is empty
-bool JobSystem::IsEmptyJob(Job* job)
+static bool IsEmptyJob(Job* job)
 {
 	return job == nullptr || job->function == nullptr;
 }
 
-WorkStealingQueue* JobSystem::GetWorkerThreadQueue()
+static WorkStealingQueue* GetWorkerThreadQueue()
 {
 	return workQueue;
 }
 
 // Generate a random number
-unsigned int JobSystem::GenerateRandomNumber(unsigned int inclusiveMin, 
-	unsigned int exclusiveMax)
+static unsigned int GenerateRandomNumber(unsigned int inclusiveMin,
+	unsigned int inclusiveMax)
 {
 	static thread_local std::mt19937 generator;
-	std::uniform_int_distribution<int> distribution(inclusiveMin, exclusiveMax);
+	std::uniform_int_distribution<int> distribution(inclusiveMin, inclusiveMax);
 	return distribution(generator);
 }
 
 // Check to see if a job is finished
-bool JobSystem::HasJobCompleted(const Job* job)
+static bool HasJobCompleted(const Job* job)
 {
-	return job->unfinishedJobs == 0;
+	return job->unfinishedJobs == -1;
 }
 
 // Allocate a new job
-Job* JobSystem::AllocateJob()
+static Job* AllocateJob()
 {
 	return new Job();
 }
 
 // Get a job that needs to be run
-Job* JobSystem::GetJob()
+static Job* GetJob()
 {
 	WorkStealingQueue* queue = GetWorkerThreadQueue();
 
@@ -89,12 +76,12 @@ Job* JobSystem::GetJob()
 	if (IsEmptyJob(job))
 	{
 		// this is not a valid job because our own queue is empty, so try stealing from some other queue
-		unsigned int randomIndex = GenerateRandomNumber(0, workerThreadCount + 1);
+		unsigned int randomIndex = GenerateRandomNumber(0, workerThreadCount - 1);
 		WorkStealingQueue* stealQueue = jobQueues[randomIndex];
-		if (stealQueue == queue)
+		if (stealQueue == queue || stealQueue == nullptr)
 		{
 			// don't try to steal from ourselves
-			_YIELD_PROCESSOR;
+			Yield();
 			return nullptr;
 		}
 
@@ -102,7 +89,7 @@ Job* JobSystem::GetJob()
 		if (IsEmptyJob(stolenJob))
 		{
 			// we couldn't steal a job from the other queue either, so we just yield our time slice for now
-			_YIELD_PROCESSOR;
+			Yield();
 			return nullptr;
 		}
 
@@ -112,20 +99,13 @@ Job* JobSystem::GetJob()
 	return job;
 }
 
-// Execute a job
-void JobSystem::Execute(Job* job)
-{
-	(job->function)(job, job->data);
-	Finish(job);
-}
-
 // Finish executing a job
-void JobSystem::Finish(Job* job)
+static void Finish(Job* job)
 {
-	const int32_t unfinishedJobs = job->unfinishedJobs--;
+	const int32_t unfinishedJobs = --(job->unfinishedJobs);
 	if (unfinishedJobs == 0)
 	{
-		const int32_t index = jobToDeleteCount++;
+		const int32_t index = ++jobsToDeleteCount;
 		jobsToDelete[index - 1] = job;
 
 		if (job->parent)
@@ -137,6 +117,98 @@ void JobSystem::Finish(Job* job)
 	}
 }
 
+// Execute a job
+static void Execute(Job* job)
+{
+	(job->function)(job, job->data);
+	Finish(job);
+}
+
+// The main loop that worker threads run to run jobs
+static void WorkerThreadLoop(unsigned i)
+{
+	//Create the queue
+	workQueue = new WorkStealingQueue();
+	jobQueues[i] = workQueue;
+
+	//Yield at first
+	Yield();
+	
+	//Run
+	int tries;
+	while (workerThreadsActive)
+	{
+		Job* job = GetJob();
+		if (job)
+		{
+			Execute(job);
+		}
+
+		//Lock releases when out of scope
+		{
+			std::unique_lock<std::mutex> lck(mtx);
+			while (!running) threadCondition.wait(lck);
+		}
+	}
+}
+
+// --------------------------------------------------------
+// CLASS FUNCTIONS
+// --------------------------------------------------------
+void JobSystem::Init()
+{
+	// only create number_of_cores - 1 threads
+	workerThreadCount = thread::hardware_concurrency() - 1;
+	if (workerThreadCount < 1)
+		workerThreadCount = 1;
+
+	//Create queue array and initialize it
+	jobQueues = new WorkStealingQueue*[workerThreadCount + 1];
+	for (unsigned i = 0; i < workerThreadCount + 1; i++)
+	{
+		jobQueues[i] = nullptr;
+	}
+
+	//Add main thread
+	workQueue = new WorkStealingQueue();
+	jobQueues[workerThreadCount] = workQueue;
+
+	//Create worker threads
+	workerThreads = new std::thread[workerThreadCount];
+	for (unsigned i = 0; i < workerThreadCount; i++)
+	{
+		workerThreads[i] = std::thread(WorkerThreadLoop, i);
+	}
+}
+
+void JobSystem::Release()
+{
+	//Lock releases when out of scope
+	workerThreadsActive = false;
+	{
+		//Wake up all the threads
+		std::unique_lock<std::mutex> lck(mtx);
+		running = true;
+		threadCondition.notify_all();
+	}
+
+	//Join all threads so they finish then delete array
+	for (unsigned i = 0; i < workerThreadCount; i++)
+	{
+		workerThreads[i].join();
+	}
+	delete[] workerThreads;
+
+	//Delete all jobs and job queues
+	DeleteFinishedJobs();
+	for (unsigned i = 0; i < workerThreadCount + 1; i++)
+	{
+		if (jobQueues[i])
+			delete jobQueues[i];
+	}
+	delete[] jobQueues;
+}
+
 Job* JobSystem::CreateJob(JobFunction function)
 {
 	Job* job = AllocateJob();
@@ -144,6 +216,17 @@ Job* JobSystem::CreateJob(JobFunction function)
 	job->parent = nullptr;
 	job->unfinishedJobs = 1;
 
+	return job;
+}
+
+Job* JobSystem::CreateJob(JobFunction function, void* data)
+{
+	Job* job = CreateJob(function);
+	if (sizeof(data) > sizeof(job->data))
+	{
+		throw length_error("Data being passed into thread is too large. Allocate on heap and pass in pointer instead.");
+	}
+	memcpy(job->data, data, sizeof(data));
 	return job;
 }
 
@@ -159,10 +242,32 @@ Job* JobSystem::CreateJobAsChild(Job* parent, JobFunction function)
 	return job;
 }
 
+Job* JobSystem::CreateJobAsChild(Job* parent, JobFunction function, void* data)
+{
+	Job* job = CreateJobAsChild(parent, function);
+	if (sizeof(data) > sizeof(job->data))
+	{
+		throw length_error("Data being passed into thread is too large. Allocate on heap and pass in pointer instead.");
+	}
+	memcpy(job->data, data, sizeof(data));
+	return job;
+}
+
 void JobSystem::Run(Job* job)
 {
 	WorkStealingQueue* queue = GetWorkerThreadQueue();
 	queue->Push(job);
+
+	//Lock releases when out of scope
+	{
+		std::unique_lock<std::mutex> lck(mtx);
+		if (running == false)
+		{
+			std::unique_lock<std::mutex> lck(mtx);
+			running = true;
+			threadCondition.notify_all();
+		}
+	}
 }
 
 void JobSystem::Wait(const Job* job)
@@ -176,4 +281,19 @@ void JobSystem::Wait(const Job* job)
 			Execute(nextJob);
 		}
 	}
+}
+
+void JobSystem::DeleteFinishedJobs()
+{
+	for(int i = 0; i < jobsToDeleteCount; i++)
+	{
+		Job* job = jobsToDelete[i];
+		if (job)
+		{
+			delete job;
+			jobsToDelete[i] = nullptr;
+		}
+	}
+
+	jobsToDeleteCount = 0;
 }

@@ -1,4 +1,5 @@
 #include "PhysicsManager.h"
+#include "JobSystem.h"
 
 using namespace physx;
 
@@ -71,6 +72,15 @@ void PhysicsManager::Init()
 #endif
 }
 
+static void UpdateRigidBody(Job* job, const void* userData)
+{
+	RigidBody* rigidBody = *((RigidBody**)userData);
+	if (rigidBody)
+	{
+		//Update gameobject
+		rigidBody->UpdateWorldPosition();
+	}
+}
 
 bool PhysicsManager::Simulate(float deltaTime)
 {
@@ -91,14 +101,15 @@ bool PhysicsManager::Simulate(float deltaTime)
 	PxActor** activeActors = scene->getActiveActors(nbActiveActors);
 
 	// update each render object with the new transform
+	Job* root = JobSystem::CreateJob(&EmptyJob);
 	for (PxU32 i = 0; i < nbActiveActors; ++i)
 	{
-		RigidBody* rigidBody = static_cast<RigidBody*>(activeActors[i]->userData);
-		if (rigidBody)
-		{
-			rigidBody->UpdateWorldPosition();
-		}
+		Job* job = JobSystem::CreateJobAsChild(root, &UpdateRigidBody, 
+			&(activeActors[i]->userData));
+		JobSystem::Run(job);
 	}
+	JobSystem::Run(root);
+	JobSystem::Wait(root);
 
 	return true;
 }

@@ -67,6 +67,9 @@ void Collider::Attach(RigidBody* rigidBody)
 	//Attach
 	rigidBody->GetRigidBody()->attachShape(*shape);
 	attachedRigidBody = rigidBody;
+
+	if(!(rigidBody->GetRigidBody()->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
+		rigidBody->GetRigidBody()->wakeUp();
 }
 
 // Re-calculate the shape and re-attach this collider to a rigidbody
@@ -146,7 +149,7 @@ physx::PxShape* BoxCollider::GenerateShape(PxPhysics* physics)
 {
 	XMFLOAT3 half;
 	XMStoreFloat3(&half, XMVectorScale(XMLoadFloat3(&size), 1/2.0f));
-	PxBoxGeometry box = PxBoxGeometry(PhysicsHelper::Float3ToVec3(half));
+	PxBoxGeometry box = PxBoxGeometry(Float3ToVec3(half));
 	
 	PxMaterial* mat;
 	if (physicsMaterial == nullptr)
@@ -154,7 +157,7 @@ physx::PxShape* BoxCollider::GenerateShape(PxPhysics* physics)
 	else mat = physicsMaterial->GetPxMaterial();
 
 	PxShape* shape = physics->createShape(box, *mat, true);
-	shape->setLocalPose(PxTransform(PhysicsHelper::Float3ToVec3(center)));
+	shape->setLocalPose(PxTransform(Float3ToVec3(center)));
 	return shape;
 }
 #pragma endregion
@@ -183,7 +186,7 @@ physx::PxShape* SphereCollider::GenerateShape(physx::PxPhysics * physics)
 	else mat = physicsMaterial->GetPxMaterial();
 
 	PxShape* shape = physics->createShape(sphere, *mat, true);
-	shape->setLocalPose(PxTransform(PhysicsHelper::Float3ToVec3(center)));
+	shape->setLocalPose(PxTransform(Float3ToVec3(center)));
 	return shape;
 }
 
@@ -235,12 +238,12 @@ physx::PxShape* CapsuleCollider::GenerateShape(physx::PxPhysics * physics)
 	{
 		case CapsuleDirection::Y:
 			shape->setLocalPose(PxTransform(
-				PhysicsHelper::Float3ToVec3(center), PxQuat(PxHalfPi, PxVec3(0, 0, 1))));
+				Float3ToVec3(center), PxQuat(PxHalfPi, PxVec3(0, 0, 1))));
 			break;
 
 		case CapsuleDirection::Z:
 			shape->setLocalPose(PxTransform(
-				PhysicsHelper::Float3ToVec3(center), PxQuat(PxHalfPi, PxVec3(0, 1, 0))));
+				Float3ToVec3(center), PxQuat(PxHalfPi, PxVec3(0, 1, 0))));
 			break;
 
 		default:

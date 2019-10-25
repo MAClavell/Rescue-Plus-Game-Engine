@@ -11,8 +11,8 @@ RigidBody::RigidBody(GameObject* gameObject, float mass) : Component::Component(
 	
 	//Create body
 	PxTransform tr;
-	tr.p = PhysicsHelper::Float3ToVec3(gameObject->GetPosition());
-	tr.q = PhysicsHelper::Float4ToQuat(gameObject->GetRotation());
+	tr.p = Float3ToVec3(gameObject->GetPosition());
+	tr.q = Float4ToQuat(gameObject->GetRotation());
 	body = physics->createRigidDynamic(tr);
 	body->setMass(mass);
 
@@ -31,20 +31,20 @@ RigidBody::~RigidBody()
 	PhysicsManager::GetInstance()->RemoveRigidBody(this);
 }
 
-// Update the gameobject's world position from it's rigidbody
+// Update the gameobject's world position from an inputted transform
 void RigidBody::UpdateWorldPosition()
 {
 	PxTransform tr = body->getGlobalPose();
-	gameObject()->SetPositionFromRigidBody(PhysicsHelper::Vec3ToFloat3(tr.p));
-	gameObject()->SetRotationFromRigidBody(PhysicsHelper::QuatToFloat4(tr.q));
+	gameObject()->SetPositionFromRigidBody(Vec3ToFloat3(tr.p));
+	gameObject()->SetRotationFromRigidBody(QuatToFloat4(tr.q));
 }
 
 // Update the gameobject's rigidbody from it's world position
 void RigidBody::UpdateRigidbodyPosition()
 {
 	PxTransform tr;
-	tr.p = PhysicsHelper::Float3ToVec3(gameObject()->GetPosition());
-	tr.q = PhysicsHelper::Float4ToQuat(gameObject()->GetRotation());
+	tr.p = Float3ToVec3(gameObject()->GetPosition());
+	tr.q = Float4ToQuat(gameObject()->GetRotation());
 	body->setGlobalPose(tr);
 }
 
@@ -74,7 +74,7 @@ PxRigidDynamic* RigidBody::GetRigidBody()
 // Add a force to this rigidbody
 void RigidBody::AddForce(XMFLOAT3 force, PxForceMode::Enum mode)
 {
-	body->addForce(PhysicsHelper::Float3ToVec3(force), mode);
+	body->addForce(Float3ToVec3(force), mode);
 }
 
 // Add a force to this rigidbody
@@ -86,13 +86,13 @@ void RigidBody::AddForce(float x, float y, float z, PxForceMode::Enum mode)
 // Get the current linear velocity for this rigidbody
 XMFLOAT3 RigidBody::GetLinearVelocity()
 {
-	return PhysicsHelper::Vec3ToFloat3(body->getLinearVelocity());
+	return Vec3ToFloat3(body->getLinearVelocity());
 }
 
 // Set the current linear velocity for this rigidbody
 void RigidBody::SetLinearVelocity(XMFLOAT3 velocity)
 {
-	body->setLinearVelocity(PhysicsHelper::Float3ToVec3(velocity));
+	body->setLinearVelocity(Float3ToVec3(velocity));
 }
 
 // Set the current linear velocity for this rigidbody

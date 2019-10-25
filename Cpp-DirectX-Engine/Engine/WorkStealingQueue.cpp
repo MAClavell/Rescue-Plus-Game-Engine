@@ -6,7 +6,6 @@ WorkStealingQueue::WorkStealingQueue()
 	top = 0;
 }
 
-
 WorkStealingQueue::~WorkStealingQueue()
 { }
 

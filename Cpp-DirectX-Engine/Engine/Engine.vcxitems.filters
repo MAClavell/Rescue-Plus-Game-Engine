@@ -170,6 +170,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)WorkStealingQueue.h">
       <Filter>Header Files\Threading</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)ParallelForSplitters.h">
+      <Filter>Header Files\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)ParallelFor.h">
+      <Filter>Header Files\Threading</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="$(MSBuildThisFileDirectory)PS_ColDebug.hlsl">

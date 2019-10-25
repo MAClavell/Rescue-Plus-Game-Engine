@@ -7,9 +7,7 @@
 
 // For the DirectX Math library
 using namespace DirectX;
-void empty_job(Job*, const void*)
-{
-}
+
 // --------------------------------------------------------
 // Constructor
 //
@@ -52,6 +50,9 @@ Game::~Game()
 	//Delete sampler states
 	samplerState->Release();
 	shadowSampler->Release();
+
+	//Release jobs system
+	JobSystem::Release();
 }
 
 // --------------------------------------------------------
@@ -60,6 +61,9 @@ Game::~Game()
 // --------------------------------------------------------
 void Game::Init()
 {
+	//Initialize job system
+	JobSystem::Init();
+
 	//Load all needed assets
 	resourceManager = ResourceManager::GetInstance();
 	LoadAssets();
@@ -99,18 +103,6 @@ void Game::Init()
 	// geometric primitives (points, lines or triangles) we want to draw.
 	// Essentially: "What kind of shape should the GPU draw with our data?"
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	int N = 1300;
-	JobSystem* jobSystem = new JobSystem();
-	Job* root = jobSystem->CreateJob(&empty_job);
-	for (unsigned int i = 0; i < N; ++i)
-	{
-		Job* job = jobSystem->CreateJobAsChild(root, &empty_job);
-		jobSystem->Run(job);
-	}
-	jobSystem->Run(root);
-	jobSystem->Wait(root);
-	delete jobSystem;
 }
 
 // --------------------------------------------------------
@@ -193,7 +185,7 @@ void Game::CreateEntities()
 	//Create the camera and initialize matrices
 	GameObject* cameraGO = new GameObject();
 	camera = cameraGO->AddComponent<Camera>();
-	camera->CreateProjectionMatrix(0.25f * XM_PI, (float)width / height, 0.1f, 1000.0f);
+	camera->CreateProjectionMatrix(0.25f * XM_PI, (float)width / height, 0.1f, 10000.0f);
 	cameraGO->AddComponent<DebugMovement>();
 
 	//Create the floor
@@ -202,9 +194,9 @@ void Game::CreateEntities()
 		resourceManager->GetMesh("Assets\\Models\\Basic\\cube.obj"),
 		resourceManager->GetMaterial("white")
 	);
-	floor->SetRotation(15, 0, 0);
+	floor->SetRotation(5, 0, 0);
 	floor->MoveAbsolute(XMFLOAT3(0, -2, 0));
-	floor->SetScale(30, 1, 30);
+	floor->SetScale(300, 1, 300);
 	floor->AddComponent<RigidBody>(0.0f)->SetKinematic(true);
 	floor->AddComponent<BoxCollider>(floor->GetScale());
 
@@ -323,6 +315,9 @@ void Game::Update(float deltaTime, float totalTime)
 	//The only call to Update() for the InputManager
 	//Update for next frame
 	inputManager->UpdateStates();
+
+	//Delete finished jobs
+	JobSystem::DeleteFinishedJobs();
 }
 
 // --------------------------------------------------------

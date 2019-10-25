@@ -18,7 +18,7 @@ public:
 	~RigidBody();
 
 	// --------------------------------------------------------
-	// Update the gameobject's world position from it's rigidbody
+	// Update the gameobject's world position from an inputted transform
 	// --------------------------------------------------------
 	void UpdateWorldPosition();
 

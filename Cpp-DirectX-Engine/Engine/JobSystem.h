@@ -9,69 +9,26 @@
 // --------------------------------------------------------
 class JobSystem
 {
-private:
-	WorkStealingQueue** jobQueues;
-	unsigned workerThreadCount;
-
-	//Job deletion
-	std::atomic_int32_t jobToDeleteCount;
-	Job* jobsToDelete[];
-
-	// --------------------------------------------------------
-	// The main loop that worker threads run to run jobs
-	// --------------------------------------------------------
-	void WorkerThreadLoop(unsigned i);
-
-	// --------------------------------------------------------
-	// Check to see if this job is empty
-	// --------------------------------------------------------
-	bool IsEmptyJob(Job* job);
-
-	// --------------------------------------------------------
-	// Get the queue associated with this worker thread
-	// --------------------------------------------------------
-	WorkStealingQueue* GetWorkerThreadQueue();
-	
-	// --------------------------------------------------------
-	// Generate a random number
-	// --------------------------------------------------------
-	unsigned int GenerateRandomNumber(unsigned int inclusiveMin,
-		unsigned int exclusiveMax);
-
-	// --------------------------------------------------------
-	// Check to see if a job is finished
-	// --------------------------------------------------------
-	bool HasJobCompleted(const Job* job);
-
-	// --------------------------------------------------------
-	// Allocate a new job
-	// --------------------------------------------------------
-	Job* AllocateJob();
-
-	// --------------------------------------------------------
-	// Get a job that needs to be run
-	// --------------------------------------------------------
-	Job* GetJob();
-
-	// --------------------------------------------------------
-	// Execute a job
-	// --------------------------------------------------------
-	void Execute(Job* job);
-
-	// --------------------------------------------------------
-	// Finish executing a job
-	// --------------------------------------------------------
-	void Finish(Job* job);
-
 public:
-	JobSystem();
-	~JobSystem();
+
+	// --------------------------------------------------------
+	// Initialize values
+	// --------------------------------------------------------
+	static void Init();
+
+	// --------------------------------------------------------
+	// Deinitialize values
+	// --------------------------------------------------------
+	static void Release();
 
 	//TODO: memcpy data
-	//TODO: delete jobs
-	Job* CreateJob(JobFunction function); 
-	Job* CreateJobAsChild(Job* parent, JobFunction function);
-	void Run(Job* job);
-	void Wait(const Job* job);
+	static Job* CreateJob(JobFunction function);
+	static Job* CreateJob(JobFunction function, void* data);
+	static Job* CreateJobAsChild(Job* parent, JobFunction function);
+	static Job* CreateJobAsChild(Job* parent, JobFunction function, void* data);
+	static void Run(Job* job);
+	static void Wait(const Job* job);
+	static void DeleteFinishedJobs();
 };
 
+static void EmptyJob(Job*, const void*) { };
