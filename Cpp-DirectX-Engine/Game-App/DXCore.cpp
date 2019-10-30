@@ -48,8 +48,10 @@ DXCore::DXCore(
 	this->titleBarStats = debugTitleBarStats;
 
 	// Initialize fields
-	fpsFrameCount = 0;
+	fps = 0;
 	fpsTimeElapsed = 0.0f;
+	statsTimeElapsed = 0.0f;
+	maxFrameRate = 1 / 60.0f;
 	
 	device = 0;
 	context = 0;
@@ -367,8 +369,15 @@ HRESULT DXCore::Run()
 		}
 		else
 		{
-			// Update timer and title bar (if necessary)
+			// Only update the game at a set rate
 			UpdateTimer();
+			float timeDiff = totalTime - fpsTimeElapsed;
+			if (timeDiff < maxFrameRate)
+				continue;
+			fpsTimeElapsed += timeDiff;
+
+			// Update timer and title bar (if necessary)
+			UpdateFps();
 			if(titleBarStats)
 				UpdateTitleBarStats();
 
@@ -405,16 +414,26 @@ void DXCore::UpdateTimer()
 	QueryPerformanceCounter((LARGE_INTEGER*)&now);
 	currentTime = now;
 
+	// Calculate the total time from start to now
+	totalTime = (float)((currentTime - startTime) * perfCounterSeconds);
+}
+
+// --------------------------------------------------------
+// Uses high resolution time stamps to get very accurate
+// timing information, and calculates useful time stats
+// --------------------------------------------------------
+void DXCore::UpdateFps()
+{
 	// Calculate delta time and clamp to zero
 	//  - Could go negative if CPU goes into power save mode 
 	//    or the process itself gets moved to another core
 	deltaTime = max((float)((currentTime - previousTime) * perfCounterSeconds), 0.0f);
 
-	// Calculate the total time from start to now
-	totalTime = (float)((currentTime - startTime) * perfCounterSeconds);
-
 	// Save current time for next frame
 	previousTime = currentTime;
+
+	//Update fps count
+	fps++;
 }
 
 
@@ -427,15 +446,13 @@ void DXCore::UpdateTimer()
 // --------------------------------------------------------
 void DXCore::UpdateTitleBarStats()
 {
-	fpsFrameCount++;
-
 	// Only calc FPS and update title bar once per second
-	float timeDiff = totalTime - fpsTimeElapsed;
+	float timeDiff = totalTime - statsTimeElapsed;
 	if (timeDiff < 1.0f)
 		return;
 
 	// How long did each frame take?  (Approx)
-	float mspf = 1000.0f / (float)fpsFrameCount;
+	float mspf = 1000.0f / (float)fps;
 
 	// Quick and dirty title bar text (mostly for debugging)
 	std::ostringstream output;
@@ -443,7 +460,7 @@ void DXCore::UpdateTitleBarStats()
 	output << titleBarText <<
 		"    Width: "		<< width <<
 		"    Height: "		<< height <<
-		"    FPS: "			<< fpsFrameCount <<
+		"    FPS: " << fps <<
 		"    Frame Time: "	<< mspf << "ms";
 
 	// Append the version of DirectX the app is using
@@ -461,8 +478,8 @@ void DXCore::UpdateTitleBarStats()
 
 	// Actually update the title bar and reset fps data
 	SetWindowText(hWnd, output.str().c_str());
-	fpsFrameCount = 0;
-	fpsTimeElapsed += 1.0f;
+	fps = 0;
+	statsTimeElapsed += timeDiff;
 }
 
 // --------------------------------------------------------

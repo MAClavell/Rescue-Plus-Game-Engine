@@ -1,4 +1,7 @@
 #include "Game.h"
+#include <fstream>
+#include <sstream>
+#include "StringHelper.h"
 #include "MAT_PBRTexture.h"
 #include "MAT_Skybox.h"
 #include "MAT_Basic.h"
@@ -7,6 +10,7 @@
 
 // For the DirectX Math library
 using namespace DirectX;
+using namespace std;
 
 // --------------------------------------------------------
 // Constructor
@@ -56,11 +60,65 @@ Game::~Game()
 }
 
 // --------------------------------------------------------
+// Read the config file for data
+// --------------------------------------------------------
+void Game::ReadConfig(string path)
+{
+	ifstream config(path, ifstream::in);
+	
+	if (config.fail())
+	{
+		printf("Could not find or open config file... Assuming defaults and generating file.");
+		return;
+	}
+
+	//Loop until EoF
+	string key;
+	while(!getline(config, key, ':').fail())
+	{
+		//Read token
+		key = trim(key);
+
+		//Read arguments
+		string arg;
+		getline(config, arg);
+		arg = trim(arg);
+
+		//Parse key
+		if (key == "FPS")
+		{
+			//Calculate max FPS from file
+			float max = 60;
+			try
+			{
+				stringstream argSS(arg);
+				argSS >> max;
+			}
+			catch(exception e)
+			{
+				printf("Error parsing 'FPS' from config file");
+			}
+			//If it's we read in less than 0, then set it to 0
+			if (max <= 0)
+			{
+				maxFrameRate = 0;
+			}
+			else maxFrameRate = 1 / max;
+		}
+
+	}
+
+	config.close();
+}
+
+// --------------------------------------------------------
 // Called once per program, after DirectX and the window
 // are initialized but before the game loop.
 // --------------------------------------------------------
 void Game::Init()
 {
+	ReadConfig("Assets/rescue+.txt");
+
 	//Initialize job system
 	JobSystem::Init();
 

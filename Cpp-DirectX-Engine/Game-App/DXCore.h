@@ -59,7 +59,8 @@ protected:
 	// Size of the window's client area
 	unsigned int width;
 	unsigned int height;
-	
+	float maxFrameRate;
+
 	// DirectX related objects and variables
 	D3D_FEATURE_LEVEL		dxFeatureLevel;
 	IDXGISwapChain*			swapChain;
@@ -82,10 +83,12 @@ private:
 	__int64 previousTime;
 
 	// FPS calculation
-	int fpsFrameCount;
 	float fpsTimeElapsed;
+	float statsTimeElapsed;
+	int fps;
 	
-	void UpdateTimer();			// Updates the timer for this frame
+	void UpdateTimer();			// Updates overarching timer
+	void UpdateFps();			// Updates the timer for this frame
 	void UpdateTitleBarStats();	// Puts debug info in the title bar
 };
 

@@ -58,6 +58,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)ResourceManager.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)RigidBody.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SimpleShader.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)StringHelper.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Vertex.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)WorkStealingQueue.h" />
   </ItemGroup>

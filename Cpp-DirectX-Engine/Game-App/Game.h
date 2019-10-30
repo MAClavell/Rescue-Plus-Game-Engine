@@ -17,6 +17,9 @@ public:
 	Game(HINSTANCE hInstance);
 	~Game();
 
+	// Config file reading
+	void ReadConfig(std::string path);
+
 	//Camera
 	Camera* camera;
 	GameObject* floor;

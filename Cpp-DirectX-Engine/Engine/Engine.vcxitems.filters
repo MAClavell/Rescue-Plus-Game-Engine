@@ -176,6 +176,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)ParallelFor.h">
       <Filter>Header Files\Threading</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)StringHelper.h">
+      <Filter>Header Files\Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="$(MSBuildThisFileDirectory)PS_ColDebug.hlsl">
