@@ -63,6 +63,7 @@ void Collider::Attach(RigidBody* rigidBody)
 
 	//Create shape
 	shape = GenerateShape(physics);
+	shape->userData = this;
 
 	//Attach
 	rigidBody->GetRigidBody()->attachShape(*shape);

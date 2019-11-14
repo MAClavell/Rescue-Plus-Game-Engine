@@ -1,8 +1,9 @@
 #pragma once
 #include <DirectXMath.h>
 #include "Collider.h"
+#include "PxSimulationEventCallback.h"
 
-class PhysicsManager
+class PhysicsManager : public physx::PxSimulationEventCallback
 {
 private:
 	physx::PxFoundation* foundation;
@@ -25,6 +26,14 @@ private:
 	// Initialize values and start the physics world
 	// --------------------------------------------------------
 	void Init();
+
+	// Implements PxSimulationEventCallback
+	virtual void onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs);
+	virtual void onTrigger(physx::PxTriggerPair* pairs, physx::PxU32 count);
+	virtual void onConstraintBreak(physx::PxConstraintInfo*, physx::PxU32) {}
+	virtual void onWake(physx::PxActor**, physx::PxU32) {}
+	virtual void onSleep(physx::PxActor**, physx::PxU32) {}
+	virtual void onAdvance(const physx::PxRigidBody*const*, const physx::PxTransform*, const physx::PxU32) {}
 
 public:
 

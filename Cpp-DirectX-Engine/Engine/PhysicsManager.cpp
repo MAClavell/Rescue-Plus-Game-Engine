@@ -23,6 +23,28 @@ void PhysicsManager::Release()
 	PX_RELEASE(foundation);
 }
 
+PxFilterFlags CollisionFilterShader(
+	PxFilterObjectAttributes attributes0, PxFilterData filterData0,
+	PxFilterObjectAttributes attributes1, PxFilterData filterData1,
+	PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
+{
+	// let triggers through
+	if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
+	{
+		pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
+		return PxFilterFlag::eDEFAULT;
+	}
+	// generate contacts for all that were not filtered above
+	pairFlags = PxPairFlag::eCONTACT_DEFAULT;
+
+	// trigger the contact callback for pairs (A,B) where 
+	// the filtermask of A contains the ID of B and vice versa.
+	if ((filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1))
+		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+
+	return PxFilterFlag::eDEFAULT;
+}
+
 // Initialize values and start the physics world
 void PhysicsManager::Init()
 {
@@ -56,8 +78,9 @@ void PhysicsManager::Init()
 	sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
 	dispatcher = PxDefaultCpuDispatcherCreate(2);
 	sceneDesc.cpuDispatcher = dispatcher;
-	sceneDesc.filterShader = PxDefaultSimulationFilterShader;
+	sceneDesc.filterShader = CollisionFilterShader;
 	sceneDesc.flags.set(PxSceneFlag::eENABLE_ACTIVE_ACTORS);
+	sceneDesc.simulationEventCallback = this;
 	scene = physics->createScene(sceneDesc);
 	
 #ifdef DEBUG_PHYSICS
@@ -70,6 +93,15 @@ void PhysicsManager::Init()
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
 	}
 #endif
+}
+
+void PhysicsManager::onContact(const physx::PxContactPairHeader & pairHeader, const physx::PxContactPair * pairs, physx::PxU32 nbPairs)
+{
+	int i = 5;
+}
+
+void PhysicsManager::onTrigger(physx::PxTriggerPair * pairs, physx::PxU32 count)
+{
 }
 
 static void UpdateRigidBody(Job* job, const void* userData)
