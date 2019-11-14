@@ -74,6 +74,19 @@ static Job* GetJob()
 	if (IsEmptyJob(job))
 	{
 		// this is not a valid job because our own queue is empty, so try stealing from some other queue
+		// try to steal from the main thread's queue first
+		WorkStealingQueue* mainQueue = jobQueues[workerThreadCount];
+		if (mainQueue != queue && mainQueue != nullptr)
+		{
+			// steal a job
+			Job* stolenJob = mainQueue->Steal();
+			if (!IsEmptyJob(stolenJob))
+			{
+				return stolenJob;
+			}
+		}
+
+		//try to steal from another queue
 		unsigned int randomIndex = GenerateRandomNumber(0, workerThreadCount - 1);
 		WorkStealingQueue* stealQueue = jobQueues[randomIndex];
 		if (stealQueue == queue || stealQueue == nullptr)
@@ -82,16 +95,16 @@ static Job* GetJob()
 			Yield();
 			return nullptr;
 		}
-
+		// steal a job
 		Job* stolenJob = stealQueue->Steal();
-		if (IsEmptyJob(stolenJob))
+		if (!IsEmptyJob(stolenJob))
 		{
-			// we couldn't steal a job from the other queue either, so we just yield our time slice for now
-			Yield();
-			return nullptr;
+			return stolenJob;
 		}
 
-		return stolenJob;
+		// we couldn't steal a job from the other queue either, so we just yield our time slice for now
+		Yield();
+		return nullptr;
 	}
 
 	return job;
@@ -146,6 +159,7 @@ static void WorkerThreadLoop(unsigned i)
 		}
 
 		//Lock releases when out of scope
+		//TODO: put threads to sleep when not in use
 		{
 			std::unique_lock<std::mutex> lck(mtx);
 			while (!running) threadCondition.wait(lck);
