@@ -372,18 +372,28 @@ HRESULT DXCore::Run()
 			// Only update the game at a set rate
 			UpdateTimer();
 			float timeDiff = totalTime - fpsTimeElapsed;
-			if (timeDiff < maxFrameRate)
-				continue;
-			fpsTimeElapsed += timeDiff;
+			if (timeDiff >= maxFrameRate)
+			{
+				fpsTimeElapsed += timeDiff;
 
-			// Update timer and title bar (if necessary)
-			UpdateFps();
-			if(titleBarStats)
-				UpdateTitleBarStats();
+				// Update timer and title bar (if necessary)
+				UpdateFps();
+				if (titleBarStats)
+					UpdateTitleBarStats();
 
-			// The game loop
-			Update(deltaTime, totalTime);
-			Draw(deltaTime, totalTime);
+				//Fixed update
+				static float accumulator = 0.0f;
+				accumulator += deltaTime;
+				if (accumulator >= fixedUpdateStepSize)
+				{
+					accumulator -= fixedUpdateStepSize;
+					FixedUpdate(fixedUpdateStepSize, totalTime);
+				}
+
+				// The normal game loop
+				Update(deltaTime, totalTime);
+				Draw(deltaTime, totalTime);
+			}
 		}
 	}
 

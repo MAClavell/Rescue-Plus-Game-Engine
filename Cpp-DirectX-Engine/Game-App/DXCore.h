@@ -40,6 +40,7 @@ public:
 	
 	// Pure virtual methods for setup and game functionality
 	virtual void Init()										= 0;
+	virtual void FixedUpdate(float constantStepSize, float totalTime) = 0;
 	virtual void Update(float deltaTime, float totalTime)	= 0;
 	virtual void Draw(float deltaTime, float totalTime)		= 0;
 
@@ -74,6 +75,9 @@ protected:
 	void CreateConsoleWindow(int bufferLines, int bufferColumns, int windowLines, int windowColumns);
 
 private:
+	//Fixed update FPS (Ex: 60)
+	const float fixedUpdateStepSize = 1.0f / 60;
+
 	// Timing related data
 	double perfCounterSeconds;
 	float totalTime;

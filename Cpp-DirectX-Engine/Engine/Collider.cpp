@@ -111,6 +111,42 @@ void Collider::SetPhysicsMaterial(PhysicsMaterial* physicsMaterial)
 	ReAttach();
 }
 
+// CALLED BY ENGINE FUNCTIONS ONLY
+// Notify the collider that it has a collision
+void Collider::AddCollision(Collision collisionInfo)
+{
+	collisions.push_back(CollisionResolveInfo(collisionInfo));
+}
+
+// CALLED BY ENGINE FUNCTIONS ONLY
+// Call OnCollision or OnTrigger functions
+void Collider::ResolveCollisions()
+{
+	for (size_t i = collisions.size() - 1; i >= 0; i--)
+	{
+		CollisionResolveInfo colInfo = collisions[i];
+		
+		//Collision is entering
+		if (colInfo.first && collisionEnter.HasActions())
+		{
+			collisionEnter.Invoke(colInfo.col);
+			colInfo.first = false;
+		}
+		//Collision is staying
+		else if (!colInfo.first && collisionStay.HasActions())
+			collisionStay.Invoke(colInfo.col);
+		//Collision is exiting
+		else if (!colInfo.first && collisionExit.HasActions())
+		{
+			collisionExit.Invoke(colInfo.col);
+		}
+	}
+}
+
+void Collider::AddCallbackCollisionEnter(std::function<void(Collision)> func)
+{
+	return collisionEnter.AddListener(func);
+}
 
 #pragma endregion
 

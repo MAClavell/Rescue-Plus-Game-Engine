@@ -236,6 +236,16 @@ void Game::LoadAssets()
 	//Bouncy PhysicsMaterial
 	PhysicsMaterial* pMat_bouncy = new PhysicsMaterial(0.1f, 0.1f, 1.0f);
 	resourceManager->AddPhysicsMaterial("bouncy", pMat_bouncy);
+
+	//Solid PhysicsMaterial
+	PhysicsMaterial* pMat_solid = new PhysicsMaterial(0.1f, 0.1f, 0.0f);
+	resourceManager->AddPhysicsMaterial("solid", pMat_solid);
+}
+
+//TODO: REMOVE AFTER TESTING
+void OnCol(Collision c)
+{
+	printf(c.other->gameObject()->GetName().c_str());
 }
 
 void Game::CreateEntities()
@@ -252,7 +262,6 @@ void Game::CreateEntities()
 		resourceManager->GetMesh("Assets\\Models\\Basic\\cube.obj"),
 		resourceManager->GetMaterial("white")
 	);
-	floor->SetRotation(5, 0, 0);
 	floor->MoveAbsolute(XMFLOAT3(0, -2, 0));
 	floor->SetScale(300, 1, 300);
 	floor->AddComponent<RigidBody>(0.0f)->SetKinematic(true);
@@ -264,11 +273,11 @@ void Game::CreateEntities()
 		resourceManager->GetMesh("Assets\\Models\\Basic\\cube.obj"),
 		resourceManager->GetMaterial("white")
 	);
-	box1->MoveAbsolute(XMFLOAT3(0, 3, 8));
-	box1->SetScale(1, 2, 2);
-	box1->AddComponent<RigidBody>(1.0f);
+	box1->MoveAbsolute(XMFLOAT3(0, 0, 8));
+	box1->SetScale(2, 2, 2);
+	box1->AddComponent<RigidBody>(20.0f);
 	box1->AddComponent<BoxCollider>(box1->GetScale(), 
-		resourceManager->GetPhysicsMaterial("bouncy"));
+		resourceManager->GetPhysicsMaterial("solid"));
 
 	//Create box2
 	GameObject* box2 = new GameObject("Box2");
@@ -276,32 +285,22 @@ void Game::CreateEntities()
 		resourceManager->GetMesh("Assets\\Models\\Basic\\cube.obj"),
 		resourceManager->GetMaterial("white")
 		);
-	box2->MoveAbsolute(XMFLOAT3(0, 3.5f, 8));
-	box2->SetScale(3, 3, 3);
-	box2->AddComponent<RigidBody>(1.0f);
-	col = box2->AddComponent<BoxCollider>(box2->GetScale());
+	box2->MoveAbsolute(XMFLOAT3(0, 2, 8));
+	box2->SetScale(1, 1, 1);
+	rb = box2->AddComponent<RigidBody>(1.0f);
+	box2->AddComponent<BoxCollider>(box2->GetScale(),
+		resourceManager->GetPhysicsMaterial("solid"))
+		->AddCallbackCollisionEnter(std::function<void(Collision)>(OnCol));
 
-	//Create sphere
-	GameObject* sphere = new GameObject("Sphere");
-	sphere->AddComponent<MeshRenderer>(
-		resourceManager->GetMesh("Assets\\Models\\Basic\\sphere.obj"),
+	//Create box3
+	GameObject* box3 = new GameObject("Box3");
+	box3->AddComponent<MeshRenderer>(
+		resourceManager->GetMesh("Assets\\Models\\Basic\\cube.obj"),
 		resourceManager->GetMaterial("white")
 		);
-	sphere->MoveAbsolute(XMFLOAT3(3, 3.5f, 4));
-	sphere->SetScale(2, 2, 2);
-	sphere->AddComponent<RigidBody>(1.0f);
-	sphere->AddComponent<SphereCollider>(1.0f);
-
-	//Create Capsule
-	GameObject* capsule = new GameObject("Capsule");
-	capsule->AddComponent<MeshRenderer>(
-		resourceManager->GetMesh("Assets\\Models\\Basic\\cylinder.obj"),
-		resourceManager->GetMaterial("white")
-		);
-	capsule->MoveAbsolute(XMFLOAT3(-3, 3.5f, 4));
-	capsule->SetScale(2.0f, 4.0f, 2.0f);
-	capsule->AddComponent<RigidBody>(1.0f);
-	capsule->AddComponent<CapsuleCollider>(1.0f, 2.0f, CapsuleDirection::Y);
+	box3->SetScale(0.5f, 0.5f, 0.5f);
+	box3->SetParent(box2);
+	box3->SetLocalPosition(0, 2, 0);
 }
 
 // --------------------------------------------------------
@@ -319,6 +318,15 @@ void Game::OnResize()
 		(float)width / height,	// Aspect ratio
 		0.1f,				  	// Near clip plane distance
 		100.0f);			  	// Far clip plane distance
+}
+
+// --------------------------------------------------------
+// Update your game at a fixed time interval here - physics
+// --------------------------------------------------------
+void Game::FixedUpdate(float constantStepSize, float totalTime)
+{
+	//Update physics
+	physicsManager->Simulate(constantStepSize);
 }
 
 // --------------------------------------------------------
@@ -346,9 +354,7 @@ void Game::Update(float deltaTime, float totalTime)
 
 	if (inputManager->GetKey('F'))
 	{
-		col->SetSize(1, 1, 1);
-		col->gameObject()->SetScale(1, 1, 1);
-		col->SetPhysicsMaterial(resourceManager->GetPhysicsMaterial("bouncy"));
+		rb->AddForce(0, 10, 0);
 	}
 
 	if (inputManager->GetKey('G'))
@@ -367,8 +373,6 @@ void Game::Update(float deltaTime, float totalTime)
 
 	//All game code goes above
 	// --------------------------------------------------------
-	//Update physics
-	physicsManager->Simulate(deltaTime);
 
 	//The only call to Update() for the InputManager
 	//Update for next frame

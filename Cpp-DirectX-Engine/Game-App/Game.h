@@ -28,6 +28,7 @@ public:
 	// will be called automatically
 	void Init();
 	void OnResize();
+	void FixedUpdate(float constantStepSize, float totalTime);
 	void Update(float deltaTime, float totalTime);
 	void Draw(float deltaTime, float totalTime);
 
@@ -50,7 +51,7 @@ private:
 	ID3D11SamplerState* samplerState;
 	ID3D11SamplerState* shadowSampler;
 
-	BoxCollider* col;
+	RigidBody* rb;
 
 	//Transformation modifiers
 	float position;

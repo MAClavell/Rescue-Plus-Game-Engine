@@ -35,7 +35,7 @@ PxFilterFlags CollisionFilterShader(
 		return PxFilterFlag::eDEFAULT;
 	}
 	// generate contacts for all that were not filtered above
-	pairFlags = PxPairFlag::eCONTACT_DEFAULT;
+	pairFlags = PxPairFlag::eCONTACT_DEFAULT | PxPairFlag::eNOTIFY_TOUCH_FOUND;
 
 	// trigger the contact callback for pairs (A,B) where 
 	// the filtermask of A contains the ID of B and vice versa.
@@ -95,12 +95,17 @@ void PhysicsManager::Init()
 #endif
 }
 
-void PhysicsManager::onContact(const physx::PxContactPairHeader & pairHeader, const physx::PxContactPair * pairs, physx::PxU32 nbPairs)
+void PhysicsManager::onContact(const physx::PxContactPairHeader & pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs)
 {
-	int i = 5;
+	Collider* shape1 = (Collider*)(pairs->shapes[0]->userData);
+	Collider* shape2 = (Collider*)(pairs->shapes[1]->userData);
+
+	//Send collisions
+	shape1->AddCollision(Collision(shape2));
+	shape2->AddCollision(Collision(shape2));
 }
 
-void PhysicsManager::onTrigger(physx::PxTriggerPair * pairs, physx::PxU32 count)
+void PhysicsManager::onTrigger(PxTriggerPair* pairs, PxU32 count)
 {
 }
 
@@ -116,16 +121,7 @@ static void UpdateRigidBody(Job* job, const void* userData)
 
 bool PhysicsManager::Simulate(float deltaTime)
 {
-	static float accumulator = 0.0f;
-	static float stepSize = 1.0f / 60.0f;
-
-	accumulator += deltaTime;
-	if (accumulator < stepSize)
-		return false;
-
-	accumulator -= stepSize;
-
-	scene->simulate(stepSize);
+	scene->simulate(deltaTime);
 	scene->fetchResults(true);
 
 	// retrieve array of actors that moved
@@ -142,6 +138,12 @@ bool PhysicsManager::Simulate(float deltaTime)
 	}
 	JobSystem::Run(root);
 	JobSystem::Wait(root);
+
+	// resolve collisions
+	for (PxU32 i = 0; i < nbActiveActors; ++i)
+	{
+		PxRigidBody* rb = static_cast<PxRigidBody*>(activeActors[i]);
+	}
 
 	return true;
 }

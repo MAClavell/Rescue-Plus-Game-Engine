@@ -38,6 +38,7 @@
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Camera.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Collider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Messenger.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Job.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)JobSystem.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MeshRenderer.h" />

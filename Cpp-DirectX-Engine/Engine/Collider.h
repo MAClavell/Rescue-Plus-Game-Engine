@@ -1,8 +1,18 @@
 #pragma once
 #include "PhysicsMaterial.h"
 #include "RigidBody.h"
+#include "Messenger.hpp"
 
 enum class ColliderType { Box = 0, Sphere = 1, Capsule = 2 };
+
+class Collider;
+struct Collision
+{
+	Collider* other;
+
+	Collision(Collider* other)
+		: other(other) {}
+};
 
 // --------------------------------------------------------
 // The base collider class
@@ -37,9 +47,21 @@ protected:
 	void ReAttach();
 
 private:
+	struct CollisionResolveInfo
+	{
+		Collision col;
+		bool first;
+
+		CollisionResolveInfo(Collision col) : col(col), first(true) { }
+	};
+
 	ColliderType type;
 	RigidBody* attachedRigidBody;
 	physx::PxShape* shape;
+	std::vector<CollisionResolveInfo> collisions;
+	Messenger<Collision> collisionEnter;
+	Messenger<Collision> collisionStay;
+	Messenger<Collision> collisionExit;
 
 	// --------------------------------------------------------
 	// DeAttach this collider from it's rigidbody
@@ -84,6 +106,19 @@ public:
 	// --------------------------------------------------------
 	void SetPhysicsMaterial(PhysicsMaterial* physicsMaterial);
 
+	// --------------------------------------------------------
+	// CALLED BY ENGINE FUNCTIONS ONLY
+	// Notify the collider that it has a collision
+	// --------------------------------------------------------
+	void AddCollision(Collision collisionInfo);
+
+	// --------------------------------------------------------
+	// CALLED BY ENGINE FUNCTIONS ONLY
+	// Call OnCollision or OnTrigger functions
+	// --------------------------------------------------------
+	void ResolveCollisions();
+
+	void AddCallbackCollisionEnter(std::function<void(Collision)> func);
 };
 
 // --------------------------------------------------------
