@@ -52,9 +52,9 @@ private:
 	DirectX::XMFLOAT3 upAxis;
 
 	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT3 localPosition;
+	DirectX::XMFLOAT3 relativePosition;
 	DirectX::XMFLOAT4 rotation;
-	DirectX::XMFLOAT4 localRotation;
+	DirectX::XMFLOAT4 relativeRotation;
 	DirectX::XMFLOAT3 scale;
 	bool worldDirty;
 
@@ -77,7 +77,7 @@ private:
 	// newPosition - The new position to go to
 	// fromRigidBody - If this position setting is from a rigidbody
 	// --------------------------------------------------------
-	void SetPosition(DirectX::XMFLOAT3 newPosition, bool setLocal, bool fromRigidBody = false);
+	void SetPosition(DirectX::XMFLOAT3 newPosition, bool setRelative, bool fromRigidBody = false);
 
 	// --------------------------------------------------------
 	// Set the rotation for this GameObject (Quaternion)
@@ -85,7 +85,7 @@ private:
 	// newQuatRotation - The new rotation to rotate to
 	// fromRigidBody - If this position setting is from a rigidbody
 	// --------------------------------------------------------
-	void SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool setLocal, bool fromRigidBody = false);
+	void SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool setRelative, bool fromRigidBody = false);
 
 	// --------------------------------------------------------
 	// Update transformations after parent's transformations changed
@@ -103,7 +103,7 @@ private:
 	void ParentScaleChanged();
 
 	// --------------------------------------------------------
-	// Calculate the local axis for the gameobject
+	// Calculate the relative axis for the gameobject
 	// --------------------------------------------------------
 	void CalculateAxis();
 
@@ -264,9 +264,9 @@ public:
 	DirectX::XMFLOAT3 GetPosition();
 
 	// --------------------------------------------------------
-	// Get the local position for this GameObject
+	// Get the relative position for this GameObject
 	// --------------------------------------------------------
-	DirectX::XMFLOAT3 GetLocalPosition();
+	DirectX::XMFLOAT3 GetRelativePosition();
 
 	// --------------------------------------------------------
 	// CALLED BY ENGINE FUNCTIONS ONLY
@@ -293,20 +293,20 @@ public:
 	void SetPosition(float x, float y, float z);
 
 	// --------------------------------------------------------
-	// Set the local position for this GameObject
+	// Set the relative position for this GameObject
 	//
-	// newLocalPosition - The new local position to go to
+	// newRelativePosition - The new relative position to go to
 	// --------------------------------------------------------
-	void SetLocalPosition(DirectX::XMFLOAT3 newLocalPosition);
+	void SetRelativePosition(DirectX::XMFLOAT3 newRelativePosition);
 
 	// --------------------------------------------------------
-	// Set the local position for this GameObject
+	// Set the relative position for this GameObject
 	//
 	// x - new x position
 	// y - new y position
 	// z - new z position
 	// --------------------------------------------------------
-	void SetLocalPosition(float x, float y, float z);
+	void SetRelativePosition(float x, float y, float z);
 
 	// --------------------------------------------------------
 	// Moves this GameObject in absolute space by a given vector.
@@ -345,9 +345,9 @@ public:
 	DirectX::XMFLOAT4 GetRotation();
 
 	// --------------------------------------------------------
-	// Get the local rotation for this GameObject (Quaternion)
+	// Get the relative rotation for this GameObject (Quaternion)
 	// --------------------------------------------------------
-	DirectX::XMFLOAT4 GetLocalRotation();
+	DirectX::XMFLOAT4 GetRelativeRotation();
 
 	// --------------------------------------------------------
 	// CALLED BY ENGINE FUNCTIONS ONLY
@@ -397,27 +397,27 @@ public:
 	void Rotate(float x, float y, float z);
 
 	// --------------------------------------------------------
-	// Set the local rotation for this GameObject (Quaternion)
+	// Set the relative rotation for this GameObject (Quaternion)
 	//
 	// newQuatRotation - The new rotation to rotate to
 	// --------------------------------------------------------
-	void SetLocalRotation(DirectX::XMFLOAT4 newLocalQuatRotation);
+	void SetRelativeRotation(DirectX::XMFLOAT4 newRelativeQuatRotation);
 
 	// --------------------------------------------------------
-	// Set the local rotation for this GameObject (Angles)
+	// Set the relative rotation for this GameObject (Angles)
 	//
 	// newRotation - The new rotation to rotate to
 	// --------------------------------------------------------
-	void SetLocalRotation(DirectX::XMFLOAT3 newLocalRotation);
+	void SetRelativeRotation(DirectX::XMFLOAT3 newRelativeRotation);
 
 	// --------------------------------------------------------
-	// Set the local rotation for this GameObject using angles
+	// Set the relative rotation for this GameObject using angles
 	//
 	// x - x angle
 	// y - y angle
 	// z - z angle
 	// --------------------------------------------------------
-	void SetLocalRotation(float x, float y, float z);
+	void SetRelativeRotation(float x, float y, float z);
 
 	// --------------------------------------------------------
 	// Get the scale for this GameObject
