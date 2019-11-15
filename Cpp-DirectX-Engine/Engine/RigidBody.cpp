@@ -35,8 +35,8 @@ RigidBody::~RigidBody()
 void RigidBody::UpdateWorldPosition()
 {
 	PxTransform tr = body->getGlobalPose();
-	gameObject()->SetPositionFromRigidBody(Vec3ToFloat3(tr.p));
 	gameObject()->SetRotationFromRigidBody(QuatToFloat4(tr.q));
+	gameObject()->SetPositionFromRigidBody(Vec3ToFloat3(tr.p));
 }
 
 // Update the gameobject's rigidbody from it's world position

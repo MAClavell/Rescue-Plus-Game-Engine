@@ -52,6 +52,7 @@ private:
 	ID3D11SamplerState* shadowSampler;
 
 	RigidBody* rb;
+	GameObject* child;
 
 	//Transformation modifiers
 	float position;

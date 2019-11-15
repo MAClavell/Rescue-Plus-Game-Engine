@@ -82,7 +82,12 @@ void GameObject::SetParent(GameObject* parent)
 	this->parent = parent;
 
 	if (this->parent != nullptr)
+	{
 		this->parent->AddChild(this);
+		XMStoreFloat3(&localPosition, 
+			XMVectorSubtract(XMLoadFloat3(&position), XMLoadFloat3(&parent->GetPosition())));
+	}
+	else localPosition = position;
 }
 
 // Get the parent of this GameObject
@@ -153,7 +158,7 @@ void GameObject::RebuildWorld()
 	XMMATRIX translation = XMMatrixTranslationFromVector(XMLoadFloat3(&position));
 
 	//Get rotation matrix
-	XMMATRIX rotating = XMMatrixRotationQuaternion(XMLoadFloat4(&rotationQuat));
+	XMMATRIX rotating = XMMatrixRotationQuaternion(XMLoadFloat4(&rotation));
 
 	//Get scale matrix
 	XMMATRIX scaling = XMMatrixScalingFromVector(XMLoadFloat3(&scale));
@@ -168,20 +173,27 @@ void GameObject::RebuildWorld()
 	worldDirty = false;
 }
 
-// Update transformations after parent's transformations changed
-void GameObject::ParentPositionChanged()
-{
-	XMFLOAT3 newPos;
-	XMStoreFloat3(&newPos, XMVectorAdd(XMLoadFloat3(&parent->position), XMLoadFloat3(&localPosition)));
-	SetPosition(newPos);
-}
+//// Update transformations after parent's transformations changed
+//void GameObject::ParentPositionChanged()
+//{
+//	XMFLOAT3 newPos;
+//	XMStoreFloat3(&newPos, XMVectorAdd(XMLoadFloat3(&parent->position), XMLoadFloat3(&localPosition)));
+//	SetPosition(newPos);
+//}
 
 // Update transformations after parent's transformations changed
 void GameObject::ParentRotationChanged()
 {
-	XMFLOAT4 newRot;
-	XMStoreFloat4(&newRot, XMQuaternionMultiply(XMLoadFloat4(&parent->rotationQuat), XMLoadFloat4(&rotationQuat)));
-	SetRotation(newRot);
+	//XMFLOAT4 newRot;
+	//XMStoreFloat4(&newRot, XMQuaternionMultiply(XMLoadFloat4(&parent->rotation), XMLoadFloat4(&rotation)));
+	//SetRotation(newRot, false);
+	SetLocalRotation(GetLocalRotation());
+
+	//Position must be re-rotated
+	//XMFLOAT3 rotatedNewPos;
+	//XMStoreFloat3(&rotatedNewPos, XMVector3Rotate(XMLoadFloat3(&position),
+//		XMLoadFloat4(&parent->rotation)));
+//	this->SetPosition(rotatedNewPos, false);
 }
 
 // Update transformations after parent's transformations changed
@@ -198,12 +210,19 @@ XMFLOAT3 GameObject::GetPosition()
 	return position;
 }
 
+// Get the local position for this GameObject
+DirectX::XMFLOAT3 GameObject::GetLocalPosition()
+{
+	return localPosition;
+}
+
 // Set the position for this GameObject
-void GameObject::SetPosition(XMFLOAT3 newPosition, bool fromRigidBody)
+void GameObject::SetPosition(XMFLOAT3 newPosition, bool setLocal, bool fromRigidBody)
 {
 	worldDirty = true;
 	position = newPosition;
 
+	//Update the rigidbody's position
 	//TODO: Implement a better way to update the rigidbody's position
 	//Events and delegates?
 	if (!fromRigidBody)
@@ -213,48 +232,63 @@ void GameObject::SetPosition(XMFLOAT3 newPosition, bool fromRigidBody)
 			rb->UpdateRigidbodyPosition();
 	}
 
+	//Update the local position
+	if (setLocal)
+	{
+		if (parent != nullptr)
+		{
+			XMVECTOR rotatedPos = XMVector3Rotate(XMLoadFloat3(&position), XMLoadFloat4(&rotation));
+			XMStoreFloat3(&localPosition,
+				XMVectorSubtract(rotatedPos, XMLoadFloat3(&parent->GetLocalPosition())));
+		}
+		else localPosition = position;
+	}
+
 	//Update transforms of all children
 	for (auto c : children)
 	{
-		c->ParentPositionChanged();
+		c->SetLocalPosition(c->GetLocalPosition());
 	}
 }
 
 // Set the position for this GameObject from a rigidbody
 void GameObject::SetPositionFromRigidBody(XMFLOAT3 newPosition)
 {
-	SetPosition(newPosition, true);
+	SetPosition(newPosition, true, true);
 }
 
 // Set the position for this GameObject
 void GameObject::SetPosition(XMFLOAT3 newPosition)
 {
-	SetPosition(newPosition, false);
+	SetPosition(newPosition, true);
 }
 
 // Set the position for this GameObject
 void GameObject::SetPosition(float x, float y, float z)
 {
-	SetPosition(XMFLOAT3(x, y, z), false);
+	SetPosition(XMFLOAT3(x, y, z), true);
 }
 
 // Set the local position for this GameObject
 void GameObject::SetLocalPosition(XMFLOAT3 newLocalPosition)
 {
-	localPosition = newLocalPosition;
-
-	XMFLOAT3 newPos;
 	if (parent != nullptr)
 	{
-		XMStoreFloat3(&newPos,
-			XMVectorAdd(XMLoadFloat3(&parent->GetPosition()), XMLoadFloat3(&localPosition)));
+		localPosition = newLocalPosition;
+		XMFLOAT3 rotatedWorldPos;
+		XMVECTOR rotated = XMVector3Rotate(XMLoadFloat3(&localPosition),
+			XMLoadFloat4(&rotation));
+		XMStoreFloat3(&rotatedWorldPos,
+			XMVectorAdd(XMLoadFloat3(&parent->GetPosition()), rotated));
+		SetPosition(rotatedWorldPos, false);
 	}
 	else
 	{
-		XMStoreFloat3(&newPos,
-			XMVectorAdd(XMLoadFloat3(&position), XMLoadFloat3(&localPosition)));
+		XMFLOAT3 rotatedNewPos;
+		XMStoreFloat3(&rotatedNewPos, XMVector3Rotate(XMLoadFloat3(&newLocalPosition),
+			XMLoadFloat4(&rotation)));
+		this->SetPosition(rotatedNewPos, true);
 	}
-	this->SetPosition(newPos, false);
 }
 
 // Set the local position for this GameObject
@@ -280,7 +314,7 @@ void GameObject::MoveRelative(XMFLOAT3 moveAmnt)
 {
 	// Rotate the movement vector
 	XMVECTOR move = XMVector3Rotate(XMLoadFloat3(&moveAmnt),
-		XMLoadFloat4(&rotationQuat));
+		XMLoadFloat4(&rotation));
 
 	//Add to position
 	XMFLOAT3 newPos;
@@ -309,17 +343,23 @@ XMFLOAT3 GameObject::GetUpAxis()
 // Get the quaternion rotation for this entity (Quaternion)
 DirectX::XMFLOAT4 GameObject::GetRotation()
 {
-	return rotationQuat;
+	return rotation;
+}
+
+DirectX::XMFLOAT4 GameObject::GetLocalRotation()
+{
+	return localRotation;
 }
 
 // Set the rotation for this GameObject (Quaternion)
-void GameObject::SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool fromRigidBody)
+void GameObject::SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool setLocal, bool fromRigidBody)
 {
 	worldDirty = true;
-	rotationQuat = newQuatRotation;
+	rotation = newQuatRotation;
 
 	CalculateAxis();
 
+	//Update the rigidbody's rotation
 	//TODO: Implement a better way to update the rigidbody's rotation
 	//Events and delegates?
 	if (!fromRigidBody)
@@ -327,6 +367,18 @@ void GameObject::SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool fromRigidBo
 		RigidBody* rb = this->GetComponent<RigidBody>();
 		if (rb)
 			rb->UpdateRigidbodyPosition();
+	}
+
+	//Update the local position
+	if (setLocal)
+	{
+		if (parent != nullptr)
+		{
+			XMStoreFloat4(&localRotation,
+				XMQuaternionMultiply(XMLoadFloat4(&rotation),
+					XMQuaternionInverse(XMLoadFloat4(&parent->GetLocalRotation()))));
+		}
+		else localRotation = rotation;
 	}
 
 	//Update transforms of all children
@@ -339,13 +391,13 @@ void GameObject::SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool fromRigidBo
 // Set the rotation for this GameObject (Quaternion) from a rigidbody
 void GameObject::SetRotationFromRigidBody(DirectX::XMFLOAT4 newQuatRotation)
 {
-	SetRotation(newQuatRotation, true);
+	SetRotation(newQuatRotation, true, true);
 }
 
 // Set the rotation for this GameObject (Quaternion)
 void GameObject::SetRotation(DirectX::XMFLOAT4 newQuatRotation)
 {
-	SetRotation(newQuatRotation, false);
+	SetRotation(newQuatRotation, true);
 }
 
 // Set the rotation for this GameObject (Quaternion)
@@ -355,7 +407,7 @@ void GameObject::SetRotation(XMFLOAT3 newRotation)
 	XMVECTOR angles = XMVectorScale(XMLoadFloat3(&newRotation), XM_PI / 180.0f);
 	XMFLOAT4 newRot;
 	XMStoreFloat4(&newRot, XMQuaternionRotationRollPitchYawFromVector(angles));
-	SetRotation(newRot, false);
+	SetRotation(newRot, true);
 }
 
 // Set the rotation for this GameObject using euler angles (Quaternion)
@@ -365,7 +417,7 @@ void GameObject::SetRotation(float x, float y, float z)
 	XMVECTOR angles = XMVectorScale(XMVectorSet(x, y, z, 0), XM_PI / 180.0f);
 	XMFLOAT4 newRot;
 	XMStoreFloat4(&newRot, XMQuaternionRotationRollPitchYawFromVector(angles));
-	SetRotation(newRot, false);
+	SetRotation(newRot, true);
 }
 
 // Rotate this GameObject (Angles)
@@ -375,8 +427,8 @@ void GameObject::Rotate(DirectX::XMFLOAT3 newRotation)
 	XMVECTOR quat = XMQuaternionRotationRollPitchYawFromVector(angles);
 
 	XMFLOAT4 rot;
-	XMStoreFloat4(&rot, XMQuaternionMultiply(XMLoadFloat4(&rotationQuat), quat));
-	SetRotation(rot, false);
+	XMStoreFloat4(&rot, XMQuaternionMultiply(XMLoadFloat4(&rotation), quat));
+	SetRotation(rot, true);
 }
 
 // Rotate this GameObject using angles
@@ -386,8 +438,42 @@ void GameObject::Rotate(float x, float y, float z)
 	XMVECTOR quat = XMQuaternionRotationRollPitchYawFromVector(angles);
 
 	XMFLOAT4 rot;
-	XMStoreFloat4(&rot, XMQuaternionMultiply(XMLoadFloat4(&rotationQuat), quat));
-	SetRotation(rot, false);
+	XMStoreFloat4(&rot, XMQuaternionMultiply(XMLoadFloat4(&rotation), quat));
+	SetRotation(rot, true);
+}
+
+// Set the local rotation for this GameObject (Quaternion)
+void GameObject::SetLocalRotation(XMFLOAT4 newLocalQuatRotation)
+{
+	if (parent != nullptr)
+	{
+		localRotation = newLocalQuatRotation;
+		XMFLOAT4 newRot;
+		XMStoreFloat4(&newRot,
+			XMQuaternionMultiply(XMLoadFloat4(&parent->GetRotation()), XMLoadFloat4(&localRotation)));
+		SetRotation(newRot, false);
+	}
+	else this->SetRotation(newLocalQuatRotation, true);
+}
+
+// Set the local rotation for this GameObject (Angles)
+void GameObject::SetLocalRotation(XMFLOAT3 newLocalRotation)
+{
+	//Convert to quaternions and store
+	XMVECTOR angles = XMVectorScale(XMLoadFloat3(&newLocalRotation), XM_PI / 180.0f);
+	XMFLOAT4 newRot;
+	XMStoreFloat4(&newRot, XMQuaternionRotationRollPitchYawFromVector(angles));
+	SetLocalRotation(newRot);
+}
+
+// Set the local rotation for this GameObject using angles
+void GameObject::SetLocalRotation(float x, float y, float z)
+{
+	//Convert to quaternions and store
+	XMVECTOR angles = XMVectorScale(XMVectorSet(x, y, z, 0), XM_PI / 180.0f);
+	XMFLOAT4 newRot;
+	XMStoreFloat4(&newRot, XMQuaternionRotationRollPitchYawFromVector(angles));
+	SetLocalRotation(newRot);
 }
 
 // Calculate the local axis for the gameobject
@@ -395,17 +481,17 @@ void GameObject::CalculateAxis()
 {
 	//Rotate the forward axis
 	XMVECTOR forward = XMVector3Normalize(
-		XMVector3Rotate(XMVectorSet(0, 0, 1, 0), XMLoadFloat4(&rotationQuat)));
+		XMVector3Rotate(XMVectorSet(0, 0, 1, 0), XMLoadFloat4(&rotation)));
 	XMStoreFloat3(&forwardAxis, forward);
 
 	//Rotate the right axis
 	XMVECTOR right = XMVector3Normalize(
-		XMVector3Rotate(XMVectorSet(1, 0, 0, 0), XMLoadFloat4(&rotationQuat)));
+		XMVector3Rotate(XMVectorSet(1, 0, 0, 0), XMLoadFloat4(&rotation)));
 	XMStoreFloat3(&rightAxis, right);
 
 	//Rotate the up axis
 	XMVECTOR up = XMVector3Normalize(
-		XMVector3Rotate(XMVectorSet(0, 1, 0, 0), XMLoadFloat4(&rotationQuat)));
+		XMVector3Rotate(XMVectorSet(0, 1, 0, 0), XMLoadFloat4(&rotation)));
 	XMStoreFloat3(&upAxis, up);
 }
 
