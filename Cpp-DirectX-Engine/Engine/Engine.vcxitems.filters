@@ -179,7 +179,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsManager.h">
       <Filter>Header Files\Physics</Filter>
     </ClInclude>
-    <ClInclude Include="D:\Documents\GitHub\Cpp-DirectX-Engine\Cpp-DirectX-Engine\Engine\Messenger.hpp">
+    <ClInclude Include="$(MSBuildThisFileDirectory)Messenger.hpp">
       <Filter>Header Files\Helpers</Filter>
     </ClInclude>
   </ItemGroup>

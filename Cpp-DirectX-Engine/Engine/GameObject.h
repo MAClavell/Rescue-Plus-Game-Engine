@@ -90,16 +90,6 @@ private:
 	// --------------------------------------------------------
 	// Update transformations after parent's transformations changed
 	// --------------------------------------------------------
-	//void ParentPositionChanged();
-
-	// --------------------------------------------------------
-	// Update transformations after parent's transformations changed
-	// --------------------------------------------------------
-	void ParentRotationChanged();
-	
-	// --------------------------------------------------------
-	// Update transformations after parent's transformations changed
-	// --------------------------------------------------------
 	void ParentScaleChanged();
 
 	// --------------------------------------------------------
