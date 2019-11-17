@@ -300,8 +300,8 @@ void Game::CreateEntities()
 		);
 	box3->SetScale(0.5f, 0.5f, 0.5f);
 	box3->SetParent(box2);
-	box3->SetRelativePosition(0, 1, 0);
-	box3->SetRelativeRotation(45, 0, 0);
+	box3->SetLocalPosition(0, 1, 0);
+	box3->SetLocalRotation(45, 0, 0);
 	child = box3;
 }
 
@@ -363,7 +363,7 @@ void Game::Update(float deltaTime, float totalTime)
 	{
 		static float x = 1;
 		x += 1 * deltaTime;
-		child->SetRelativePosition(0, x, 0);
+		child->SetLocalPosition(0, x, 0);
 	}
 
 	if (inputManager->GetKey('G'))
