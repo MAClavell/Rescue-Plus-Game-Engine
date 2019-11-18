@@ -143,6 +143,7 @@
       <BrowseInformation>true</BrowseInformation>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PreprocessorDefinitions>DEBUG_PHYSICS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Bscmake>
       <PreserveSbr>true</PreserveSbr>
@@ -164,6 +165,7 @@ xcopy "$(SolutionDir)Engine\PhysX\bin\*.*" "$(TargetDir)" /Y /I /E</Command>
       <BrowseInformation>true</BrowseInformation>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PreprocessorDefinitions>DEBUG_PHYSICS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Bscmake>
       <PreserveSbr>true</PreserveSbr>
@@ -205,6 +207,7 @@ xcopy "$(SolutionDir)Engine\PhysX\bin\*.*" "$(TargetDir)" /Y /I /E</Command>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <AdditionalIncludeDirectories>$(SolutionDir)Engine\PhysX\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -225,6 +228,7 @@ xcopy "$(SolutionDir)Engine\PhysX\bin\*.*" "$(TargetDir)" /Y /I /E</Command>
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MAT_Basic.cpp" />
     <ClCompile Include="MAT_PBRTexture.cpp" />
+    <ClCompile Include="TestCallbacks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DXCore.h" />
@@ -232,6 +236,7 @@ xcopy "$(SolutionDir)Engine\PhysX\bin\*.*" "$(TargetDir)" /Y /I /E</Command>
     <ClInclude Include="MAT_Basic.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="MAT_PBRTexture.h" />
+    <ClInclude Include="TestCallbacks.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl">

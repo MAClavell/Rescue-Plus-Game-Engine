@@ -12,6 +12,11 @@ Component::Component(GameObject* gameObject)
 	this->attatchedGameObject = gameObject;
 }
 
+//Have to put these here for the Collision definition
+void UserComponent::OnCollisionEnter(Collision collision) {}
+void UserComponent::OnCollisionStay(Collision collision) {}
+void UserComponent::OnCollisionExit(Collision collision) {}
+
 // Constructor - Set up the gameobject.
 GameObject::GameObject()
 {
@@ -113,6 +118,12 @@ void GameObject::RemoveChild(GameObject* child)
 	}
 }
 
+// Get the children of this gameobject
+std::vector<GameObject*> GameObject::GetChildren()
+{
+	return children;
+}
+
 // --------------------------------------------------------
 // Add a child to a gameobject
 // --------------------------------------------------------
@@ -121,12 +132,27 @@ void GameObject::AddChild(GameObject* child)
 	children.push_back(child);
 }
 
-// Update this entity
+// Get a readonly list of all user components
+const std::vector<UserComponent*>& GameObject::GetAllUserComponents()
+{
+	return userComponents;
+}
+
+// Update this component
 void GameObject::Update(float deltaTime)
 { 
 	for (auto c : components)
 	{
 		c->Update(deltaTime);
+	}
+}
+
+// Update this component at the fixed timestep
+void GameObject::FixedUpdate(float deltaTime)
+{
+	for (auto c : components)
+	{
+		c->FixedUpdate(deltaTime);
 	}
 }
 
@@ -170,12 +196,6 @@ void GameObject::RebuildWorld()
 	XMStoreFloat4x4(&worldInvTrans, XMMatrixInverse(&XMVectorSet(-1, -1, -1, -1), XMMatrixTranspose(newWorld)));
 
 	worldDirty = false;
-}
-
-// Update transformations after parent's transformations changed
-void GameObject::ParentScaleChanged()
-{
-
 }
 
 // Get the position for this GameObject

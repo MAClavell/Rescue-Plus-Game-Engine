@@ -1,35 +1,8 @@
 #pragma once
 #include <DirectXMath.h>
+#include "Component.h"
 #include <vector>
 #include <string>
-
-class GameObject;
-class Component
-{
-private:
-	GameObject* attatchedGameObject;
-
-public:
-	// --------------------------------------------------------
-	//Construct a component
-	// --------------------------------------------------------
-	Component(GameObject* gameObject);
-	
-	// --------------------------------------------------------
-	// Destroy a component
-	// --------------------------------------------------------
-	virtual ~Component() { }
-
-	// --------------------------------------------------------
-	// Update this component
-	// --------------------------------------------------------
-	virtual void Update(float deltaTime) {};
-
-	// --------------------------------------------------------
-	// Get the GameObject this component is tied to
-	// --------------------------------------------------------
-	GameObject* gameObject() { return attatchedGameObject; }
-};
 
 // --------------------------------------------------------
 // A GameObject definition.
@@ -60,6 +33,7 @@ private:
 
 	//Components
 	std::vector<Component*> components;
+	std::vector<UserComponent*> userComponents;
 
 	// --------------------------------------------------------
 	// Remove a child from a gameobject
@@ -86,11 +60,6 @@ private:
 	// fromRigidBody - If this position setting is from a rigidbody
 	// --------------------------------------------------------
 	void SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool setLocal, bool fromRigidBody = false);
-
-	// --------------------------------------------------------
-	// Update transformations after parent's transformations changed
-	// --------------------------------------------------------
-	void ParentScaleChanged();
 
 	// --------------------------------------------------------
 	// Calculate the local axis for the gameobject
@@ -154,6 +123,11 @@ public:
 	GameObject* GetParent();
 
 	// --------------------------------------------------------
+	// Get the children of this gameobject
+	// --------------------------------------------------------
+	std::vector<GameObject*> GetChildren();
+
+	// --------------------------------------------------------
 	// Add a component of a specific type (must derive from component)
 	// --------------------------------------------------------
 	template <typename T, typename... Args>
@@ -164,6 +138,10 @@ public:
 		//Push new T
 		T* component = new T(this, args...);
 		components.push_back(component);
+		if constexpr(std::is_base_of<UserComponent, T>())
+		{
+			userComponents.push_back(component);
+		}
 		return component;
 	}
 
@@ -200,22 +178,21 @@ public:
 	void RemoveComponent()
 	{
 		static_assert(std::is_base_of<Component, T>::value, "Can't remove a component not derived from Component\n");
+		bool isUC = std::is_base_of<UserComponent, T>::value;
 
 		//Try to find it
 		bool found = false;
+		T& c;
 		for (auto iter = components.begin(); iter != components.end(); iter++)
 		{
 			try
 			{
-				T& c = dynamic_cast<T&>(**iter); // try to cast
+				c = dynamic_cast<T&>(**iter); // try to cast
 				found = true;
 
 				//Swap with the last and pop
 				std::iter_swap(iter, components.end());
 				components.pop_back();
-
-				//Delete
-				delete c;
 				break;
 			}
 			catch (...)
@@ -223,14 +200,48 @@ public:
 			}
 		}
 
+		//Remove user components
+		if constexpr (std::is_base_of<UserComponent, T>() && found)
+		{
+			for (auto iter = userComponents.begin(); iter != userComponents.end(); iter++)
+			{
+				try
+				{
+					T& c = dynamic_cast<T&>(**iter); // try to cast
+
+					//Swap with the last and pop
+					std::iter_swap(iter, userComponents.end());
+					userComponents.pop_back();
+					break;
+				}
+				catch (...)
+				{
+				}
+			}
+		}
+
 		if (!found)
 			printf("Could not find a component of type '%s' in %s\n", typeid(T).name(), name.c_str());
+
+		//Delete
+		else
+			delete c;
 	}
+
+	// --------------------------------------------------------
+	// Get a readonly list of all user components
+	// --------------------------------------------------------
+	const std::vector<UserComponent*>& GetAllUserComponents();
 
 	// --------------------------------------------------------
 	// Update all componenets in this gameObject
 	// --------------------------------------------------------
-	virtual void Update(float deltaTime);
+	void Update(float deltaTime);
+
+	// --------------------------------------------------------
+	// Update all componenets in this gameObject
+	// --------------------------------------------------------
+	void FixedUpdate(float deltaTime);
 
 	// --------------------------------------------------------
 	// Get the world matrix for this GameObject (rebuilding if necessary)

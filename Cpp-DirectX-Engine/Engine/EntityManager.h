@@ -66,10 +66,13 @@ public:
 	// --------------------------------------------------------
 	void RemoveEntity(GameObject* entity, bool deleteEntity = true);
 
-	// --------------------------------------
-
 	// --------------------------------------------------------
 	// Run Update() for all entities in the manager
 	// --------------------------------------------------------
 	void Update(float deltaTime);
+
+	// --------------------------------------------------------
+	// Run FixedUpdate() for all entities in the manager
+	// --------------------------------------------------------
+	void FixedUpdate(float deltaTime);
 };

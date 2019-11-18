@@ -5,7 +5,7 @@
 // --------------------------------------------------------
 // A first person camera definition. Includes flying movement
 // --------------------------------------------------------
-class DebugMovement : public Component
+class DebugMovement : public UserComponent
 {
 private:
 	InputManager* inputManager;

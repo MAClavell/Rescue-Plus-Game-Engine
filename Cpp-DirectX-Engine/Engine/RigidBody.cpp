@@ -8,7 +8,8 @@ using namespace DirectX;
 RigidBody::RigidBody(GameObject* gameObject, float mass) : Component::Component(gameObject)
 {
 	PxPhysics* physics = PhysicsManager::GetInstance()->GetPhysics();
-	
+	collisionResolver = new CollisionResolver();
+
 	//Create body
 	PxTransform tr;
 	tr.p = Float3ToVec3(gameObject->GetPosition());
@@ -16,10 +17,8 @@ RigidBody::RigidBody(GameObject* gameObject, float mass) : Component::Component(
 	body = physics->createRigidDynamic(tr);
 	body->setMass(mass);
 
-	//See if there is already a collider attached to this gameobject
-	Collider* collider = gameObject->GetComponent<Collider>();
-	if (collider != nullptr)
-		collider->Attach(this);
+	//See if there is already a collider attached to this or any child gameobjects
+	FindChildrenColliders(gameObject);
 	
 	//Add to the scene
 	body->userData = this;
@@ -29,6 +28,36 @@ RigidBody::RigidBody(GameObject* gameObject, float mass) : Component::Component(
 RigidBody::~RigidBody()
 {
 	PhysicsManager::GetInstance()->RemoveRigidBody(this);
+	if (collisionResolver != nullptr)
+		delete collisionResolver;
+}
+
+// Attach all children colliders to this GO
+void RigidBody::FindChildrenColliders(GameObject* go, bool first)
+{
+	//If there's a rigidbody in a children, ignore all those colliders
+	if (!first)
+	{
+		RigidBody* rb = go->GetComponent<RigidBody>();
+		if (rb != nullptr)
+			return;
+	}
+	
+	Collider* col = go->GetComponent<Collider>();
+	if (col != nullptr)
+	{
+		col->Attach(this);
+	}
+
+	for each (GameObject* c in go->GetChildren())
+	{
+		FindChildrenColliders(c, false);
+	}
+}
+
+void RigidBody::FixedUpdate(float deltaTime)
+{
+	collisionResolver->ResolveCollisions(gameObject()->GetAllUserComponents());
 }
 
 // Update the gameobject's world position from an inputted transform
@@ -111,4 +140,12 @@ float RigidBody::GetMaxLinearVelocity()
 void RigidBody::SetMaxLinearVelocity(float max)
 {
 	body->setMaxLinearVelocity(max);
+}
+
+// --------------------------------------------------------
+// WARNING: THIS IS FOR INTERNAL ENGINE USE ONLY. DO NOT USE
+// Get the collision resolver for this rigidbody.
+CollisionResolver* RigidBody::GetCollisionResolver()
+{
+	return collisionResolver;
 }

@@ -20,12 +20,15 @@ Collider::Collider(GameObject* gameObject, ColliderType type,
 	this->type = type;
 	this->physicsMaterial = physicsMaterial;
 	this->center = center;
+	collisionResolver = new CollisionResolver();
 }
 
 Collider::~Collider()
 {
 	if (shape != nullptr)
 		shape->release();
+	if (collisionResolver != nullptr)
+		delete collisionResolver;
 }
 
 // Get the rigidbody this collider is attached to (null if none)
@@ -35,13 +38,21 @@ RigidBody* Collider::GetAttachedRigidBody()
 }
 
 // Search to see if there is already a rigidbody we can attach to
-void Collider::FindInitialRigidBody(GameObject* gameObject)
+void Collider::FindParentRigidBody()
 {
 	//Try to find a rigidbody to attach to
-	RigidBody* rigidBody = gameObject->GetComponent<RigidBody>();
-	if (rigidBody != nullptr)
-		Attach(rigidBody);
-	else attachedRigidBody = nullptr;
+	GameObject* go = gameObject();
+	while (go != nullptr)
+	{
+		RigidBody* rigidBody = go->GetComponent<RigidBody>();
+		if (rigidBody != nullptr)
+		{
+			Attach(rigidBody);
+			break;
+		}
+		go = go->GetParent();
+	}
+
 }
 
 // DeAttach this collider to a rigidbody
@@ -54,6 +65,12 @@ void Collider::DeAttach()
 	}
 	if (shape != nullptr)
 		shape->release();
+}
+
+// Update collisions
+void Collider::FixedUpdate(float deltaTime)
+{
+	collisionResolver->ResolveCollisions(gameObject()->GetAllUserComponents());
 }
 
 // Attach this collider to a rigidbody
@@ -111,41 +128,11 @@ void Collider::SetPhysicsMaterial(PhysicsMaterial* physicsMaterial)
 	ReAttach();
 }
 
-// CALLED BY ENGINE FUNCTIONS ONLY
-// Notify the collider that it has a collision
-void Collider::AddCollision(Collision collisionInfo)
+// WARNING: THIS IS FOR INTERNAL ENGINE USE ONLY. DO NOT USE
+// Get the collision resolver for this collider.
+CollisionResolver* Collider::GetCollisionResolver()
 {
-	collisions.push_back(CollisionResolveInfo(collisionInfo));
-}
-
-// CALLED BY ENGINE FUNCTIONS ONLY
-// Call OnCollision or OnTrigger functions
-void Collider::ResolveCollisions()
-{
-	for (size_t i = collisions.size() - 1; i >= 0; i--)
-	{
-		CollisionResolveInfo colInfo = collisions[i];
-		
-		//Collision is entering
-		if (colInfo.first && collisionEnter.HasActions())
-		{
-			collisionEnter.Invoke(colInfo.col);
-			colInfo.first = false;
-		}
-		//Collision is staying
-		else if (!colInfo.first && collisionStay.HasActions())
-			collisionStay.Invoke(colInfo.col);
-		//Collision is exiting
-		else if (!colInfo.first && collisionExit.HasActions())
-		{
-			collisionExit.Invoke(colInfo.col);
-		}
-	}
-}
-
-void Collider::AddCallbackCollisionEnter(std::function<void(Collision)> func)
-{
-	return collisionEnter.AddListener(func);
+	return collisionResolver;
 }
 
 #pragma endregion
@@ -160,7 +147,7 @@ BoxCollider::BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size,
 	: Collider(gameObject, ColliderType::Box, physicsMaterial, center)
 {
 	this->size = size;
-	FindInitialRigidBody(gameObject); //has to be in derived constructor because of GenerateShape pure virtual
+	FindParentRigidBody(); //has to be in derived constructor because of GenerateShape pure virtual
 }
 
 // Get the size of the BoxCollider
@@ -209,7 +196,7 @@ SphereCollider::SphereCollider(GameObject* gameObject, float radius,
 	: Collider(gameObject, ColliderType::Sphere, physicsMaterial, center)
 {
 	this->radius = radius;
-	FindInitialRigidBody(gameObject);
+	FindParentRigidBody();
 }
 
 // Implementation of the abstract function for generating the collider's physx shape
@@ -253,7 +240,7 @@ CapsuleCollider::CapsuleCollider(GameObject* gameObject, float radius, float hei
 	this->radius = radius;
 	this->height = height;
 	this->dir = dir;
-	FindInitialRigidBody(gameObject);
+	FindParentRigidBody();
 }
 
 // Implementation of the abstract function for generating the collider's physx shape

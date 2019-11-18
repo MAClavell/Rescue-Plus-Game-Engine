@@ -5,15 +5,6 @@
 
 enum class ColliderType { Box = 0, Sphere = 1, Capsule = 2 };
 
-class Collider;
-struct Collision
-{
-	Collider* other;
-
-	Collision(Collider* other)
-		: other(other) {}
-};
-
 // --------------------------------------------------------
 // The base collider class
 //
@@ -35,11 +26,12 @@ protected:
 	// Abstract function for generating the collider's physx shape
 	// --------------------------------------------------------
 	virtual physx::PxShape* GenerateShape(physx::PxPhysics* physics) = 0;
-	
+
 	// --------------------------------------------------------
 	// Search to see if there is already a rigidbody we can attach to
+	// It'll attach to the first rigidbody it finds in the parent chain
 	// --------------------------------------------------------
-	void FindInitialRigidBody(GameObject* gameObject);
+	void FindParentRigidBody();
 
 	// --------------------------------------------------------
 	// Re-calculate the shape and re-attach this collider to a rigidbody
@@ -47,26 +39,20 @@ protected:
 	void ReAttach();
 
 private:
-	struct CollisionResolveInfo
-	{
-		Collision col;
-		bool first;
-
-		CollisionResolveInfo(Collision col) : col(col), first(true) { }
-	};
-
 	ColliderType type;
 	RigidBody* attachedRigidBody;
 	physx::PxShape* shape;
-	std::vector<CollisionResolveInfo> collisions;
-	Messenger<Collision> collisionEnter;
-	Messenger<Collision> collisionStay;
-	Messenger<Collision> collisionExit;
+	CollisionResolver* collisionResolver;
 
 	// --------------------------------------------------------
 	// DeAttach this collider from it's rigidbody
 	// --------------------------------------------------------
 	void DeAttach();
+
+	// --------------------------------------------------------
+	// Update collisions
+	// --------------------------------------------------------
+	void FixedUpdate(float deltaTime) override;
 
 public:
 	// --------------------------------------------------------
@@ -107,18 +93,10 @@ public:
 	void SetPhysicsMaterial(PhysicsMaterial* physicsMaterial);
 
 	// --------------------------------------------------------
-	// CALLED BY ENGINE FUNCTIONS ONLY
-	// Notify the collider that it has a collision
+	// WARNING: THIS IS FOR INTERNAL ENGINE USE ONLY. DO NOT USE
+	// Get the collision resolver for this collider.
 	// --------------------------------------------------------
-	void AddCollision(Collision collisionInfo);
-
-	// --------------------------------------------------------
-	// CALLED BY ENGINE FUNCTIONS ONLY
-	// Call OnCollision or OnTrigger functions
-	// --------------------------------------------------------
-	void ResolveCollisions();
-
-	void AddCallbackCollisionEnter(std::function<void(Collision)> func);
+	CollisionResolver* GetCollisionResolver();
 };
 
 // --------------------------------------------------------

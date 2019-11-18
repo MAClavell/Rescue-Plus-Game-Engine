@@ -7,6 +7,7 @@
 #include "MAT_Basic.h"
 #include "DebugMovement.h"
 #include "JobSystem.h"
+#include "TestCallbacks.h"
 
 // For the DirectX Math library
 using namespace DirectX;
@@ -242,12 +243,6 @@ void Game::LoadAssets()
 	resourceManager->AddPhysicsMaterial("solid", pMat_solid);
 }
 
-//TODO: REMOVE AFTER TESTING
-void OnCol(Collision c)
-{
-	printf(c.other->gameObject()->GetName().c_str());
-}
-
 void Game::CreateEntities()
 {
 	//Create the camera and initialize matrices
@@ -289,8 +284,8 @@ void Game::CreateEntities()
 	box2->SetScale(1, 1, 1);
 	rb = box2->AddComponent<RigidBody>(1.0f);
 	box2->AddComponent<BoxCollider>(box2->GetScale(),
-		resourceManager->GetPhysicsMaterial("solid"))
-		->AddCallbackCollisionEnter(std::function<void(Collision)>(OnCol));
+		resourceManager->GetPhysicsMaterial("solid"));
+	box2->AddComponent<TestCallbacks>();
 
 	//Create box3
 	GameObject* box3 = new GameObject("Box3");
@@ -329,6 +324,9 @@ void Game::FixedUpdate(float constantStepSize, float totalTime)
 {
 	//Update physics
 	physicsManager->Simulate(constantStepSize);
+
+	//FixedUpdate entities
+	entityManager->FixedUpdate(constantStepSize);
 }
 
 // --------------------------------------------------------

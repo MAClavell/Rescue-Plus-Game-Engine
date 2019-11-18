@@ -4,7 +4,7 @@
 using namespace DirectX;
 
 // Constructor - Set up the focus camera
-DebugMovement::DebugMovement(GameObject* gameObject) : Component(gameObject)
+DebugMovement::DebugMovement(GameObject* gameObject) : UserComponent(gameObject)
 {
 	inputManager = InputManager::GetInstance();
 }

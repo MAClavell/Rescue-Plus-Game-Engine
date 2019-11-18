@@ -1,6 +1,7 @@
 #pragma once
-#include "GameObject.h"
 #include <PxPhysicsAPI.h>
+#include "GameObject.h"
+#include "CollisionResolver.h"
 
 // --------------------------------------------------------
 // A rigid body definition.
@@ -11,6 +12,17 @@ class RigidBody : public Component
 {
 private:
 	physx::PxRigidDynamic* body;
+	CollisionResolver* collisionResolver;
+
+	// --------------------------------------------------------
+	// Attach all children colliders to this GO
+	// --------------------------------------------------------
+	void FindChildrenColliders(GameObject*, bool first = true);
+
+	// --------------------------------------------------------
+	// Update collisions
+	// --------------------------------------------------------
+	void FixedUpdate(float deltaTime) override;
 
 public:
 	RigidBody(GameObject* gameObject, float mass);
@@ -89,5 +101,11 @@ public:
 	// Set the maximum linear velocity for this rigidbody
 	// --------------------------------------------------------
 	void SetMaxLinearVelocity(float max);
+
+	// --------------------------------------------------------
+	// WARNING: THIS IS FOR INTERNAL ENGINE USE ONLY. DO NOT USE
+	// Get the collision resolver for this rigidbody.
+	// --------------------------------------------------------
+	CollisionResolver* GetCollisionResolver();
 };
 

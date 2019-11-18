@@ -84,6 +84,26 @@ void EntityManager::RemoveEntity(GameObject* entity, bool deleteEntity)
 	return;
 }
 
+// Run FixedUpdate() for all entities in the manager
+void EntityManager::FixedUpdate(float deltaTime)
+{
+	//Update entities
+	for (size_t i = 0; i < entities.size(); i++)
+	{
+		if (entities[i] && entities[i]->GetEnabled())
+		{
+			entities[i]->FixedUpdate(deltaTime);
+		}
+	}
+
+	//Remove entities
+	for (size_t i = 0; i < remove_entities.size(); i++)
+	{
+		RemoveEntityFromList(remove_entities[i].e, remove_entities[i].release);
+	}
+	remove_entities.clear();
+}
+
 // Run Update() for all entities in the manager
 void EntityManager::Update(float deltaTime)
 {
