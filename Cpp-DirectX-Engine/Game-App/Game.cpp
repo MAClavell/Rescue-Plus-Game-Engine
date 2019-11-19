@@ -366,15 +366,15 @@ void Game::Update(float deltaTime, float totalTime)
 
 	if (inputManager->GetKey('G'))
 	{
-		GameObject* box2 = new GameObject("Box2");
-		box2->AddComponent<MeshRenderer>(
+		GameObject* box4 = new GameObject("Box4");
+		box4->AddComponent<MeshRenderer>(
 			resourceManager->GetMesh("Assets\\Models\\Basic\\cube.obj"),
 			resourceManager->GetMaterial("white")
 			);
-		box2->MoveAbsolute(XMFLOAT3(0, 8, 8));
-		box2->SetScale(1, 2, 2);
-		box2->AddComponent<RigidBody>(1.0f);
-		box2->AddComponent<BoxCollider>(box2->GetScale());
+		box4->MoveAbsolute(XMFLOAT3(0, 8, 8));
+		box4->SetScale(1, 2, 2);
+		box4->AddComponent<RigidBody>(1.0f);
+		box4->AddComponent<BoxCollider>(box4->GetScale());
 	}
 
 
