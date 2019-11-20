@@ -142,6 +142,7 @@ void PhysicsManager::onContact(const physx::PxContactPairHeader & pairHeader, co
 
 void PhysicsManager::onTrigger(PxTriggerPair* pairs, PxU32 count)
 {
+	
 }
 
 static void UpdateRigidBody(Job* job, const void* userData)
