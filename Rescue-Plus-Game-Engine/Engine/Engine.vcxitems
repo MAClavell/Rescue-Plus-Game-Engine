@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{d1d54c58-6246-45f0-85ee-fe8c76190775}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Camera.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Collider.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)CollisionResolver.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)JobSystem.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)MeshRenderer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)EntityManager.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)ExtendedMath.h" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)GameObject.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)InputManager.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)LightManager.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Lights.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Material.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)MAT_Skybox.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Mesh.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)PhysicsManager.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)PhysicsMaterial.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Renderer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)ResourceManager.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)RigidBody.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)SimpleShader.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)WorkStealingQueue.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Camera.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Collider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)CollisionResolver.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Component.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Messenger.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Job.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)JobSystem.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)MeshRenderer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)EntityManager.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)GameObject.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)InputManager.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)LightManager.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Lights.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Material.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)MAT_Skybox.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Mesh.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ParallelFor.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ParallelForSplitters.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsHelper.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsManager.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsMaterial.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Renderer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ResourceManager.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)RigidBody.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SimpleShader.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)StringHelper.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Vertex.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)WorkStealingQueue.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="$(MSBuildThisFileDirectory)..\Game-App\PS_Sky.hlsl">
+      <ShaderType>Pixel</ShaderType>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="$(MSBuildThisFileDirectory)..\Game-App\VS_Sky.hlsl">
+      <ShaderType>Vertex</ShaderType>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="$(MSBuildThisFileDirectory)PS_ColDebug.hlsl">
+      <ShaderType>Pixel</ShaderType>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="$(MSBuildThisFileDirectory)VS_ColDebug.hlsl">
+      <ShaderType>Vertex</ShaderType>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="$(MSBuildThisFileDirectory)VS_Shadow.hlsl">
+      <ShaderType>Vertex</ShaderType>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
+  </ItemGroup>
+</Project>
