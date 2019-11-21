@@ -2,7 +2,7 @@
 
 Rescue+ is a in-progress 3D game engine written in C++ using the DirectX 11 graphics api.
 
-The original Rescue engine was created for the [Snake on the Water](https://github.com/MAClavell/Snake-on-the-Water) project. Since then I have been solo working on the engine on my own time. My goal is to create an easy and optimized pure C++ environment for experiementing with gameplay programming.
+The original Rescue engine was created for the [Snake on the Water](https://github.com/MAClavell/Snake-on-the-Water) project. Since then I have been solo working on the engine on my own time and for IGME 550 (Game Engine Design and Development). My goal is to create an easy and optimized pure C++ environment for experiementing with gameplay programming.
 
 The current feature list (that I can remember, there's probably more) includes:
 * GameObject/Component system for ease of implementing and reusing behaviours.
