@@ -210,8 +210,8 @@ void DirectionalLight::CalculateViewMatrix()
 void DirectionalLight::CalculateProjMatrix()
 {
 	XMMATRIX proj = XMMatrixTranspose(XMMatrixOrthographicLH(
-		30,
-		30,
+		200,
+		200,
 		0.1f,
 		100));
 	XMStoreFloat4x4(&shadowProj, proj);

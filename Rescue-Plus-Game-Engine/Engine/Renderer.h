@@ -137,12 +137,12 @@ public:
 	// --------------------------------------------------------
 	// Tell the renderer to render a collider this frame
 	// --------------------------------------------------------
-	void AddDebugCubeToThisFrame(DirectX::XMFLOAT3 position, float size = 1);
+	void AddDebugCubeToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 scale);
 
 	// --------------------------------------------------------
 	// Tell the renderer to render a collider this frame
 	// --------------------------------------------------------
-	void AddDebugCubeToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, float size = 1);
+	void AddDebugCubeToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, DirectX::XMFLOAT3 scale);
 
 	// --------------------------------------------------------
 	// Tell the renderer to render a collider this frame

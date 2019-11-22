@@ -486,10 +486,10 @@ void Renderer::RemoveMeshRenderer(MeshRenderer* mr)
 }
 
 // Tell the renderer to render a collider this frame
-void Renderer::AddDebugCubeToThisFrame(DirectX::XMFLOAT3 position, float size)
+void Renderer::AddDebugCubeToThisFrame(XMFLOAT3 position, XMFLOAT3 scale)
 {
 	XMMATRIX translation = XMMatrixTranslationFromVector(XMLoadFloat3(&position));
-	XMMATRIX scaling = XMMatrixScalingFromVector(XMVectorSet(size, size, size, 0));
+	XMMATRIX scaling = XMMatrixScalingFromVector(XMLoadFloat3(&scale));
 	XMMATRIX world = XMMatrixTranspose(scaling * translation);
 	XMFLOAT4X4 cubeWorld;
 	XMStoreFloat4x4(&cubeWorld, world);
@@ -497,11 +497,11 @@ void Renderer::AddDebugCubeToThisFrame(DirectX::XMFLOAT3 position, float size)
 }
 
 // Tell the renderer to render a collider this frame
-void Renderer::AddDebugCubeToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, float size)
+void Renderer::AddDebugCubeToThisFrame(XMFLOAT3 position, XMFLOAT4 rotation, XMFLOAT3 scale)
 {
 	XMMATRIX translation = XMMatrixTranslationFromVector(XMLoadFloat3(&position));
 	XMMATRIX rot = XMMatrixRotationQuaternion(XMLoadFloat4(&rotation));
-	XMMATRIX scaling = XMMatrixScalingFromVector(XMVectorSet(size, size, size, 0));
+	XMMATRIX scaling = XMMatrixScalingFromVector(XMLoadFloat3(&scale));
 	XMMATRIX world = XMMatrixTranspose(scaling * rot * translation);
 	XMFLOAT4X4 cubeWorld;
 	XMStoreFloat4x4(&cubeWorld, world);

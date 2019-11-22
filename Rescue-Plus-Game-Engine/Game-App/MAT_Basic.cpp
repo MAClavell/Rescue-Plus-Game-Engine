@@ -6,6 +6,7 @@
 MAT_Basic::MAT_Basic(SimpleVertexShader* vertexShader, SimplePixelShader* pixelShader,
 	DirectX::XMFLOAT2 uvScale, ID3D11SamplerState* sampler,
 	ID3D11ShaderResourceView* albedo, ID3D11ShaderResourceView* normals,
+	ID3D11SamplerState* shadowSampler,
 	float roughness, float shininess)
 	: Material(vertexShader, pixelShader)
 {
@@ -15,7 +16,7 @@ MAT_Basic::MAT_Basic(SimpleVertexShader* vertexShader, SimplePixelShader* pixelS
 	this->roughness = roughness;
 	this->sampler = sampler;
 	this->uvScale = uvScale;
-	//this->shadowSampler = shadowSampler;
+	this->shadowSampler = shadowSampler;
 }
 
 // Release all data in the material
@@ -32,8 +33,8 @@ void MAT_Basic::PrepareMaterialCombo(GameObject* entityObj, Camera* cam)
 	vertexShader->SetMatrix4x4("projection", cam->GetProjectionMatrix());
 	vertexShader->SetMatrix4x4("view", cam->GetViewMatrix());
 	vertexShader->SetFloat2("uvScale", uvScale);
-	//vertexShader->SetMatrix4x4("shadowView", lights[0]->GetViewMatrix());
-	//vertexShader->SetMatrix4x4("shadowProj", lights[0]->GetProjectionMatrix());
+	vertexShader->SetMatrix4x4("shadowView", lights[0]->GetViewMatrix());
+	vertexShader->SetMatrix4x4("shadowProj", lights[0]->GetProjectionMatrix());
 
 	//Pixel shader data
 	pixelShader->SetFloat3("CameraPosition", cam->gameObject()->GetPosition());
@@ -54,9 +55,9 @@ void MAT_Basic::PrepareMaterialCombo(GameObject* entityObj, Camera* cam)
 	pixelShader->SetSamplerState("BasicSampler", sampler);
 
 	//Set shadow vars
-	//ID3D11ShaderResourceView* shadowSRV = lights[0]->GetShadowSRV();
-	//pixelShader->SetShaderResourceView("ShadowMap", shadowSRV);
-	//pixelShader->SetSamplerState("ShadowSampler", shadowSampler);
+	ID3D11ShaderResourceView* shadowSRV = lights[0]->GetShadowSRV();
+	pixelShader->SetShaderResourceView("ShadowMap", shadowSRV);
+	pixelShader->SetSamplerState("ShadowSampler", shadowSampler);
 
 	vertexShader->CopyBufferData("perCombo");
 	pixelShader->CopyBufferData("perCombo");

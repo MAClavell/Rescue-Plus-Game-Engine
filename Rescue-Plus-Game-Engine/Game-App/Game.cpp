@@ -142,7 +142,7 @@ void Game::Init()
 	lightManager->SetAmbientColor(0.789f, 0.886f, 1);
 
 	//Directional lights
-	DirectionalLight* dLight = lightManager->CreateDirectionalLight(false, XMFLOAT3(1, 1, 1), 1);
+	DirectionalLight* dLight = lightManager->CreateDirectionalLight(true, XMFLOAT3(1, 1, 1), 1);
 	dLight->gameObject()->SetRotation(60, -45, 0);
 
 	// Tell the input assembler stage of the pipeline what kind of

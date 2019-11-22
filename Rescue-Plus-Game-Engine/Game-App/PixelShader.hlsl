@@ -23,7 +23,7 @@ struct VertexToPixel
 	float3 normal		: NORMAL;
 	float3 tangent		: TANGENT;
 	float3 worldPos		: POSITION; // The world position of this PIXEL
-	//float4 posForShadow : SHADOW;
+	float4 posForShadow : SHADOW;
 };
 
 // Texture-related variables
@@ -32,8 +32,8 @@ Texture2D NormalTexture			: register(t1);
 SamplerState BasicSampler		: register(s0);
 
 // Shadow-related variables
-//Texture2D ShadowMap						: register(t2);
-//SamplerComparisonState ShadowSampler	: register(s1);
+Texture2D ShadowMap						: register(t2);
+SamplerComparisonState ShadowSampler	: register(s1);
 
 // Entry point for this pixel shader
 float4 main(VertexToPixel input) : SV_TARGET
@@ -52,10 +52,10 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 	//Sample shadowmap
 	//Shadows are only on the singular directional light
-	//float depthFromLight = input.posForShadow.z / input.posForShadow.w;
-	//float2 shadowUV = input.posForShadow.xy / input.posForShadow.w * 0.5f + 0.5f;
-	//shadowUV.y = 1.0f - shadowUV.y;
-	//float shadowAmount = ShadowMap.SampleCmpLevelZero(ShadowSampler, shadowUV, depthFromLight);
+	float depthFromLight = input.posForShadow.z / input.posForShadow.w;
+	float2 shadowUV = input.posForShadow.xy / input.posForShadow.w * 0.5f + 0.5f;
+	shadowUV.y = 1.0f - shadowUV.y;
+	float shadowAmount = ShadowMap.SampleCmpLevelZero(ShadowSampler, shadowUV, depthFromLight);
 
 	// Total color for this pixel
 	float3 totalColor = float3(0, 0, 0);
@@ -71,7 +71,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 		{
 		case LIGHT_TYPE_DIRECTIONAL:
 			float3 dL = DirLight(Lights[i], input.normal, input.worldPos, CameraPosition, Shininess, Roughness, surfaceColor.rgb);
-			//dL *= shadowAmount;
+			dL *= shadowAmount;
 			totalColor += dL;
 			break;
 

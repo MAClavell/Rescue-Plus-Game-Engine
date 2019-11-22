@@ -13,7 +13,7 @@ private:
 	float shininess;
 	float roughness;
 
-	//ID3D11SamplerState* shadowSampler;
+	ID3D11SamplerState* shadowSampler;
 
 public:
 	// --------------------------------------------------------
@@ -25,6 +25,7 @@ public:
 	MAT_Basic(SimpleVertexShader* vertexShader, SimplePixelShader* pixelShader,
 		DirectX::XMFLOAT2 uvScale, ID3D11SamplerState* sampler,
 		ID3D11ShaderResourceView* albedo, ID3D11ShaderResourceView* normals,
+		ID3D11SamplerState* shadowSampler,
 		float roughness, float shininess);
 
 	// --------------------------------------------------------

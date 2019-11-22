@@ -5,8 +5,8 @@ cbuffer perCombo : register(b0)
 	matrix view;
 	matrix projection;
 	float2 uvScale;
-	//matrix shadowView;
-	//matrix shadowProj;
+	matrix shadowView;
+	matrix shadowProj;
 }
 
 //Data that changes once per MatMesh combo
@@ -51,7 +51,7 @@ struct VertexToPixel
 	float3 normal		: NORMAL;        // XYZ normal
 	float3 tangent		: TANGENT;
 	float3 worldPos		: POSITION;		 // world position of the vertex
-	//float4 posForShadow : SHADOW;
+	float4 posForShadow : SHADOW;
 };
 
 // --------------------------------------------------------
@@ -76,8 +76,8 @@ VertexToPixel main(VertexShaderInput input )
 	matrix worldViewProj = mul(mul(world, view), projection);
 
 	// Calculate shadow map position
-	//matrix shadowWVP = mul(mul(world, shadowView), shadowProj);
-	//output.posForShadow = mul(float4(input.position, 1.0f), shadowWVP);
+	matrix shadowWVP = mul(mul(world, shadowView), shadowProj);
+	output.posForShadow = mul(float4(input.position, 1.0f), shadowWVP);
 
 	// Then we convert our 3-component position vector to a 4-component vector
 	// and multiply it by our final 4x4 matrix.

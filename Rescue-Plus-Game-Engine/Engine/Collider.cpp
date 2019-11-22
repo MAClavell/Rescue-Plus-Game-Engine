@@ -1,6 +1,8 @@
 #include "Collider.h"
 #include "PhysicsManager.h"
 #include "PhysicsHelper.h"
+#include "Renderer.h"
+#include "PhysicsHelper.h"
 
 #define DEFAULT_PHYSICS_MAT (physics->createMaterial(0.6f, 0.6f, 0))
 
@@ -20,6 +22,7 @@ Collider::Collider(GameObject* gameObject, ColliderType type,
 	this->type = type;
 	this->physicsMaterial = physicsMaterial;
 	this->center = center;
+	debug = false;
 	collisionResolver = new CollisionResolver();
 }
 
@@ -135,6 +138,17 @@ CollisionResolver* Collider::GetCollisionResolver()
 	return collisionResolver;
 }
 
+// Get the debug status of this collider
+bool Collider::GetDebug()
+{
+	return debug;
+}
+// Set the debug status of this collider
+void Collider::SetDebug(bool debug)
+{
+	this->debug = debug;
+}
+
 #pragma endregion
 
 #pragma region Box Collider
@@ -142,7 +156,7 @@ CollisionResolver* Collider::GetCollisionResolver()
 //									BOX COLLIDER
 // ----------------------------------------------------------------------------
 
-BoxCollider::BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size, 
+BoxCollider::BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size,
 	PhysicsMaterial* physicsMaterial, XMFLOAT3 center)
 	: Collider(gameObject, ColliderType::Box, physicsMaterial, center)
 {
@@ -184,6 +198,21 @@ physx::PxShape* BoxCollider::GenerateShape(PxPhysics* physics)
 	shape->setLocalPose(PxTransform(Float3ToVec3(center)));
 	return shape;
 }
+
+// Update debug view
+void BoxCollider::Update(float deltaTime)
+{
+	if (debug)
+	{
+		XMFLOAT3 pos;
+		XMStoreFloat3(&pos, XMVectorAdd(XMLoadFloat3(&gameObject()->GetPosition()),
+			XMVector3Rotate(XMLoadFloat3(&center), XMLoadFloat4(&gameObject()->GetRotation()))));
+		Renderer::GetInstance()->AddDebugCubeToThisFrame(
+			pos,
+			gameObject()->GetRotation(),
+			size);
+	}
+}
 #pragma endregion
 
 #pragma region Sphere Collider
@@ -191,7 +220,7 @@ physx::PxShape* BoxCollider::GenerateShape(PxPhysics* physics)
 //									SPHERE COLLIDER
 // ----------------------------------------------------------------------------
 
-SphereCollider::SphereCollider(GameObject* gameObject, float radius, 
+SphereCollider::SphereCollider(GameObject* gameObject, float radius,
 	PhysicsMaterial* physicsMaterial, XMFLOAT3 center)
 	: Collider(gameObject, ColliderType::Sphere, physicsMaterial, center)
 {
@@ -225,14 +254,17 @@ void SphereCollider::SetRadius(float radius)
 	this->radius = radius;
 	ReAttach();
 }
+
+void SphereCollider::Update(float deltaTime)
+{
+}
 #pragma endregion
 
 #pragma region Capsule Collider
 // ----------------------------------------------------------------------------
 //									CAPSULE COLLIDER
 // ----------------------------------------------------------------------------
-
-CapsuleCollider::CapsuleCollider(GameObject* gameObject, float radius, float height, 
+CapsuleCollider::CapsuleCollider(GameObject* gameObject, float radius, float height,
 	CapsuleDirection dir, 
 	PhysicsMaterial* physicsMaterial, XMFLOAT3 center)
 	: Collider(gameObject, ColliderType::Capsule, physicsMaterial, center)
@@ -311,5 +343,9 @@ void CapsuleCollider::SetCapsuleDirection(CapsuleDirection dir)
 {
 	this->dir = dir;
 	ReAttach();
+}
+
+void CapsuleCollider::Update(float deltaTime)
+{
 }
 #pragma endregion

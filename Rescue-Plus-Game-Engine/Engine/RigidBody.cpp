@@ -17,12 +17,12 @@ RigidBody::RigidBody(GameObject* gameObject, float mass) : Component::Component(
 	body = physics->createRigidDynamic(tr);
 	body->setMass(mass);
 
-	//See if there is already a collider attached to this or any child gameobjects
-	FindChildrenColliders(gameObject);
-	
 	//Add to the scene
 	body->userData = this;
 	PhysicsManager::GetInstance()->AddRigidBody(this);
+
+	//See if there is already a collider attached to this or any child gameobjects
+	FindChildrenColliders(gameObject);
 }
 
 RigidBody::~RigidBody()

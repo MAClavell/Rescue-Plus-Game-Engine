@@ -15,6 +15,8 @@ class Collider : public Component
 protected:
 	PhysicsMaterial* physicsMaterial;
 	DirectX::XMFLOAT3 center;
+	bool debug;
+	RigidBody* attachedRigidBody;
 
 	// --------------------------------------------------------
 	// Create a collider and try to find a rigidbody
@@ -38,10 +40,14 @@ protected:
 	// --------------------------------------------------------
 	void ReAttach();
 
+	// --------------------------------------------------------
+	// Update collisions
+	// --------------------------------------------------------
+	virtual void Update(float deltaTime) override = 0;
+
 private:
-	ColliderType type;
-	RigidBody* attachedRigidBody;
 	physx::PxShape* shape;
+	ColliderType type;
 	CollisionResolver* collisionResolver;
 
 	// --------------------------------------------------------
@@ -97,6 +103,15 @@ public:
 	// Get the collision resolver for this collider.
 	// --------------------------------------------------------
 	CollisionResolver* GetCollisionResolver();
+
+	// --------------------------------------------------------
+	// Get the debug status of this collider
+	// --------------------------------------------------------
+	bool GetDebug();
+	// --------------------------------------------------------
+	// Set the debug status of this collider
+	// --------------------------------------------------------
+	void SetDebug(bool debug);
 };
 
 // --------------------------------------------------------
@@ -110,6 +125,11 @@ private:
 	DirectX::XMFLOAT3 size;
 
 	physx::PxShape* GenerateShape(physx::PxPhysics* physics);
+
+	// --------------------------------------------------------
+	// Update debug view
+	// --------------------------------------------------------
+	void Update(float deltaTime) override;
 
 public:
 	BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size = DirectX::XMFLOAT3(1, 1, 1), 
@@ -141,6 +161,11 @@ private:
 
 	physx::PxShape* GenerateShape(physx::PxPhysics* physics);
 
+	// --------------------------------------------------------
+	// Update debug view
+	// --------------------------------------------------------
+	void Update(float deltaTime) override;
+
 public:
 	SphereCollider(GameObject* gameObject, float radius = 1.0f, 
 		PhysicsMaterial* physicsMaterial = nullptr, DirectX::XMFLOAT3 center = DirectX::XMFLOAT3(0, 0, 0));
@@ -170,6 +195,11 @@ private:
 	CapsuleDirection dir;
 
 	physx::PxShape* GenerateShape(physx::PxPhysics* physics);
+
+	// --------------------------------------------------------
+	// Update debug view
+	// --------------------------------------------------------
+	void Update(float deltaTime) override;
 
 public:
 	CapsuleCollider(GameObject* gameObject, float radius = 1.0f, float height = 2.0f,

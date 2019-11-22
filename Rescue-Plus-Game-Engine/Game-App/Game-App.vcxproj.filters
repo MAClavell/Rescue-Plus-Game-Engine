@@ -59,6 +59,9 @@
     <ClCompile Include="TestBullet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ShipyardCrane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DXCore.h">
@@ -80,6 +83,9 @@
       <Filter>Header Files\UserComponents</Filter>
     </ClInclude>
     <ClInclude Include="TestBullet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ShipyardCrane.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
