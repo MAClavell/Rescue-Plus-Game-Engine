@@ -1,7 +1,31 @@
 #include "ResourceManager.h"
 #include <sstream>
+#include <mutex>
 
 using namespace DirectX;
+
+//Locks
+std::mutex texture2DLock;
+std::mutex cubemapLock;
+std::mutex meshLock;
+std::mutex pixelShaderLock;
+std::mutex vertexShaderLock;
+
+struct TwoParamLoadData
+{
+	const char* address;
+	ID3D11Device* device;
+	TwoParamLoadData(const char* address, ID3D11Device* device)
+		: address(address), device(device) { };
+};
+struct ThreeParamLoadData
+{
+	const char* address;
+	ID3D11Device* device;
+	ID3D11DeviceContext* context;
+	ThreeParamLoadData(const char* address, ID3D11Device* device, ID3D11DeviceContext* context)
+		: address(address), device(device), context(context) { };
+};
 
 void ResourceManager::Release()
 {
@@ -66,11 +90,13 @@ bool ResourceManager::LoadTexture2D(const char* address, ID3D11Device* device, I
 	const wchar_t* lAddress = lStr.c_str();
 
 	//Check if the Texture2D is already in the map
+	texture2DLock.lock();
 	if (texture2DMap.find(str) != texture2DMap.end())
 	{
 		printf("Texture2D at address \"%s\" already exists in the resource manager\n", address);
 		return false;
 	}
+	texture2DLock.unlock();
 
 	//Load the Texture2D
 	ID3D11ShaderResourceView* tex;
@@ -81,7 +107,9 @@ bool ResourceManager::LoadTexture2D(const char* address, ID3D11Device* device, I
 	}
 
 	//Add to map
+	texture2DLock.lock();
 	texture2DMap.emplace(str, tex);
+	texture2DLock.unlock();
 	return true;
 }
 
@@ -96,11 +124,13 @@ bool ResourceManager::LoadTexture2D(const char* address, ID3D11Device * device)
 	const wchar_t* lAddress = lStr.c_str();
 
 	//Check if the Texture2D is already in the map
+	texture2DLock.lock();
 	if (texture2DMap.find(str) != texture2DMap.end())
 	{
 		printf("Texture2D at address \"%s\" already exists in the resource manager\n", address);
 		return false;
 	}
+	texture2DLock.unlock();
 
 	//Load the Texture2D
 	ID3D11ShaderResourceView* tex;
@@ -111,7 +141,9 @@ bool ResourceManager::LoadTexture2D(const char* address, ID3D11Device * device)
 	}
 
 	//Add to map
+	texture2DLock.lock();
 	texture2DMap.emplace(str, tex);
+	texture2DLock.unlock();
 	return true;
 }
 
@@ -126,11 +158,13 @@ bool ResourceManager::LoadCubeMap(const char* address, ID3D11Device* device, ID3
 	const wchar_t* lAddress = lStr.c_str();
 
 	//Check if the CubeMap is already in the map
+	cubemapLock.lock();
 	if (cubemapMap.find(str) != cubemapMap.end())
 	{
 		printf("CubeMap at address \"%s\" already exists in the resource manager\n", address);
 		return false;
 	}
+	cubemapLock.unlock();
 
 	//Load the Texture2D
 	ID3D11ShaderResourceView* tex;
@@ -141,7 +175,9 @@ bool ResourceManager::LoadCubeMap(const char* address, ID3D11Device* device, ID3
 	}
 
 	//Add to map
+	cubemapLock.lock();
 	cubemapMap.emplace(str, tex);
+	cubemapLock.unlock();
 	return true;
 }
 
@@ -156,11 +192,13 @@ bool ResourceManager::LoadCubeMap(const char* address, ID3D11Device* device)
 	const wchar_t* lAddress = lStr.c_str();
 
 	//Check if the CubeMap is already in the map
+	cubemapLock.lock();
 	if (cubemapMap.find(str) != cubemapMap.end())
 	{
 		printf("CubeMap at address \"%s\" already exists in the resource manager\n", address);
 		return false;
 	}
+	cubemapLock.unlock();
 
 	//Load the Texture2D
 	ID3D11ShaderResourceView* tex;
@@ -171,7 +209,9 @@ bool ResourceManager::LoadCubeMap(const char* address, ID3D11Device* device)
 	}
 
 	//Add to map
+	cubemapLock.lock();
 	cubemapMap.emplace(str, tex);
+	cubemapLock.unlock();
 	return true;
 }
 
@@ -184,15 +224,17 @@ bool ResourceManager::LoadMesh(const char* address, ID3D11Device* device)
 	std::string str = ss.str();
 
 	//Check if the Mesh is already in the map
+	meshLock.lock();
 	if (meshMap.find(str) != meshMap.end())
 	{
 		printf("Mesh at address \"%s\" already exists in the resource manager\n", address);
 		return false;
 	}
+	meshLock.unlock();
 
 	//Load the Mesh
 	Mesh* mesh = new Mesh(address, device);
-	if (!mesh->IsMeshLoaded()) 
+	if (!mesh->IsMeshLoaded())
 	{
 		printf("Could not load Mesh \"%s\"\n", address);
 		if (mesh) { delete mesh; }
@@ -200,8 +242,28 @@ bool ResourceManager::LoadMesh(const char* address, ID3D11Device* device)
 	}
 
 	//Add to map
+	meshLock.lock();
 	meshMap.emplace(str, mesh);
+	meshLock.unlock();
 	return true;
+}
+
+static void LoadMeshAsyncHelper(Job* job, const void* userData)
+{
+	TwoParamLoadData* data = *(TwoParamLoadData**)(userData);
+	ResourceManager::GetInstance()->LoadMesh(data->address, data->device);
+	delete data;
+}
+// Load a Mesh from the specified address asynchronously
+Job* ResourceManager::LoadMeshAsync(const char* address, ID3D11Device* device, Job* root)
+{
+	Job* job = nullptr;
+	auto data = new TwoParamLoadData(address, device);
+	if(root == nullptr)
+		job = JobSystem::CreateJob(&LoadMeshAsyncHelper, &data);
+	else job = JobSystem::CreateJobAsChild(root, &LoadMeshAsyncHelper, &data);
+	JobSystem::Run(job);
+	return job;
 }
 
 // Load a Material from the specified address
@@ -235,11 +297,13 @@ bool ResourceManager::LoadPixelShader(const char* name, ID3D11Device* device, ID
 	const wchar_t* lName = lStr.c_str();
 
 	//Check if the Pixel Shader is already in the map
+	pixelShaderLock.lock();
 	if (pixelShaderMap.find(str) != pixelShaderMap.end())
 	{
 		printf("Pixel Shader of name \"%s\" already exists in the resource manager\n", name);
 		return false;
 	}
+	pixelShaderLock.unlock();
 
 	//Load shader
 	SimplePixelShader* ps = new SimplePixelShader(device, context);
@@ -250,7 +314,9 @@ bool ResourceManager::LoadPixelShader(const char* name, ID3D11Device* device, ID
 	}
 
 	//Add to map
+	pixelShaderLock.lock();
 	pixelShaderMap.emplace(str, ps);
+	pixelShaderLock.unlock();
 	return false;
 }
 
@@ -265,11 +331,13 @@ bool ResourceManager::LoadVertexShader(const char* name, ID3D11Device* device, I
 	const wchar_t* lName = lStr.c_str();
 
 	//Check if the Vertex Shader is already in the map
+	vertexShaderLock.lock();
 	if (vertexShaderMap.find(str) != vertexShaderMap.end())
 	{
 		printf("Vertex Shader of name \"%s\" already exists in the resource manager\n", name);
 		return false;
 	}
+	vertexShaderLock.unlock();
 
 	//Load shader
 	SimpleVertexShader* vs = new SimpleVertexShader(device, context);
@@ -280,7 +348,9 @@ bool ResourceManager::LoadVertexShader(const char* name, ID3D11Device* device, I
 	}
 
 	//Add to map
+	vertexShaderLock.lock();
 	vertexShaderMap.emplace(str, vs);
+	vertexShaderLock.unlock();
 	return false;
 }
 

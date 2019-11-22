@@ -149,6 +149,9 @@ void Game::Init()
 	// geometric primitives (points, lines or triangles) we want to draw.
 	// Essentially: "What kind of shape should the GPU draw with our data?"
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	//Clear loading jobs
+	JobSystem::DeleteFinishedJobs();
 }
 
 // --------------------------------------------------------

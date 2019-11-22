@@ -13,6 +13,14 @@ using namespace DirectX;
 // --------------------------------------------------------
 void Game::LoadAssets()
 {
+	Job* root = JobSystem::CreateJob(&EmptyJob);
+
+	//Create meshes
+	resourceManager->LoadMeshAsync("Assets\\Models\\Basic\\cube.obj", device, root);
+	resourceManager->LoadMeshAsync("Assets\\Models\\Basic\\sphere.obj", device, root);
+	resourceManager->LoadMeshAsync("Assets\\Models\\Basic\\cylinder.obj", device, root);
+	resourceManager->LoadMeshAsync("Assets\\Models\\Shipyard\\shipyard_container.obj", device, root);
+
 	//Load shaders
 	resourceManager->LoadVertexShader("VertexShader.cso", device, context);
 	resourceManager->LoadPixelShader("PixelShader.cso", device, context);
@@ -24,12 +32,6 @@ void Game::LoadAssets()
 	resourceManager->LoadPixelShader("PS_Sky.cso", device, context);
 
 	resourceManager->LoadVertexShader("VS_Shadow.cso", device, context);
-
-	//Create meshes
-	resourceManager->LoadMesh("Assets\\Models\\Basic\\cube.obj", device);
-	resourceManager->LoadMesh("Assets\\Models\\Basic\\sphere.obj", device);
-	resourceManager->LoadMesh("Assets\\Models\\Basic\\cylinder.obj", device);
-	resourceManager->LoadMesh("Assets\\Models\\Shipyard\\shipyard_container.obj", device);
 
 	//Load textures
 	resourceManager->LoadTexture2D("Assets/Textures/white.png", device, context);
@@ -147,6 +149,9 @@ void Game::LoadAssets()
 	//Solid PhysicsMaterial
 	PhysicsMaterial* pMat_solid = new PhysicsMaterial(0.1f, 0.1f, 0.0f);
 	resourceManager->AddPhysicsMaterial("solid", pMat_solid);
+
+	JobSystem::Run(root);
+	JobSystem::Wait(root);
 }
 
 //Create crane

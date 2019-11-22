@@ -5,6 +5,7 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "PhysicsMaterial.h"
+#include "JobSystem.h"
 
 class ResourceManager
 {
@@ -68,6 +69,13 @@ public:
 	// Load a Mesh from the specified address
 	// --------------------------------------------------------
 	bool LoadMesh(const char* address, ID3D11Device* device);
+
+	// --------------------------------------------------------
+	// Load a Mesh from the specified address asynchronously
+	//
+	// root - optional root job to attach to
+	// --------------------------------------------------------
+	Job* LoadMeshAsync(const char* address, ID3D11Device* device, Job* root = nullptr);
 
 	// --------------------------------------------------------
 	// Add an existing Material to the manager
