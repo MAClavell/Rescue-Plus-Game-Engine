@@ -22,31 +22,31 @@ void Game::LoadAssets()
 	resourceManager->LoadMeshAsync("Assets\\Models\\Shipyard\\shipyard_container.obj", device, root);
 
 	//Load shaders
-	resourceManager->LoadVertexShader("VertexShader.cso", device, context);
-	resourceManager->LoadPixelShader("PixelShader.cso", device, context);
+	resourceManager->LoadVertexShaderAsync("VertexShader.cso", device, context, root);
+	resourceManager->LoadPixelShaderAsync("PixelShader.cso", device, context, root);
 
-	resourceManager->LoadVertexShader("VS_ColDebug.cso", device, context);
-	resourceManager->LoadPixelShader("PS_ColDebug.cso", device, context);
+	resourceManager->LoadVertexShaderAsync("VS_ColDebug.cso", device, context, root);
+	resourceManager->LoadPixelShaderAsync("PS_ColDebug.cso", device, context, root);
 
-	resourceManager->LoadVertexShader("VS_Sky.cso", device, context);
-	resourceManager->LoadPixelShader("PS_Sky.cso", device, context);
+	resourceManager->LoadVertexShaderAsync("VS_Sky.cso", device, context, root);
+	resourceManager->LoadPixelShaderAsync("PS_Sky.cso", device, context, root);
 
-	resourceManager->LoadVertexShader("VS_Shadow.cso", device, context);
+	resourceManager->LoadVertexShaderAsync("VS_Shadow.cso", device, context, root);
 
 	//Load textures
-	resourceManager->LoadTexture2D("Assets/Textures/white.png", device, context);
-	resourceManager->LoadTexture2D("Assets/Textures/normals_flat.png", device, context);
-	resourceManager->LoadTexture2D("Assets/Textures/Shipyard/shipyard_container_diffuse.jpeg", device, context);
-	resourceManager->LoadTexture2D("Assets/Textures/Shipyard/shipyard_concrete_diffuse.jpg", device, context);
-	resourceManager->LoadTexture2D("Assets/Textures/Shipyard/shipyard_concrete_normals.jpg", device, context);
-	resourceManager->LoadTexture2D("Assets/Textures/Shipyard/blue.png", device, context);
-	resourceManager->LoadTexture2D("Assets/Textures/Shipyard/yellow.png", device, context);
-	resourceManager->LoadTexture2D("Assets/Textures/Shipyard/gray.png", device, context);
-	resourceManager->LoadTexture2D("Assets/Textures/Shipyard/shipyard_crate_diffuse.png", device, context);
-	resourceManager->LoadTexture2D("Assets/Textures/Shipyard/shipyard_crate_normals.png", device, context);
+	resourceManager->LoadTexture2DAsync("Assets/Textures/white.png", device, root);
+	resourceManager->LoadTexture2DAsync("Assets/Textures/normals_flat.png", device, root);
+	resourceManager->LoadTexture2DAsync("Assets/Textures/Shipyard/shipyard_container_diffuse.jpeg", device, context, root);
+	resourceManager->LoadTexture2DAsync("Assets/Textures/Shipyard/shipyard_concrete_diffuse.jpg", device, context, root);
+	resourceManager->LoadTexture2DAsync("Assets/Textures/Shipyard/shipyard_concrete_normals.jpg", device, context, root);
+	resourceManager->LoadTexture2DAsync("Assets/Textures/Shipyard/blue.png", device, root);
+	resourceManager->LoadTexture2DAsync("Assets/Textures/Shipyard/yellow.png", device, root);
+	resourceManager->LoadTexture2DAsync("Assets/Textures/Shipyard/gray.png", device, root);
+	resourceManager->LoadTexture2DAsync("Assets/Textures/Shipyard/shipyard_crate_diffuse.png", device, context, root);
+	resourceManager->LoadTexture2DAsync("Assets/Textures/Shipyard/shipyard_crate_normals.png", device, context, root);
 
 	//Load cubemaps
-	resourceManager->LoadCubeMap("Assets/Textures/Sky/SunnyCubeMap.dds", device);
+	resourceManager->LoadCubeMapAsync("Assets/Textures/Sky/SunnyCubeMap.dds", device, root);
 
 	//Create sampler state
 	D3D11_SAMPLER_DESC samplerDesc = {};
@@ -70,6 +70,10 @@ void Game::LoadAssets()
 	shadowSampDesc.BorderColor[2] = 1.0f;
 	shadowSampDesc.BorderColor[3] = 1.0f;
 	device->CreateSamplerState(&shadowSampDesc, &shadowSampler);
+	
+	//Wait for assets to load
+	JobSystem::Run(root);
+	JobSystem::Wait(root);
 
 	SimpleVertexShader* vs = resourceManager->GetVertexShader("VertexShader.cso");
 	SimplePixelShader* ps_basic = resourceManager->GetPixelShader("PixelShader.cso");
@@ -149,9 +153,6 @@ void Game::LoadAssets()
 	//Solid PhysicsMaterial
 	PhysicsMaterial* pMat_solid = new PhysicsMaterial(0.1f, 0.1f, 0.0f);
 	resourceManager->AddPhysicsMaterial("solid", pMat_solid);
-
-	JobSystem::Run(root);
-	JobSystem::Wait(root);
 }
 
 //Create crane

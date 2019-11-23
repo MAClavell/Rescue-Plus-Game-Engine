@@ -6,6 +6,7 @@
 #include "Material.h"
 #include "PhysicsMaterial.h"
 #include "JobSystem.h"
+#include <mutex>
 
 class ResourceManager
 {
@@ -56,6 +57,16 @@ public:
 	bool LoadTexture2D(const char* address, ID3D11Device* device);
 
 	// --------------------------------------------------------
+	// Load a Texture2D from the specified address with MipMaps asynchronously
+	// --------------------------------------------------------
+	Job* LoadTexture2DAsync(const char* address, ID3D11Device* device, Job* parent = nullptr);
+
+	// --------------------------------------------------------
+	// Load a Texture2D from the specified address with NO MipMaps asynchronously
+	// --------------------------------------------------------
+	Job* LoadTexture2DAsync(const char* address, ID3D11Device* device, ID3D11DeviceContext* context, Job* parent = nullptr);
+
+	// --------------------------------------------------------
 	// Load a CubeMap from the specified address with MipMaps
 	// --------------------------------------------------------
 	bool LoadCubeMap(const char* address, ID3D11Device* device, ID3D11DeviceContext* context);
@@ -64,6 +75,16 @@ public:
 	// Load a CubeMap from the specified address with NO MipMaps
 	// --------------------------------------------------------
 	bool LoadCubeMap(const char* address, ID3D11Device* device);
+
+	// --------------------------------------------------------
+	// Load a CubeMap from the specified address with MipMaps asynchronously
+	// --------------------------------------------------------
+	Job* LoadCubeMapAsync(const char* address, ID3D11Device* device, Job* parent = nullptr);
+
+	// --------------------------------------------------------
+	// Load a CubeMap from the specified address with NO MipMaps asynchronously
+	// --------------------------------------------------------
+	Job* LoadCubeMapAsync(const char* address, ID3D11Device* device, ID3D11DeviceContext* context, Job* parent = nullptr);
 
 	// --------------------------------------------------------
 	// Load a Mesh from the specified address
@@ -75,7 +96,7 @@ public:
 	//
 	// root - optional root job to attach to
 	// --------------------------------------------------------
-	Job* LoadMeshAsync(const char* address, ID3D11Device* device, Job* root = nullptr);
+	Job* LoadMeshAsync(const char* address, ID3D11Device* device, Job* parent = nullptr);
 
 	// --------------------------------------------------------
 	// Add an existing Material to the manager
@@ -88,9 +109,19 @@ public:
 	bool LoadPixelShader(const char* name, ID3D11Device* device, ID3D11DeviceContext* context);
 
 	// --------------------------------------------------------
+	// Load a Pixel Shader from the specified address asynchronously
+	// --------------------------------------------------------
+	Job* LoadPixelShaderAsync(const char* name, ID3D11Device* device, ID3D11DeviceContext* context, Job* parent = nullptr);
+
+	// --------------------------------------------------------
 	// Load a Vertex Shader from the specified address
 	// --------------------------------------------------------
 	bool LoadVertexShader(const char* name, ID3D11Device* device, ID3D11DeviceContext* context);
+
+	// --------------------------------------------------------
+	// Load a Vertex Shader from the specified address asynchronously
+	// --------------------------------------------------------
+	Job* LoadVertexShaderAsync(const char* name, ID3D11Device* device, ID3D11DeviceContext* context, Job* parent = nullptr);
 
 	// --------------------------------------------------------
 	// Add an existing Physics Material to the manager

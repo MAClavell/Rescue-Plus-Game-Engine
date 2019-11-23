@@ -266,6 +266,9 @@ HRESULT DXCore::InitDirectX()
 	viewport.MaxDepth	= 1.0f;
 	context->RSSetViewports(1, &viewport);
 
+	//Tell DirectXTK that we are multithreaded
+	CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
 	// Return the "everything is ok" HRESULT value
 	return S_OK;
 }

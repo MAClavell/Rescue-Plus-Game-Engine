@@ -1,15 +1,15 @@
 #include "ResourceManager.h"
 #include <sstream>
-#include <mutex>
 
 using namespace DirectX;
 
 //Locks
-std::mutex texture2DLock;
-std::mutex cubemapLock;
-std::mutex meshLock;
-std::mutex pixelShaderLock;
-std::mutex vertexShaderLock;
+static std::mutex texture2DLock;
+static std::mutex cubemapLock;
+static std::mutex meshLock;
+static std::mutex pixelShaderLock;
+static std::mutex vertexShaderLock;
+static std::mutex contextLock;
 
 struct TwoParamLoadData
 {
@@ -100,11 +100,14 @@ bool ResourceManager::LoadTexture2D(const char* address, ID3D11Device* device, I
 
 	//Load the Texture2D
 	ID3D11ShaderResourceView* tex;
+	//The context is not thread safe whe generating mipmaps
+	contextLock.lock();
 	if (CreateWICTextureFromFile(device, context, lAddress, 0, &tex) != S_OK)
 	{
 		printf("Could not load texture2D %s\n", address);
 		return false;
 	}
+	contextLock.unlock();
 
 	//Add to map
 	texture2DLock.lock();
@@ -134,7 +137,8 @@ bool ResourceManager::LoadTexture2D(const char* address, ID3D11Device * device)
 
 	//Load the Texture2D
 	ID3D11ShaderResourceView* tex;
-	if (CreateWICTextureFromFile(device, lAddress, 0, &tex) != S_OK)
+	HRESULT res = CreateWICTextureFromFile(device, lAddress, 0, &tex);
+	if (res != S_OK)
 	{
 		printf("Could not load Texture2D \"%s\"\n", address);
 		return false;
@@ -146,6 +150,41 @@ bool ResourceManager::LoadTexture2D(const char* address, ID3D11Device * device)
 	texture2DLock.unlock();
 	return true;
 }
+
+// Load a Texture2D from the specified address asynchronously
+static void LoadTexture2DAsyncHelperThree(Job* job, const void* userData)
+{
+	ThreeParamLoadData* data = *(ThreeParamLoadData**)(userData);
+	ResourceManager::GetInstance()->LoadTexture2D(data->address, data->device, data->context);
+	delete data;
+}
+static void LoadTexture2DAsyncHelperTwo(Job* job, const void* userData)
+{
+	TwoParamLoadData* data = *(TwoParamLoadData**)(userData);
+	ResourceManager::GetInstance()->LoadTexture2D(data->address, data->device);
+	delete data;
+}
+Job* ResourceManager::LoadTexture2DAsync(const char* address, ID3D11Device* device, Job* root)
+{
+	Job* job = nullptr;
+	auto data = new TwoParamLoadData(address, device);
+	if (root == nullptr)
+		job = JobSystem::CreateJob(&LoadTexture2DAsyncHelperTwo, &data);
+	else job = JobSystem::CreateJobAsChild(root, &LoadTexture2DAsyncHelperTwo, &data);
+	JobSystem::Run(job);
+	return job;
+}
+Job* ResourceManager::LoadTexture2DAsync(const char* address, ID3D11Device* device, ID3D11DeviceContext* context, Job* root)
+{
+	Job* job = nullptr;
+	auto data = new ThreeParamLoadData(address, device, context);
+	if (root == nullptr)
+		job = JobSystem::CreateJob(&LoadTexture2DAsyncHelperThree, &data);
+	else job = JobSystem::CreateJobAsChild(root, &LoadTexture2DAsyncHelperThree, &data);
+	JobSystem::Run(job);
+	return job;
+}
+
 
 // Load a CubeMap from the specified address with MipMaps
 bool ResourceManager::LoadCubeMap(const char* address, ID3D11Device* device, ID3D11DeviceContext* context)
@@ -168,11 +207,14 @@ bool ResourceManager::LoadCubeMap(const char* address, ID3D11Device* device, ID3
 
 	//Load the Texture2D
 	ID3D11ShaderResourceView* tex;
+	//The context is not thread safe whe generating mipmaps
+	contextLock.lock();
 	if(CreateDDSTextureFromFile(device, context, lAddress, 0, &tex) != S_OK)
 	{
 		printf("Could not load CubeMap \"%s\"\n", address);
 		return false;
 	}
+	contextLock.unlock();
 
 	//Add to map
 	cubemapLock.lock();
@@ -215,6 +257,40 @@ bool ResourceManager::LoadCubeMap(const char* address, ID3D11Device* device)
 	return true;
 }
 
+// Load a CubeMap from the specified address asynchronously
+static void LoadCubeMapAsyncHelperThree(Job* job, const void* userData)
+{
+	ThreeParamLoadData* data = *(ThreeParamLoadData**)(userData);
+	ResourceManager::GetInstance()->LoadCubeMap(data->address, data->device, data->context);
+	delete data;
+}
+static void LoadCubeMapAsyncHelperTwo(Job* job, const void* userData)
+{
+	TwoParamLoadData* data = *(TwoParamLoadData**)(userData);
+	ResourceManager::GetInstance()->LoadCubeMap(data->address, data->device);
+	delete data;
+}
+Job* ResourceManager::LoadCubeMapAsync(const char* address, ID3D11Device* device, Job* root)
+{
+	Job* job = nullptr;
+	auto data = new TwoParamLoadData(address, device);
+	if (root == nullptr)
+		job = JobSystem::CreateJob(&LoadCubeMapAsyncHelperTwo, &data);
+	else job = JobSystem::CreateJobAsChild(root, &LoadCubeMapAsyncHelperTwo, &data);
+	JobSystem::Run(job);
+	return job;
+}
+Job* ResourceManager::LoadCubeMapAsync(const char* address, ID3D11Device* device, ID3D11DeviceContext* context, Job* root)
+{
+	Job* job = nullptr;
+	auto data = new ThreeParamLoadData(address, device, context);
+	if (root == nullptr)
+		job = JobSystem::CreateJob(&LoadCubeMapAsyncHelperThree, &data);
+	else job = JobSystem::CreateJobAsChild(root, &LoadCubeMapAsyncHelperThree, &data);
+	JobSystem::Run(job);
+	return job;
+}
+
 // Load a Mesh from the specified address
 bool ResourceManager::LoadMesh(const char* address, ID3D11Device* device)
 {
@@ -248,13 +324,13 @@ bool ResourceManager::LoadMesh(const char* address, ID3D11Device* device)
 	return true;
 }
 
+// Load a Mesh from the specified address asynchronously
 static void LoadMeshAsyncHelper(Job* job, const void* userData)
 {
 	TwoParamLoadData* data = *(TwoParamLoadData**)(userData);
 	ResourceManager::GetInstance()->LoadMesh(data->address, data->device);
 	delete data;
 }
-// Load a Mesh from the specified address asynchronously
 Job* ResourceManager::LoadMeshAsync(const char* address, ID3D11Device* device, Job* root)
 {
 	Job* job = nullptr;
@@ -320,6 +396,24 @@ bool ResourceManager::LoadPixelShader(const char* name, ID3D11Device* device, ID
 	return false;
 }
 
+// Load a Pixel Shader from the specified address asynchronously
+static void LoadPixelShaderAsyncHelper(Job* job, const void* userData)
+{
+	ThreeParamLoadData* data = *(ThreeParamLoadData**)(userData);
+	ResourceManager::GetInstance()->LoadPixelShader(data->address, data->device, data->context);
+	delete data;
+}
+Job* ResourceManager::LoadPixelShaderAsync(const char* address, ID3D11Device* device, ID3D11DeviceContext* context, Job* root)
+{
+	Job* job = nullptr;
+	auto data = new ThreeParamLoadData(address, device, context);
+	if (root == nullptr)
+		job = JobSystem::CreateJob(&LoadPixelShaderAsyncHelper, &data);
+	else job = JobSystem::CreateJobAsChild(root, &LoadPixelShaderAsyncHelper, &data);
+	JobSystem::Run(job);
+	return job;
+}
+
 // Load a Vertex Shader from the specified address
 bool ResourceManager::LoadVertexShader(const char* name, ID3D11Device* device, ID3D11DeviceContext* context)
 {
@@ -352,6 +446,24 @@ bool ResourceManager::LoadVertexShader(const char* name, ID3D11Device* device, I
 	vertexShaderMap.emplace(str, vs);
 	vertexShaderLock.unlock();
 	return false;
+}
+
+// Load a Vertex Shader from the specified address asynchronously
+static void LoadVertexShaderAsyncHelper(Job* job, const void* userData)
+{
+	ThreeParamLoadData* data = *(ThreeParamLoadData * *)(userData);
+	ResourceManager::GetInstance()->LoadVertexShader(data->address, data->device, data->context);
+	delete data;
+}
+Job* ResourceManager::LoadVertexShaderAsync(const char* address, ID3D11Device* device, ID3D11DeviceContext* context, Job* root)
+{
+	Job* job = nullptr;
+	auto data = new ThreeParamLoadData(address, device, context);
+	if (root == nullptr)
+		job = JobSystem::CreateJob(&LoadVertexShaderAsyncHelper, &data);
+	else job = JobSystem::CreateJobAsChild(root, &LoadVertexShaderAsyncHelper, &data);
+	JobSystem::Run(job);
+	return job;
 }
 
 // Add an existing Physics Material to the manager
