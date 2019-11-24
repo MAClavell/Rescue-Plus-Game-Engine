@@ -14,9 +14,11 @@ class Collider : public Component
 {
 protected:
 	PhysicsMaterial* physicsMaterial;
+	RigidBody* attachedRigidBody;
+	physx::PxRigidStatic* staticActor;
 	DirectX::XMFLOAT3 center;
 	bool debug;
-	RigidBody* attachedRigidBody;
+	bool isInChildObj;
 
 	// --------------------------------------------------------
 	// Create a collider and try to find a rigidbody
@@ -36,9 +38,24 @@ protected:
 	void FindParentRigidBody();
 
 	// --------------------------------------------------------
+	// DeAttach this collider from it's rigidbody
+	// --------------------------------------------------------
+	void DeAttachFromStatic();
+
+	// --------------------------------------------------------
 	// Re-calculate the shape and re-attach this collider to a rigidbody
 	// --------------------------------------------------------
 	void ReAttach();
+
+	// --------------------------------------------------------
+	// Attach this collider to a static shape
+	// --------------------------------------------------------
+	void AttachToStatic();
+
+	// --------------------------------------------------------
+	// Get this shape's transform based on its position from the parent
+	// --------------------------------------------------------
+	physx::PxTransform GetChildTransform();
 
 	// --------------------------------------------------------
 	// Update collisions
@@ -49,11 +66,6 @@ private:
 	physx::PxShape* shape;
 	ColliderType type;
 	CollisionResolver* collisionResolver;
-
-	// --------------------------------------------------------
-	// DeAttach this collider from it's rigidbody
-	// --------------------------------------------------------
-	void DeAttach();
 
 	// --------------------------------------------------------
 	// Update collisions
@@ -74,7 +86,12 @@ public:
 	// --------------------------------------------------------
 	// Attach this collider to a rigidbody
 	// --------------------------------------------------------
-	void Attach(RigidBody* rigidBody);
+	void AttachToRB(RigidBody* rigidBody, bool isChildObj);
+
+	// --------------------------------------------------------
+	// DeAttach this collider from it's rigidbody and make it a static collider
+	// --------------------------------------------------------
+	void DeAttachFromRB(bool makeStatic = true);
 
 	// --------------------------------------------------------
 	// Get the center of the Collider

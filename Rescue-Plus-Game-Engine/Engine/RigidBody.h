@@ -17,7 +17,7 @@ private:
 	// --------------------------------------------------------
 	// Attach all children colliders to this GO
 	// --------------------------------------------------------
-	void FindChildrenColliders(GameObject*, bool first = true);
+	void FindChildrenColliders(GameObject*, bool firstObj);
 
 	// --------------------------------------------------------
 	// Update collisions

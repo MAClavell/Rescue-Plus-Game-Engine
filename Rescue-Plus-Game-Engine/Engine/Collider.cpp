@@ -24,12 +24,18 @@ Collider::Collider(GameObject* gameObject, ColliderType type,
 	this->center = center;
 	debug = false;
 	collisionResolver = new CollisionResolver();
+	staticActor = nullptr;
+	attachedRigidBody = nullptr;
 }
 
 Collider::~Collider()
 {
-	if (shape != nullptr)
-		shape->release();
+	//Detach shape first
+	if (attachedRigidBody != nullptr)
+		DeAttachFromRB(false);
+	else
+		DeAttachFromStatic();
+
 	if (collisionResolver != nullptr)
 		delete collisionResolver;
 }
@@ -45,21 +51,30 @@ void Collider::FindParentRigidBody()
 {
 	//Try to find a rigidbody to attach to
 	GameObject* go = gameObject();
+	bool isChild = false;
 	while (go != nullptr)
 	{
 		RigidBody* rigidBody = go->GetComponent<RigidBody>();
 		if (rigidBody != nullptr)
 		{
-			Attach(rigidBody);
-			break;
+			AttachToRB(rigidBody, isChild);
+			return;
 		}
 		go = go->GetParent();
+		isChild = true;
 	}
-
+	AttachToStatic();
 }
 
-// DeAttach this collider to a rigidbody
-void Collider::DeAttach()
+// Update collisions
+void Collider::FixedUpdate(float deltaTime)
+{
+	if(staticActor != nullptr)
+		collisionResolver->ResolveCollisions(gameObject()->GetAllUserComponents());
+}
+
+// DeAttach this collider from it's rigidbody and make it a static collider
+void Collider::DeAttachFromRB(bool makeStatic)
 {
 	if (attachedRigidBody != nullptr)
 	{
@@ -67,42 +82,117 @@ void Collider::DeAttach()
 		attachedRigidBody = nullptr;
 	}
 	if (shape != nullptr)
+	{
 		shape->release();
+		shape = nullptr;
+	}
+
+	if (makeStatic)
+		AttachToStatic();
 }
 
-// Update collisions
-void Collider::FixedUpdate(float deltaTime)
+// DeAttach this collider to a rigidbody
+void Collider::DeAttachFromStatic()
 {
-	collisionResolver->ResolveCollisions(gameObject()->GetAllUserComponents());
+	if (staticActor != nullptr)
+	{
+		PhysicsManager::GetInstance()->RemoveActor(staticActor);
+		staticActor->release();
+		staticActor = nullptr;
+	}
+	if (shape != nullptr)
+	{
+		shape->release();
+		shape = nullptr;
+	}
+}
+
+// Re-calculate the shape and re-attach this collider to a rigidbody
+void Collider::ReAttach()
+{
+	if (attachedRigidBody != nullptr)
+	{
+		RigidBody* rb = attachedRigidBody;
+		DeAttachFromRB();
+		AttachToRB(rb, isInChildObj);
+	}
+	else
+	{
+		DeAttachFromStatic();
+		AttachToStatic();
+	}
 }
 
 // Attach this collider to a rigidbody
-void Collider::Attach(RigidBody* rigidBody)
+void Collider::AttachToRB(RigidBody* rigidBody, bool isChildObj)
 {
+	if (staticActor != nullptr)
+		DeAttachFromStatic();
+
+	PxPhysics* physics = PhysicsManager::GetInstance()->GetPhysics();
+
+	//Create shape
+	isInChildObj = isChildObj;
+	attachedRigidBody = rigidBody;
+	shape = GenerateShape(physics);
+	shape->userData = this;
+
+	//Attach
+	rigidBody->GetRigidBody()->attachShape(*shape);
+
+	if (!(rigidBody->GetRigidBody()->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
+		rigidBody->GetRigidBody()->wakeUp();
+}
+
+// Attach this collider to a static shape
+void Collider::AttachToStatic()
+{
+	if (attachedRigidBody != nullptr)
+		DeAttachFromRB(false);
+
 	PxPhysics* physics = PhysicsManager::GetInstance()->GetPhysics();
 
 	//Create shape
 	shape = GenerateShape(physics);
 	shape->userData = this;
 
-	//Attach
-	rigidBody->GetRigidBody()->attachShape(*shape);
-	attachedRigidBody = rigidBody;
+	//Calc transform
+	PxTransform tr = PxTransform(Float3ToVec3(gameObject()->GetPosition()),
+		Float4ToQuat(gameObject()->GetRotation()));
 
-	if(!(rigidBody->GetRigidBody()->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
-		rigidBody->GetRigidBody()->wakeUp();
+	//Attach
+	if (staticActor != nullptr)
+		staticActor->release();
+	staticActor = PxCreateStatic(*physics, tr, *shape);
+	PhysicsManager::GetInstance()->AddActor(staticActor);
 }
 
-// Re-calculate the shape and re-attach this collider to a rigidbody
-void Collider::ReAttach()
+// Get this shape's transform based on its position from the parent
+PxTransform Collider::GetChildTransform()
 {
-	RigidBody* rb = attachedRigidBody;
-	DeAttach();
-	Attach(rb);
+	//Rotation difference
+	XMFLOAT4 rotDiff;
+	XMVECTOR rotDiffVec = XMQuaternionMultiply(
+		XMLoadFloat4(&gameObject()->GetRotation()),
+		XMQuaternionInverse(XMLoadFloat4(&attachedRigidBody->gameObject()->GetRotation())));
+	XMStoreFloat4(&rotDiff, rotDiffVec);
+	
+	//Position difference
+	XMVECTOR posDiff = XMVectorSubtract(
+		XMLoadFloat3(&gameObject()->GetPosition()),
+		XMLoadFloat3(&attachedRigidBody->gameObject()->GetPosition()));
+
+	//Rotated center added to posDiff
+	XMFLOAT3 pos;
+	XMStoreFloat3(&pos, XMVectorAdd(posDiff,
+		XMVector3Rotate(XMLoadFloat3(&center), rotDiffVec)));
+
+	//Make transform
+	return PxTransform(Float3ToVec3(pos), Float4ToQuat(rotDiff));
 }
 
 // Get the center of the Collider
-DirectX::XMFLOAT3 Collider::GetCenter()
+XMFLOAT3 Collider::GetCenter()
 {
 	return center;
 }
@@ -189,13 +279,21 @@ physx::PxShape* BoxCollider::GenerateShape(PxPhysics* physics)
 	XMStoreFloat3(&half, XMVectorScale(XMLoadFloat3(&size), 1/2.0f));
 	PxBoxGeometry box = PxBoxGeometry(Float3ToVec3(half));
 	
+	//Get material
 	PxMaterial* mat;
 	if (physicsMaterial == nullptr)
 		mat = DEFAULT_PHYSICS_MAT;
 	else mat = physicsMaterial->GetPxMaterial();
 
+	//Get transform
+	PxTransform tr;
+	if (isInChildObj && attachedRigidBody != nullptr)
+		tr = GetChildTransform();
+	else tr = PxTransform(Float3ToVec3(center));
+
+	//Make shape
 	PxShape* shape = physics->createShape(box, *mat, true);
-	shape->setLocalPose(PxTransform(Float3ToVec3(center)));
+	shape->setLocalPose(tr);
 	return shape;
 }
 
@@ -233,13 +331,21 @@ physx::PxShape* SphereCollider::GenerateShape(physx::PxPhysics * physics)
 {
 	PxSphereGeometry sphere = PxSphereGeometry(radius);
 
+	//Get material
 	PxMaterial* mat;
 	if (physicsMaterial == nullptr)
 		mat = DEFAULT_PHYSICS_MAT;
 	else mat = physicsMaterial->GetPxMaterial();
 
+	//Get transform
+	PxTransform tr;
+	if (isInChildObj && attachedRigidBody != nullptr)
+		tr = GetChildTransform();
+	else tr = PxTransform(Float3ToVec3(center));
+
+	//Make shape
 	PxShape* shape = physics->createShape(sphere, *mat, true);
-	shape->setLocalPose(PxTransform(Float3ToVec3(center)));
+	shape->setLocalPose(tr);
 	return shape;
 }
 
@@ -280,29 +386,36 @@ physx::PxShape* CapsuleCollider::GenerateShape(physx::PxPhysics * physics)
 {
 	PxCapsuleGeometry capsule = PxCapsuleGeometry(radius, height / 2);
 
+	//Get material
 	PxMaterial* mat;
 	if (physicsMaterial == nullptr)
 		mat = DEFAULT_PHYSICS_MAT;
 	else mat = physicsMaterial->GetPxMaterial();
 
+	//Get transform
+	PxTransform tr;
+	if (isInChildObj && attachedRigidBody != nullptr)
+		tr = GetChildTransform();
+	else tr = PxTransform(Float3ToVec3(center));
+
 	//Create shape
 	PxShape* shape = physics->createShape(capsule, *mat, true);
 
 	//Rotate capsule
-	PxTransform transform = shape->getLocalPose();
 	switch (dir)
 	{
 		case CapsuleDirection::Y:
-			shape->setLocalPose(PxTransform(
-				Float3ToVec3(center), PxQuat(PxHalfPi, PxVec3(0, 0, 1))));
+			tr.q = tr.q * PxQuat(PxHalfPi, PxVec3(0, 0, 1));
+			shape->setLocalPose(tr);
 			break;
 
 		case CapsuleDirection::Z:
-			shape->setLocalPose(PxTransform(
-				Float3ToVec3(center), PxQuat(PxHalfPi, PxVec3(0, 1, 0))));
+			tr.q = tr.q * PxQuat(PxHalfPi, PxVec3(0, 1, 0));
+			shape->setLocalPose(tr);
 			break;
 
 		default:
+			shape->setLocalPose(tr);
 			break;
 	}
 	

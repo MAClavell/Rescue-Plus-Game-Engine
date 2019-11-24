@@ -317,7 +317,6 @@ void Game::SetupScene()
 		);
 	floor->MoveAbsolute(XMFLOAT3(0, -2, 0));
 	floor->SetScale(200, 1, 200);
-	floor->AddComponent<RigidBody>(0.0f)->SetKinematic(true);
 	floor->AddComponent<BoxCollider>(floor->GetScale());
 
 	//Create horizontal shipping container
@@ -370,6 +369,7 @@ void Game::SetupScene()
 	crate10C->SetParent(crate10);
 	crate10C->SetLocalPosition(0, 4, 0);
 	crate10C->SetLocalRotation(0, 0, 45);
+	crate10C->AddComponent<BoxCollider>(crate10C->GetScale())->SetDebug(true);
 
 	CreateCrane(resourceManager);
 }

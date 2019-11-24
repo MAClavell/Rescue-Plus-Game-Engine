@@ -19,36 +19,52 @@ RigidBody::RigidBody(GameObject* gameObject, float mass) : Component::Component(
 
 	//Add to the scene
 	body->userData = this;
-	PhysicsManager::GetInstance()->AddRigidBody(this);
+	PhysicsManager::GetInstance()->AddActor(body);
 
 	//See if there is already a collider attached to this or any child gameobjects
-	FindChildrenColliders(gameObject);
+	FindChildrenColliders(gameObject, true);
 }
 
 RigidBody::~RigidBody()
 {
-	PhysicsManager::GetInstance()->RemoveRigidBody(this);
+	if (body != nullptr)
+	{
+		//Detatch all shapes
+		auto numShapes = body->getNbShapes();
+		PxShape** shapes = new PxShape*[numShapes];
+		numShapes = body->getShapes(shapes, numShapes);
+		for (int i = numShapes - 1; i >= 0; i--)
+		{
+			((Collider*)(shapes[i]->userData))->DeAttachFromRB();
+		}
+		delete[] shapes;
+	}
+	PhysicsManager::GetInstance()->RemoveActor(body);
+	body->release();
+	body = nullptr;
 	if (collisionResolver != nullptr)
 		delete collisionResolver;
 }
 
 // Attach all children colliders to this GO
-void RigidBody::FindChildrenColliders(GameObject* go, bool first)
+void RigidBody::FindChildrenColliders(GameObject* go, bool firstObj)
 {
-	//If there's a rigidbody in a children, ignore all those colliders
-	if (!first)
+	//If there's a rigidbody in a child, ignore all those colliders
+	if (!firstObj)
 	{
 		RigidBody* rb = go->GetComponent<RigidBody>();
 		if (rb != nullptr)
 			return;
 	}
 	
+	//Find collider
 	Collider* col = go->GetComponent<Collider>();
 	if (col != nullptr)
 	{
-		col->Attach(this);
+		col->AttachToRB(this, !firstObj);
 	}
 
+	//Check children for more colliders
 	for each (GameObject* c in go->GetChildren())
 	{
 		FindChildrenColliders(c, false);

@@ -107,7 +107,7 @@ void PhysicsManager::onContact(const physx::PxContactPairHeader & pairHeader, co
 	//Use the rigidbody if the shape is attached to a rigidbody
 	RigidBody* shape1Rb = shape1->GetAttachedRigidBody();
 	RigidBody* shape2Rb = shape2->GetAttachedRigidBody();
-	if (shape1Rb == shape2Rb)
+	if (shape1Rb != nullptr && shape1Rb == shape2Rb)
 		return;
 
 	//Calculate collisions
@@ -203,16 +203,16 @@ float PhysicsManager::GetGravity()
 }
 
 // Add a rigidbody to the sim
-void PhysicsManager::AddRigidBody(RigidBody* rigidBody)
+void PhysicsManager::AddActor(PxActor* actor)
 {
 	if (foundation && scene)
-		scene->addActor(*(rigidBody->GetRigidBody()));
+		scene->addActor(*actor);
 }
 
 // Remove a rigidbody from the sim
-void PhysicsManager::RemoveRigidBody(RigidBody* rigidBody)
+void PhysicsManager::RemoveActor(PxActor* actor)
 {
 	if (foundation && scene)
-		scene->removeActor(*(rigidBody->GetRigidBody()));
+		scene->removeActor(*actor);
 }
 

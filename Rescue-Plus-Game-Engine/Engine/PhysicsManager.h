@@ -79,12 +79,12 @@ public:
 	// --------------------------------------------------------
 	// Add a rigidbody to the sim
 	// --------------------------------------------------------
-	void AddRigidBody(RigidBody* rigidBody);
+	void AddActor(physx::PxActor* actor);
 
 	// --------------------------------------------------------
 	// Remove a rigidbody from the sim
 	// --------------------------------------------------------
-	void RemoveRigidBody(RigidBody* rigidBody);
+	void RemoveActor(physx::PxActor* actor);
 
 };
 
