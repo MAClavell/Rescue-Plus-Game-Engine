@@ -98,45 +98,48 @@ void PhysicsManager::Init()
 
 void PhysicsManager::onContact(const physx::PxContactPairHeader & pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs)
 {
-	//Get shapes
-	Collider* shape1 = (Collider*)(pairs->shapes[0]->userData);
-	Collider* shape2 = (Collider*)(pairs->shapes[1]->userData);
-	if (shape1 == shape2)
-		return;
-
-	//Use the rigidbody if the shape is attached to a rigidbody
-	RigidBody* shape1Rb = shape1->GetAttachedRigidBody();
-	RigidBody* shape2Rb = shape2->GetAttachedRigidBody();
-	if (shape1Rb != nullptr && shape1Rb == shape2Rb)
-		return;
-
-	//Calculate collisions
-	Collision col1 = shape2Rb == nullptr ? Collision(shape2->gameObject(), shape2)
-		: Collision(shape2Rb->gameObject(), shape2);
-	Collision col2 = shape1Rb == nullptr ? Collision(shape1->gameObject(), shape1)
-		: Collision(shape1Rb->gameObject(), shape1);
-
-	//OnEnter
-	if (pairHeader.pairs->flags.isSet(PxContactPairFlag::eACTOR_PAIR_HAS_FIRST_TOUCH))
+	for (PxU32 i = 0; i < nbPairs; i++)
 	{
-		if (shape1Rb != nullptr)
-			shape1Rb->GetCollisionResolver()->AddEnterCollision(col1);
-		else shape1->GetCollisionResolver()->AddEnterCollision(col1);
+		//Get shapes
+		Collider* shape1 = (Collider*)(pairs[i].shapes[0]->userData);
+		Collider* shape2 = (Collider*)(pairs[i].shapes[1]->userData);
+		if (shape1 == shape2)
+			return;
 
-		if (shape2Rb != nullptr)
-			shape2Rb->GetCollisionResolver()->AddEnterCollision(col2);
-		else shape2->GetCollisionResolver()->AddEnterCollision(col2);
-	}
-	//OnExit
-	else if (pairHeader.pairs->flags.isSet(PxContactPairFlag::eACTOR_PAIR_LOST_TOUCH))
-	{
-		if (shape1Rb != nullptr)
-			shape1Rb->GetCollisionResolver()->AddExitCollision(col1);
-		else shape1->GetCollisionResolver()->AddExitCollision(col1);
+		//Use the rigidbody if the shape is attached to a rigidbody
+		RigidBody* shape1Rb = shape1->GetAttachedRigidBody();
+		RigidBody* shape2Rb = shape2->GetAttachedRigidBody();
+		if (shape1Rb != nullptr && shape1Rb == shape2Rb)
+			return;
 
-		if (shape2Rb != nullptr)
-			shape2Rb->GetCollisionResolver()->AddExitCollision(col2);
-		else shape2->GetCollisionResolver()->AddExitCollision(col2);
+		//Calculate collisions
+		Collision col1 = shape2Rb == nullptr ? Collision(shape2->gameObject(), shape2)
+			: Collision(shape2Rb->gameObject(), shape2);
+		Collision col2 = shape1Rb == nullptr ? Collision(shape1->gameObject(), shape1)
+			: Collision(shape1Rb->gameObject(), shape1);
+
+		//OnEnter
+		if (pairs[i].flags.isSet(PxContactPairFlag::eACTOR_PAIR_HAS_FIRST_TOUCH))
+		{
+			if (shape1Rb != nullptr)
+				shape1Rb->GetCollisionResolver()->AddEnterCollision(col1);
+			else shape1->GetCollisionResolver()->AddEnterCollision(col1);
+
+			if (shape2Rb != nullptr)
+				shape2Rb->GetCollisionResolver()->AddEnterCollision(col2);
+			else shape2->GetCollisionResolver()->AddEnterCollision(col2);
+		}
+		//OnExit
+		else if (pairs[i].flags.isSet(PxContactPairFlag::eACTOR_PAIR_LOST_TOUCH))
+		{
+			if (shape1Rb != nullptr)
+				shape1Rb->GetCollisionResolver()->AddExitCollision(col1);
+			else shape1->GetCollisionResolver()->AddExitCollision(col1);
+
+			if (shape2Rb != nullptr)
+				shape2Rb->GetCollisionResolver()->AddExitCollision(col2);
+			else shape2->GetCollisionResolver()->AddExitCollision(col2);
+		}
 	}
 }
 

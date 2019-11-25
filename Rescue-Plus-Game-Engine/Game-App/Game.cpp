@@ -181,6 +181,9 @@ void Game::FixedUpdate(float constantStepSize, float totalTime)
 
 	//FixedUpdate entities
 	entityManager->FixedUpdate(constantStepSize);
+
+	//Delete finished jobs
+	JobSystem::DeleteFinishedJobs();
 }
 
 // --------------------------------------------------------
@@ -217,6 +220,20 @@ void Game::Update(float deltaTime, float totalTime)
 		box4->SetScale(1, 2, 2);
 		box4->AddComponent<RigidBody>(1.0f);
 		box4->AddComponent<BoxCollider>(box4->GetScale());
+	}
+
+	if (inputManager->GetKey('T'))
+	{
+		static float amt = 4;
+		amt += 2 * deltaTime;
+		crate10C->SetLocalPosition(0, amt, 0);
+	}
+
+	if (inputManager->GetKey('R'))
+	{
+		static float amt = 0;
+		amt += 2 * deltaTime;
+		crate10C->SetLocalRotation(0, amt, 45);
 	}
 
 

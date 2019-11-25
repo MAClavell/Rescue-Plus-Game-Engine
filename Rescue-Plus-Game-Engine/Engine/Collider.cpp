@@ -26,6 +26,10 @@ Collider::Collider(GameObject* gameObject, ColliderType type,
 	collisionResolver = new CollisionResolver();
 	staticActor = nullptr;
 	attachedRigidBody = nullptr;
+	gameObject->AddListenerOnPositionChanged(std::bind(&Collider::OnPositionChanged, this,
+			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	gameObject->AddListenerOnRotationChanged(std::bind(&Collider::OnRotationChanged, this,
+			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 }
 
 Collider::~Collider()
@@ -38,6 +42,9 @@ Collider::~Collider()
 
 	if (collisionResolver != nullptr)
 		delete collisionResolver;
+
+	//gameObject()->RemoveListenerOnPositionChanged(std::bind(&Collider::OnPositionChanged, this,
+	//	std::placeholders::_1, std::placeholders::_2));
 }
 
 // Get the rigidbody this collider is attached to (null if none)
@@ -71,6 +78,25 @@ void Collider::FixedUpdate(float deltaTime)
 {
 	if(staticActor != nullptr)
 		collisionResolver->ResolveCollisions(gameObject()->GetAllUserComponents());
+}
+
+void Collider::OnPositionChanged(DirectX::XMFLOAT3 position, bool fromParent, bool fromRigidBody)
+{
+	if (!fromRigidBody && ((attachedRigidBody != nullptr && !fromParent && isInChildObj)
+		|| (staticActor != nullptr)))
+		ReAttach();
+}
+
+void Collider::OnRotationChanged(DirectX::XMFLOAT4 rotation, bool fromParent, bool fromRigidBody)
+{
+	if (!fromRigidBody && ((attachedRigidBody != nullptr && !fromParent)
+		|| (staticActor != nullptr)))
+		ReAttach();
+}
+
+void Collider::OnScaleChanged(DirectX::XMFLOAT3 scale)
+{
+	ReAttach();
 }
 
 // DeAttach this collider from it's rigidbody and make it a static collider
@@ -113,7 +139,7 @@ void Collider::ReAttach()
 	if (attachedRigidBody != nullptr)
 	{
 		RigidBody* rb = attachedRigidBody;
-		DeAttachFromRB();
+		DeAttachFromRB(false);
 		AttachToRB(rb, isInChildObj);
 	}
 	else
@@ -171,16 +197,18 @@ void Collider::AttachToStatic()
 PxTransform Collider::GetChildTransform()
 {
 	//Rotation difference
+	XMVECTOR rbRot = XMLoadFloat4(&attachedRigidBody->gameObject()->GetRotation());
 	XMFLOAT4 rotDiff;
 	XMVECTOR rotDiffVec = XMQuaternionMultiply(
 		XMLoadFloat4(&gameObject()->GetRotation()),
-		XMQuaternionInverse(XMLoadFloat4(&attachedRigidBody->gameObject()->GetRotation())));
+		XMQuaternionInverse(rbRot));
 	XMStoreFloat4(&rotDiff, rotDiffVec);
 	
 	//Position difference
-	XMVECTOR posDiff = XMVectorSubtract(
+	XMMATRIX mat = XMLoadFloat4x4(&attachedRigidBody->gameObject()->GetWorldMatrix());
+	XMVECTOR posDiff = XMVector3Transform(
 		XMLoadFloat3(&gameObject()->GetPosition()),
-		XMLoadFloat3(&attachedRigidBody->gameObject()->GetPosition()));
+		XMMatrixInverse(nullptr, mat));
 
 	//Rotated center added to posDiff
 	XMFLOAT3 pos;

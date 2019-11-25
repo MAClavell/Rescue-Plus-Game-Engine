@@ -171,7 +171,7 @@ static void CreateCrane(ResourceManager* rm)
 	//Create pillars
 	for (int i = 1; i < 5; i++)
 	{
-		GameObject* pillar = CreateCraneObj(rm, "Pillar" + i, "blue", craneGO);
+		GameObject* pillar = CreateCraneObj(rm, "Pillar", "blue", craneGO);
 		pillar->SetScale(3, 30, 3);
 		switch (i)
 		{
@@ -189,7 +189,6 @@ static void CreateCrane(ResourceManager* rm)
 			break;
 		default: break;
 		}
-		pillar->AddComponent<RigidBody>(1.0f)->SetKinematic(true);
 		pillar->AddComponent<BoxCollider>(pillar->GetScale());
 	}
 
@@ -197,24 +196,20 @@ static void CreateCrane(ResourceManager* rm)
 	GameObject* top1 = CreateCraneObj(rm, "Top1", "blue", craneGO);
 	top1->SetScale(43, 2, 3);
 	top1->SetLocalPosition(0, 15, -15);
-	top1->AddComponent<RigidBody>(1.0f)->SetKinematic(true);
 	top1->AddComponent<BoxCollider>(top1->GetScale());
 	GameObject* top2 = CreateCraneObj(rm, "Top2", "blue", craneGO);
 	top2->SetScale(43, 2, 3);
 	top2->SetLocalPosition(0, 15, 15);
-	top2->AddComponent<RigidBody>(1.0f)->SetKinematic(true);
 	top2->AddComponent<BoxCollider>(top2->GetScale());
 
 	//Create sides
 	GameObject* side1 = CreateCraneObj(rm, "Side1", "blue", craneGO);
 	side1->SetScale(1, 3, 30);
 	side1->SetLocalPosition(20, 6, 0);
-	side1->AddComponent<RigidBody>(1.0f)->SetKinematic(true);
 	side1->AddComponent<BoxCollider>(side1->GetScale());
 	GameObject* side2 = CreateCraneObj(rm, "Side1", "blue", craneGO);
 	side2->SetScale(1, 3, 30);
 	side2->SetLocalPosition(-20, 6, 0);
-	side2->AddComponent<RigidBody>(1.0f)->SetKinematic(true);
 	side2->AddComponent<BoxCollider>(side2->GetScale());
 
 	//Create moveable crane part
@@ -226,7 +221,7 @@ static void CreateCrane(ResourceManager* rm)
 
 	for (int i = 1; i < 5; i++)
 	{
-		GameObject* rope = new GameObject("Rope"+i);
+		GameObject* rope = new GameObject("Rope");
 		rope->AddComponent<MeshRenderer>(
 			rm->GetMesh("Assets\\Models\\Basic\\cylinder.obj"),
 			rm->GetMaterial("gray"));
@@ -282,7 +277,6 @@ static GameObject* CreateContainer(ResourceManager* rm, const char* name)
 	cont->AddComponent<MeshRenderer>(
 		rm->GetMesh("Assets\\Models\\Shipyard\\shipyard_container.obj"),
 		rm->GetMaterial("shipyard_container"));
-	cont->AddComponent<RigidBody>(1.0f)->SetKinematic(true);
 	cont->AddComponent<BoxCollider>(XMFLOAT3(25.5f, 10, 10), nullptr, XMFLOAT3(-0.2f, 5.1f, 0))->SetDebug(true);
 	return cont;
 }
@@ -360,7 +354,7 @@ void Game::SetupScene()
 	GameObject* crate10 = CreateCrate(resourceManager, "Crate10", 5);
 	crate10->SetPosition(-20, 3, 17);
 	crate10->AddComponent<TestCallbacks>();
-	GameObject* crate10C = new GameObject("Crate10Child");
+	crate10C = new GameObject("Crate10Child");
 	crate10C->AddComponent<MeshRenderer>(
 		resourceManager->GetMesh("Assets\\Models\\Basic\\cube.obj"),
 		resourceManager->GetMaterial("shipyard_crate")

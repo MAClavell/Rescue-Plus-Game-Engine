@@ -13,7 +13,7 @@ void CollisionResolver::AddExitCollision(Collision collision)
 	//Try to find in enter list
 	for (auto iter = enterCollisions.begin(); iter != enterCollisions.end(); iter++)
 	{
-		if ((*iter).col == collision && enterCollisions.size() > 0)
+		if ((*iter).col == collision)
 		{
 			std::iter_swap(iter, enterCollisions.end() - 1);
 			enterCollisions.pop_back();

@@ -52,6 +52,8 @@ private:
 	ID3D11SamplerState* samplerState;
 	ID3D11SamplerState* shadowSampler;
 
+	GameObject* crate10C;
+
 	// Initialization helper methods - feel free to customize, combine, etc.
 	void LoadAssets();
 	void SetupScene();

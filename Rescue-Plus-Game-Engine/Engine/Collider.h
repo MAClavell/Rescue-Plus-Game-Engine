@@ -12,6 +12,31 @@ enum class ColliderType { Box = 0, Sphere = 1, Capsule = 2 };
 // --------------------------------------------------------
 class Collider : public Component
 {
+private:
+	physx::PxShape* shape;
+	ColliderType type;
+	CollisionResolver* collisionResolver;
+
+	// --------------------------------------------------------
+	// Update collisions
+	// --------------------------------------------------------
+	void FixedUpdate(float deltaTime) override;
+
+	// --------------------------------------------------------
+	// The attached GameObject's position changed
+	// --------------------------------------------------------
+	void OnPositionChanged(DirectX::XMFLOAT3 position, bool fromParent, bool fromRigidBody);
+
+	// --------------------------------------------------------
+	// The attached GameObject's rotation changed
+	// --------------------------------------------------------
+	void OnRotationChanged(DirectX::XMFLOAT4 rotation, bool fromParent, bool fromRigidBody);
+
+	// --------------------------------------------------------
+	// The attached GameObject's scale changed
+	// --------------------------------------------------------
+	void OnScaleChanged(DirectX::XMFLOAT3 scale);
+
 protected:
 	PhysicsMaterial* physicsMaterial;
 	RigidBody* attachedRigidBody;
@@ -61,16 +86,6 @@ protected:
 	// Update collisions
 	// --------------------------------------------------------
 	virtual void Update(float deltaTime) override = 0;
-
-private:
-	physx::PxShape* shape;
-	ColliderType type;
-	CollisionResolver* collisionResolver;
-
-	// --------------------------------------------------------
-	// Update collisions
-	// --------------------------------------------------------
-	void FixedUpdate(float deltaTime) override;
 
 public:
 	// --------------------------------------------------------

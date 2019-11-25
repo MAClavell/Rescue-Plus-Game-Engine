@@ -21,6 +21,9 @@ RigidBody::RigidBody(GameObject* gameObject, float mass) : Component::Component(
 	body->userData = this;
 	PhysicsManager::GetInstance()->AddActor(body);
 
+	gameObject->AddListenerOnPositionChanged(std::bind(&RigidBody::UpdateRigidbodyPosition, this,
+		std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+
 	//See if there is already a collider attached to this or any child gameobjects
 	FindChildrenColliders(gameObject, true);
 }
@@ -85,12 +88,15 @@ void RigidBody::UpdateWorldPosition()
 }
 
 // Update the gameobject's rigidbody from it's world position
-void RigidBody::UpdateRigidbodyPosition()
+void RigidBody::UpdateRigidbodyPosition(XMFLOAT3 pos, bool fromParent, bool fromRigidBody)
 {
-	PxTransform tr;
-	tr.p = Float3ToVec3(gameObject()->GetPosition());
-	tr.q = Float4ToQuat(gameObject()->GetRotation());
-	body->setGlobalPose(tr);
+	if (!fromRigidBody)
+	{
+		PxTransform tr;
+		tr.p = Float3ToVec3(gameObject()->GetPosition());
+		tr.q = Float4ToQuat(gameObject()->GetRotation());
+		body->setGlobalPose(tr);
+	}
 }
 
 // Set the mass of this rigid body

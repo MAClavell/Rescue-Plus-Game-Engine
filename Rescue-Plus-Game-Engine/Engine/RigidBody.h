@@ -37,7 +37,7 @@ public:
 	// --------------------------------------------------------
 	// Update the gameobject's rigidbody from it's world position
 	// --------------------------------------------------------
-	void UpdateRigidbodyPosition();
+	void UpdateRigidbodyPosition(DirectX::XMFLOAT3 pos, bool fromParent, bool fromRigidBody);
 
 	// --------------------------------------------------------
 	// Set the mass of this rigid body

@@ -1,7 +1,7 @@
 #include "ShipyardCrane.h"
 #include "GameObject.h"
 #include <math.h>
-#define RANGE 12
+#define RANGE 12.0f
 #define SPEED 2
 
 ShipyardCrane::ShipyardCrane(GameObject* gameObject, GameObject* hook) : UserComponent(gameObject)

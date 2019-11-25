@@ -3,6 +3,7 @@
 #include "Component.h"
 #include <vector>
 #include <string>
+#include "Messenger.hpp"
 
 // --------------------------------------------------------
 // A GameObject definition.
@@ -31,6 +32,11 @@ private:
 	DirectX::XMFLOAT3 scale;
 	bool worldDirty;
 
+	//Messengers
+	Messenger<DirectX::XMFLOAT3, bool, bool> onPositionChanged;
+	Messenger<DirectX::XMFLOAT4, bool, bool> onRotationChanged;
+	Messenger<DirectX::XMFLOAT3> onScaleChanged;
+
 	//Components
 	std::vector<Component*> components;
 	std::vector<UserComponent*> userComponents;
@@ -49,17 +55,31 @@ private:
 	// Set the position for this GameObject
 	//
 	// newPosition - The new position to go to
-	// fromRigidBody - If this position setting is from a rigidbody
 	// --------------------------------------------------------
-	void SetPosition(DirectX::XMFLOAT3 newPosition, bool setLocal, bool fromRigidBody = false);
+	void SetPosition(DirectX::XMFLOAT3 newPosition, bool setLocal,
+		bool fromParent = false, bool fromRigidBody = false);
 
 	// --------------------------------------------------------
 	// Set the rotation for this GameObject (Quaternion)
 	//
 	// newQuatRotation - The new rotation to rotate to
-	// fromRigidBody - If this position setting is from a rigidbody
 	// --------------------------------------------------------
-	void SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool setLocal, bool fromRigidBody = false);
+	void SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool setLocal,
+		bool fromParent = false, bool fromRigidBody = false);
+
+	// --------------------------------------------------------
+	// Set the local position for this GameObject
+	//
+	// newLocalPosition - The new local position to go to
+	// --------------------------------------------------------
+	void SetLocalPosition(DirectX::XMFLOAT3 newLocalPosition, bool fromParent);
+
+	// --------------------------------------------------------
+	// Set the local rotation for this GameObject (Quaternion)
+	//
+	// newQuatRotation - The new rotation to rotate to
+	// --------------------------------------------------------
+	void SetLocalRotation(DirectX::XMFLOAT4 newLocalQuatRotation, bool fromParent);
 
 	// --------------------------------------------------------
 	// Calculate the local axis for the gameobject
@@ -258,6 +278,33 @@ public:
 	// Rebuild the world matrix from the different components
 	// --------------------------------------------------------
 	void RebuildWorld();
+
+	// --------------------------------------------------------
+	// Add a listener to onPositionChanged
+	// --------------------------------------------------------
+	void AddListenerOnPositionChanged(std::function<void(DirectX::XMFLOAT3, bool, bool)> function);
+	// --------------------------------------------------------
+	// Remove a listener from onPositionChanged
+	// --------------------------------------------------------
+	void RemoveListenerOnPositionChanged(std::function<void(DirectX::XMFLOAT3, bool, bool)> function);
+
+	// --------------------------------------------------------
+	// Add a listener to onRotationChanged
+	// --------------------------------------------------------
+	void AddListenerOnRotationChanged(std::function<void(DirectX::XMFLOAT4, bool, bool)> function);
+	// --------------------------------------------------------
+	// Remove a listener from onRotationChanged
+	// --------------------------------------------------------
+	void RemoveListenerOnRotationChanged(std::function<void(DirectX::XMFLOAT4, bool, bool)> function);
+
+	// --------------------------------------------------------
+	// Add a listener to onScaleChanged
+	// --------------------------------------------------------
+	void AddListenerOnScaleChanged(std::function<void(DirectX::XMFLOAT3)> function);
+	// --------------------------------------------------------
+	// Remove a listener from onScaleChanged
+	// --------------------------------------------------------
+	void RemoveListenerOnScaleChanged(std::function<void(DirectX::XMFLOAT3)> function);
 
 	// --------------------------------------------------------
 	// Get the position for this GameObject
