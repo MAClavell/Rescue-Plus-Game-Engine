@@ -12,12 +12,6 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{f9e8d06b-dd7b-438c-8366-5dabd553fb21}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Cameras">
-      <UniqueIdentifier>{3bb4bb4a-ec74-48eb-abe9-b61a3bbbbbd1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Cameras">
-      <UniqueIdentifier>{006062b9-02ea-4e4f-af5b-e004948e3b42}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Materials">
       <UniqueIdentifier>{fe61fe6f-c8fc-4b0c-8cae-365cb6421263}</UniqueIdentifier>
     </Filter>
@@ -29,6 +23,12 @@
     </Filter>
     <Filter Include="Source Files\UserComponents">
       <UniqueIdentifier>{c952daf5-a99f-4013-8e9d-0391491234ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UserComponents\Movement">
+      <UniqueIdentifier>{77fdb23c-414b-4ec0-b910-dbcba4bcb4d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UserComponents\Movement">
+      <UniqueIdentifier>{ee90357d-a232-4699-afd2-8ccd116dfb83}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -47,9 +47,6 @@
     <ClCompile Include="MAT_Basic.cpp">
       <Filter>Source Files\Materials</Filter>
     </ClCompile>
-    <ClCompile Include="DebugMovement.cpp">
-      <Filter>Source Files\Cameras</Filter>
-    </ClCompile>
     <ClCompile Include="TestCallbacks.cpp">
       <Filter>Source Files\UserComponents</Filter>
     </ClCompile>
@@ -61,6 +58,12 @@
     </ClCompile>
     <ClCompile Include="ShipyardCrane.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugMovement.cpp">
+      <Filter>Source Files\UserComponents\Movement</Filter>
+    </ClCompile>
+    <ClCompile Include="FirstPersonMovement.cpp">
+      <Filter>Source Files\UserComponents\Movement</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -76,9 +79,6 @@
     <ClInclude Include="MAT_Basic.h">
       <Filter>Header Files\Materials</Filter>
     </ClInclude>
-    <ClInclude Include="DebugMovement.h">
-      <Filter>Header Files\Cameras</Filter>
-    </ClInclude>
     <ClInclude Include="TestCallbacks.h">
       <Filter>Header Files\UserComponents</Filter>
     </ClInclude>
@@ -87,6 +87,12 @@
     </ClInclude>
     <ClInclude Include="ShipyardCrane.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugMovement.h">
+      <Filter>Header Files\UserComponents\Movement</Filter>
+    </ClInclude>
+    <ClInclude Include="FirstPersonMovement.h">
+      <Filter>Header Files\UserComponents\Movement</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

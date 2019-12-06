@@ -224,6 +224,7 @@ xcopy "$(SolutionDir)Engine\PhysX\bin\*.*" "$(TargetDir)" /Y /I /E</Command>
   <ItemGroup>
     <ClCompile Include="DXCore.cpp" />
     <ClCompile Include="DebugMovement.cpp" />
+    <ClCompile Include="FirstPersonMovement.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MAT_Basic.cpp" />
@@ -236,6 +237,7 @@ xcopy "$(SolutionDir)Engine\PhysX\bin\*.*" "$(TargetDir)" /Y /I /E</Command>
   <ItemGroup>
     <ClInclude Include="DXCore.h" />
     <ClInclude Include="DebugMovement.h" />
+    <ClInclude Include="FirstPersonMovement.h" />
     <ClInclude Include="MAT_Basic.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="MAT_PBRTexture.h" />
