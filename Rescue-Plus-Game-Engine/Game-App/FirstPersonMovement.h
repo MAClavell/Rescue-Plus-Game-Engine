@@ -26,9 +26,6 @@ private:
 	bool crouching;
 	bool sliding;
 
-	//Private constructor to ensure all children are created before adding this component
-	FirstPersonMovement(GameObject* gameObject);
-
 	void Update(float deltaTime) override;
 
 	// --------------------------------------------------------
@@ -58,7 +55,8 @@ private:
 	// --------------------------------------------------------
 	void EndSlide();
 
-public:
+public:\
+	FirstPersonMovement(GameObject* gameObject);
 	~FirstPersonMovement();
 
 	// --------------------------------------------------------

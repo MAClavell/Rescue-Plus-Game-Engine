@@ -268,11 +268,28 @@ void GameObject::SetPosition(XMFLOAT3 newPosition, bool setLocal,
 	{
 		if (parent != nullptr)
 		{
+			/*
 			XMMATRIX mat = XMLoadFloat4x4(&parent->GetRawWorldMatrix());
 			XMVECTOR localPos = XMVector3TransformCoord(
 				XMLoadFloat3(&position),
 				XMMatrixInverse(nullptr, mat));
-			XMStoreFloat3(&localPosition, localPos);
+			XMStoreFloat3(&localPosition, localPos);*/
+
+			XMVECTOR V = XMVectorSubtract(XMLoadFloat3(&position), XMLoadFloat3(&parent->GetPosition()));
+			XMVECTOR Q = XMQuaternionInverse(XMLoadFloat4(&parent->GetRotation()));
+			XMVECTOR T = XMVectorScale(XMVector3Cross(Q, V), 2.0f);
+			XMVECTOR newLoc = XMVectorAdd(V, XMVectorAdd(XMVectorScale(T, parent->GetRotation().w), XMVector3Cross(Q, T)));
+			XMStoreFloat3(&localPosition, newLoc);
+			
+			//const FVector Q(-X, -Y, -Z); // Inverse
+			//const FVector T = 2.f * FVector::CrossProduct(Q, V);
+			//const FVector Result = V + (W * T) + FVector::CrossProduct(Q, T);
+
+			/*
+			const FVector Q(-X, -Y, -Z); // Inverse
+			const FVector T = 2.f * FVector::CrossProduct(Q, V);
+			const FVector Result = V + (W * T) + FVector::CrossProduct(Q, T);
+			*/
 			printf("%.3f, %.3f, %.3f\n", localPosition.x, localPosition.y, localPosition.z);
 		}
 		else localPosition = position;
