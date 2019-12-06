@@ -16,7 +16,7 @@ DebugMovement::~DebugMovement()
 // Update the camera (runs every frame)
 void DebugMovement::Update(float deltaTime)
 {
-	Movement(deltaTime);
+	//Movement(deltaTime);
 }
 
 // Move the GameObject

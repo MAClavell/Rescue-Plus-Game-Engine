@@ -205,8 +205,8 @@ PxTransform Collider::GetChildTransform()
 	XMStoreFloat4(&rotDiff, rotDiffVec);
 	
 	//Position difference
-	XMMATRIX mat = XMLoadFloat4x4(&attachedRigidBody->gameObject()->GetWorldMatrix());
-	XMVECTOR posDiff = XMVector3Transform(
+	XMMATRIX mat = XMLoadFloat4x4(&attachedRigidBody->gameObject()->GetRawWorldMatrix());
+	XMVECTOR posDiff = XMVector3TransformCoord(
 		XMLoadFloat3(&gameObject()->GetPosition()),
 		XMMatrixInverse(nullptr, mat));
 
@@ -214,6 +214,9 @@ PxTransform Collider::GetChildTransform()
 	XMFLOAT3 pos;
 	XMStoreFloat3(&pos, XMVectorAdd(posDiff,
 		XMVector3Rotate(XMLoadFloat3(&center), rotDiffVec)));
+
+	auto loc = gameObject()->GetLocalPosition();
+	printf("%.3f, %.3f, %.3f vs. %.3f, %.3f, %.3f\n", loc.x, loc.y, loc.z, pos.x, pos.y, pos.z);
 
 	//Make transform
 	return PxTransform(Float3ToVec3(pos), Float4ToQuat(rotDiff));

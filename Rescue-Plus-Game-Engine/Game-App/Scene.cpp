@@ -268,7 +268,7 @@ static void CreateCrane(ResourceManager* rm)
 
 	craneGO->MoveAbsolute(XMFLOAT3(-50, 13, 40));
 	craneGO->Rotate(0, 90, 0);
-	craneGO->AddComponent<ShipyardCrane>(moveable);
+	//craneGO->AddComponent<ShipyardCrane>(moveable);
 }
 
 static GameObject* CreateContainer(ResourceManager* rm, const char* name)

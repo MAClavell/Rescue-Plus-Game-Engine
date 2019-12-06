@@ -19,6 +19,7 @@ private:
 
 	//Transformations
 	DirectX::XMFLOAT4X4 world;
+	DirectX::XMFLOAT4X4 worldRaw;
 	DirectX::XMFLOAT4X4 worldInvTrans;
 
 	DirectX::XMFLOAT3 forwardAxis;
@@ -267,6 +268,13 @@ public:
 	// Get the world matrix for this GameObject (rebuilding if necessary)
 	// --------------------------------------------------------
 	DirectX::XMFLOAT4X4 GetWorldMatrix();
+
+	// --------------------------------------------------------
+	// Get the RAW world matrix for this GameObject (rebuilding if necessary)
+	// DirectX requires a transposed version of the world matrix,
+	//	this is the untransposed version used for Rescue+ math
+	// --------------------------------------------------------
+	DirectX::XMFLOAT4X4 GetRawWorldMatrix();
 
 	// --------------------------------------------------------
 	// Get the inverse transpose of the world matrix for this GameObject 

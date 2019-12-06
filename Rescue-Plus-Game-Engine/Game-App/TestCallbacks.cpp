@@ -17,7 +17,7 @@ void TestCallbacks::OnCollisionEnter(Collision collision)
 
 void TestCallbacks::OnCollisionStay(Collision collision)
 {
-	printf("%s stayed on %s\n", collision.gameObject->GetName().c_str(), gameObject()->GetName().c_str());
+	//printf("%s stayed on %s\n", collision.gameObject->GetName().c_str(), gameObject()->GetName().c_str());
 }
 
 void TestCallbacks::OnCollisionExit(Collision collision)

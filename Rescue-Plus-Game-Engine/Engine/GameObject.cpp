@@ -166,6 +166,14 @@ XMFLOAT4X4 GameObject::GetWorldMatrix()
 	return world;
 }
 
+DirectX::XMFLOAT4X4 GameObject::GetRawWorldMatrix()
+{
+	if (worldDirty)
+		RebuildWorld();
+
+	return worldRaw;
+}
+
 // Get the inverse transpose of the world matrix for this entity (rebuilding if necessary)
 XMFLOAT4X4 GameObject::GetWorldInvTransMatrix()
 {
@@ -189,8 +197,11 @@ void GameObject::RebuildWorld()
 	XMMATRIX scaling = XMMatrixScalingFromVector(XMLoadFloat3(&scale));
 
 	//Calculate matrix and store
-	XMMATRIX newWorld = XMMatrixTranspose(scaling * rotating * translation);
+	//Transpose for DirectX
+	XMMATRIX newWorldRaw = scaling * rotating * translation;
+	XMMATRIX newWorld = XMMatrixTranspose(newWorldRaw);
 	XMStoreFloat4x4(&world, newWorld);
+	XMStoreFloat4x4(&worldRaw, newWorldRaw);
 
 	//Calculate inverse transpose
 	XMStoreFloat4x4(&worldInvTrans, XMMatrixInverse(&XMVectorSet(-1, -1, -1, -1), XMMatrixTranspose(newWorld)));
@@ -257,9 +268,12 @@ void GameObject::SetPosition(XMFLOAT3 newPosition, bool setLocal,
 	{
 		if (parent != nullptr)
 		{
-			XMVECTOR rotatedPos = XMVector3Rotate(XMLoadFloat3(&position), XMLoadFloat4(&parent->GetRotation()));
-			XMStoreFloat3(&localPosition,
-				XMVectorSubtract(rotatedPos, XMLoadFloat3(&parent->GetPosition())));
+			XMMATRIX mat = XMLoadFloat4x4(&parent->GetRawWorldMatrix());
+			XMVECTOR localPos = XMVector3TransformCoord(
+				XMLoadFloat3(&position),
+				XMMatrixInverse(nullptr, mat));
+			XMStoreFloat3(&localPosition, localPos);
+			printf("%.3f, %.3f, %.3f\n", localPosition.x, localPosition.y, localPosition.z);
 		}
 		else localPosition = position;
 	}
@@ -329,7 +343,7 @@ void GameObject::MoveAbsolute(XMFLOAT3 moveAmnt)
 	XMFLOAT3 newPos;
 	XMStoreFloat3(&newPos, XMVectorAdd(XMLoadFloat3(&position),
 		XMLoadFloat3(&moveAmnt)));
-	SetPosition(newPos, false);
+	SetPosition(newPos, true);
 }
 
 // Moves this GameObject in relative space by a given vector.
@@ -343,7 +357,7 @@ void GameObject::MoveRelative(XMFLOAT3 moveAmnt)
 	//Add to position
 	XMFLOAT3 newPos;
 	XMStoreFloat3(&newPos, XMVectorAdd(XMLoadFloat3(&position), move));
-	SetPosition(newPos, false);
+	SetPosition(newPos, true);
 }
 
 // Get the rotated forward axis of this gameobject
