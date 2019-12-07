@@ -204,16 +204,12 @@ PxTransform Collider::GetChildTransform()
 		XMQuaternionInverse(rbRot));
 	XMStoreFloat4(&rotDiff, rotDiffVec);
 	
-	//Position difference
+	//Math to get the local position
+	//Unrotate difference between positions
 	XMVECTOR V = XMVectorSubtract(XMLoadFloat3(&gameObject()->GetPosition()), XMLoadFloat3(&attachedRigidBody->gameObject()->GetPosition()));
 	XMVECTOR Q = XMQuaternionInverse(XMLoadFloat4(&attachedRigidBody->gameObject()->GetRotation()));
 	XMVECTOR T = XMVectorScale(XMVector3Cross(Q, V), 2.0f);
 	XMVECTOR posDiff = XMVectorAdd(V, XMVectorAdd(XMVectorScale(T, attachedRigidBody->gameObject()->GetRotation().w), XMVector3Cross(Q, T)));
-
-	//XMMATRIX mat = XMLoadFloat4x4(&attachedRigidBody->gameObject()->GetRawWorldMatrix());
-	//XMVECTOR posDiff = XMVector3TransformCoord(
-	//	XMLoadFloat3(&gameObject()->GetPosition()),
-	//	XMMatrixInverse(nullptr, mat));
 
 	//Rotated center added to posDiff
 	XMFLOAT3 pos;
