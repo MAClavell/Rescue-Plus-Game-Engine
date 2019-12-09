@@ -31,8 +31,8 @@ private:
 	struct CollisionResolveInfo
 	{
 		Collision col;
-
-		CollisionResolveInfo(Collision col) : col(col) { }
+		bool isTrigger;
+		CollisionResolveInfo(Collision col, bool isTrigger) : col(col), isTrigger(isTrigger) { }
 	};
 
 	//Lists of collisions
@@ -43,6 +43,14 @@ private:
 public:
 	CollisionResolver() { };
 	~CollisionResolver() { }
+
+
+	// --------------------------------------------------------
+	// Send a trigger to the resolver and have it decide what events to run.
+	// Since PhysX doesn't have PxTriggerPairFlags for enter and exit,
+	// we have to manually check if a collision is entering or exiting
+	// --------------------------------------------------------
+	void SendTriggerCollision(Collision collision);
 
 	// --------------------------------------------------------
 	// Add a collision to the resolver
@@ -57,6 +65,7 @@ public:
 	// --------------------------------------------------------
 	// Resolve all collision events for this resolver
 	// (OnCollisionEnter, OnCollisionStay, OnCollisionExit)
+	// (OnTriggerEnter, OnTriggerStay, OnTriggerExit)
 	// --------------------------------------------------------
 	void ResolveCollisions(const std::vector<UserComponent*>& ucs);
 };

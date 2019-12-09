@@ -15,13 +15,14 @@ using namespace physx;
 // ----------------------------------------------------------------------------
 
 // Create a collider and try to find a rigidbody
-Collider::Collider(GameObject* gameObject, ColliderType type,
+Collider::Collider(GameObject* gameObject, ColliderType type, bool isTrigger,
 	PhysicsMaterial* physicsMaterial, XMFLOAT3 center)
 	: Component(gameObject)
 {
 	this->type = type;
 	this->physicsMaterial = physicsMaterial;
 	this->center = center;
+	this->isTrigger = isTrigger;
 	debug = false;
 	collisionResolver = new CollisionResolver();
 	staticActor = nullptr;
@@ -197,11 +198,10 @@ void Collider::AttachToStatic()
 PxTransform Collider::GetChildTransform()
 {
 	//Rotation difference
-	XMVECTOR rbRot = XMLoadFloat4(&attachedRigidBody->gameObject()->GetRotation());
-	XMFLOAT4 rotDiff;
 	XMVECTOR rotDiffVec = XMQuaternionMultiply(
 		XMLoadFloat4(&gameObject()->GetRotation()),
-		XMQuaternionInverse(rbRot));
+		XMQuaternionInverse(XMLoadFloat4(&attachedRigidBody->gameObject()->GetRotation())));
+	XMFLOAT4 rotDiff;
 	XMStoreFloat4(&rotDiff, rotDiffVec);
 	
 	//Math to get the local position
@@ -215,9 +215,6 @@ PxTransform Collider::GetChildTransform()
 	XMFLOAT3 pos;
 	XMStoreFloat3(&pos, XMVectorAdd(posDiff,
 		XMVector3Rotate(XMLoadFloat3(&center), rotDiffVec)));
-
-	auto loc = gameObject()->GetLocalPosition();
-	printf("%.3f, %.3f, %.3f vs. %.3f, %.3f, %.3f\n", loc.x, loc.y, loc.z, pos.x, pos.y, pos.z);
 
 	//Make transform
 	return PxTransform(Float3ToVec3(pos), Float4ToQuat(rotDiff));
@@ -253,6 +250,26 @@ void Collider::SetPhysicsMaterial(PhysicsMaterial* physicsMaterial)
 	ReAttach();
 }
 
+// Get if this collider is a trigger shape
+bool Collider::GetTrigger()
+{
+	return isTrigger;
+}
+// Set if this collider is a trigger shape
+void Collider::SetTrigger(bool isTrigger)
+{
+	if (this->isTrigger != isTrigger)
+	{
+		this->isTrigger = isTrigger;
+
+		//Triggers cannot be attached to rigidbodies
+		//Must be recalculated
+		if (attachedRigidBody != nullptr)
+			DeAttachFromRB(true);
+		else ReAttach();
+	}
+}
+
 // WARNING: THIS IS FOR INTERNAL ENGINE USE ONLY. DO NOT USE
 // Get the collision resolver for this collider.
 CollisionResolver* Collider::GetCollisionResolver()
@@ -278,9 +295,9 @@ void Collider::SetDebug(bool debug)
 //									BOX COLLIDER
 // ----------------------------------------------------------------------------
 
-BoxCollider::BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size,
+BoxCollider::BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size, bool isTrigger,
 	PhysicsMaterial* physicsMaterial, XMFLOAT3 center)
-	: Collider(gameObject, ColliderType::Box, physicsMaterial, center)
+	: Collider(gameObject, ColliderType::Box, isTrigger, physicsMaterial, center)
 {
 	this->size = size;
 	FindParentRigidBody(); //has to be in derived constructor because of GenerateShape pure virtual
@@ -326,6 +343,12 @@ physx::PxShape* BoxCollider::GenerateShape(PxPhysics* physics)
 	//Make shape
 	PxShape* shape = physics->createShape(box, *mat, true);
 	shape->setLocalPose(tr);
+
+	if (isTrigger)
+	{
+		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+	}
 	return shape;
 }
 
@@ -350,9 +373,9 @@ void BoxCollider::Update(float deltaTime)
 //									SPHERE COLLIDER
 // ----------------------------------------------------------------------------
 
-SphereCollider::SphereCollider(GameObject* gameObject, float radius,
+SphereCollider::SphereCollider(GameObject* gameObject, float radius, bool isTrigger,
 	PhysicsMaterial* physicsMaterial, XMFLOAT3 center)
-	: Collider(gameObject, ColliderType::Sphere, physicsMaterial, center)
+	: Collider(gameObject, ColliderType::Sphere, isTrigger, physicsMaterial, center)
 {
 	this->radius = radius;
 	FindParentRigidBody();
@@ -378,6 +401,12 @@ physx::PxShape* SphereCollider::GenerateShape(physx::PxPhysics * physics)
 	//Make shape
 	PxShape* shape = physics->createShape(sphere, *mat, true);
 	shape->setLocalPose(tr);
+
+	if (isTrigger)
+	{
+		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+	}
 	return shape;
 }
 
@@ -403,9 +432,9 @@ void SphereCollider::Update(float deltaTime)
 //									CAPSULE COLLIDER
 // ----------------------------------------------------------------------------
 CapsuleCollider::CapsuleCollider(GameObject* gameObject, float radius, float height,
-	CapsuleDirection dir, 
+	CapsuleDirection dir, bool isTrigger,
 	PhysicsMaterial* physicsMaterial, XMFLOAT3 center)
-	: Collider(gameObject, ColliderType::Capsule, physicsMaterial, center)
+	: Collider(gameObject, ColliderType::Capsule, isTrigger, physicsMaterial, center)
 {
 	this->radius = radius;
 	this->height = height;
@@ -451,6 +480,11 @@ physx::PxShape* CapsuleCollider::GenerateShape(physx::PxPhysics * physics)
 			break;
 	}
 	
+	if (isTrigger)
+	{
+		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+	}
 	return shape;
 }
 

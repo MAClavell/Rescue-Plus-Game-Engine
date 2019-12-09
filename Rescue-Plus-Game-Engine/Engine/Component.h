@@ -61,4 +61,19 @@ public:
 	// Override for a callback when a physics object stops colliding with this
 	// --------------------------------------------------------
 	virtual void OnCollisionExit(Collision collision);
+
+	// --------------------------------------------------------
+	// Override for a callback when a physics object collides with this
+	// --------------------------------------------------------
+	virtual void OnTriggerEnter(Collision collision);
+
+	// --------------------------------------------------------
+	// Override for a callback when a physics object stays collided to this
+	// --------------------------------------------------------
+	virtual void OnTriggerStay(Collision collision);
+
+	// --------------------------------------------------------
+	// Override for a callback when a physics object stops colliding with this
+	// --------------------------------------------------------
+	virtual void OnTriggerExit(Collision collision);
 };

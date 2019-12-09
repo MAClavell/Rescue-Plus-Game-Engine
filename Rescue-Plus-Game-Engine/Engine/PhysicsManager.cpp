@@ -31,7 +31,8 @@ PxFilterFlags CollisionFilterShader(
 	// let triggers through
 	if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
 	{
-		pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
+		pairFlags = PxPairFlag::eTRIGGER_DEFAULT 
+			| PxPairFlag::eNOTIFY_TOUCH_FOUND | PxPairFlag::eNOTIFY_TOUCH_LOST;;
 		return PxFilterFlag::eDEFAULT;
 	}
 	// generate contacts for all that were not filtered above
@@ -130,7 +131,9 @@ void PhysicsManager::onContact(const physx::PxContactPairHeader & pairHeader, co
 			else shape2->GetCollisionResolver()->AddEnterCollision(col2);
 		}
 		//OnExit
-		else if (pairs[i].flags.isSet(PxContactPairFlag::eACTOR_PAIR_LOST_TOUCH))
+		else if (pairs[i].flags.isSet(PxContactPairFlag::eACTOR_PAIR_LOST_TOUCH)
+			|| pairs[i].flags.isSet(PxContactPairFlag::eREMOVED_SHAPE_0)
+			|| pairs[i].flags.isSet(PxContactPairFlag::eREMOVED_SHAPE_1))
 		{
 			if (shape1Rb != nullptr)
 				shape1Rb->GetCollisionResolver()->AddExitCollision(col1);
@@ -143,9 +146,21 @@ void PhysicsManager::onContact(const physx::PxContactPairHeader & pairHeader, co
 	}
 }
 
-void PhysicsManager::onTrigger(PxTriggerPair* pairs, PxU32 count)
+void PhysicsManager::onTrigger(PxTriggerPair* pairs, PxU32 nbPairs)
 {
-	
+	for (PxU32 i = 0; i < nbPairs; i++)
+	{
+		Collider* trigger = (Collider*)(pairs[i].triggerShape->userData);
+		Collider* shape = (Collider*)(pairs[i].otherShape->userData);
+		RigidBody* shapeRb = shape->GetAttachedRigidBody();
+
+		Collision col = shapeRb == nullptr ? Collision(shape->gameObject(), shape)
+			: Collision(shapeRb->gameObject(), shape);
+
+		// Since PhysX doesn't have PxTriggerPairFlags for enter and exit,
+		// we have to manually check if a collision is entering or exiting in the resolver
+		trigger->GetCollisionResolver()->SendTriggerCollision(col);
+	}
 }
 
 static void UpdateRigidBody(Job* job, const void* userData)
@@ -167,21 +182,24 @@ bool PhysicsManager::Simulate(float deltaTime)
 	PxU32 nbActiveActors;
 	PxActor** activeActors = scene->getActiveActors(nbActiveActors);
 
-	// update each render object with the new transform
-	Job* root = JobSystem::CreateJob(&EmptyJob);
-	for (PxU32 i = 0; i < nbActiveActors; ++i)
+	if (nbActiveActors > 0)
 	{
-		Job* job = JobSystem::CreateJobAsChild(root, &UpdateRigidBody, 
-			&(activeActors[i]->userData));
-		JobSystem::Run(job);
-	}
-	JobSystem::Run(root);
-	JobSystem::Wait(root);
+		// update each render object with the new transform
+		Job* root = JobSystem::CreateJob(&EmptyJob);
+		for (PxU32 i = 0; i < nbActiveActors; ++i)
+		{
+			Job* job = JobSystem::CreateJobAsChild(root, &UpdateRigidBody,
+				&(activeActors[i]->userData));
+			JobSystem::Run(job);
+		}
+		JobSystem::Run(root);
+		JobSystem::Wait(root);
 
-	// resolve collisions
-	for (PxU32 i = 0; i < nbActiveActors; ++i)
-	{
-		PxRigidBody* rb = static_cast<PxRigidBody*>(activeActors[i]);
+		// resolve collisions
+		for (PxU32 i = 0; i < nbActiveActors; ++i)
+		{
+			PxRigidBody* rb = static_cast<PxRigidBody*>(activeActors[i]);
+		}
 	}
 
 	return true;

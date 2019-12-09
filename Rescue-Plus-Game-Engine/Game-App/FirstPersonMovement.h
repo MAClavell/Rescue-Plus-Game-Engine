@@ -55,7 +55,7 @@ private:
 	// --------------------------------------------------------
 	void EndSlide();
 
-public:\
+public:
 	FirstPersonMovement(GameObject* gameObject);
 	~FirstPersonMovement();
 

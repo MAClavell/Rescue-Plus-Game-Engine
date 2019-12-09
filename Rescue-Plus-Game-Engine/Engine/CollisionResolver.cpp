@@ -1,19 +1,17 @@
 #include "CollisionResolver.h"
 #include "Component.h"
 
-void CollisionResolver::AddEnterCollision(Collision collision)
-{
-	enterCollisions.push_back(CollisionResolveInfo(collision));
-}
-
-void CollisionResolver::AddExitCollision(Collision collision)
+// Send a trigger to the resolver and have it decide what events to run.
+// Since PhysX doesn't have PxTriggerPairFlags for enter and exit,
+// we have to manually check if a collision is entering or exiting
+void CollisionResolver::SendTriggerCollision(Collision collision)
 {
 	bool found = false;
 
 	//Try to find in enter list
 	for (auto iter = enterCollisions.begin(); iter != enterCollisions.end(); iter++)
 	{
-		if ((*iter).col == collision)
+		if ((*iter).col == collision && (*iter).isTrigger == true)
 		{
 			std::iter_swap(iter, enterCollisions.end() - 1);
 			enterCollisions.pop_back();
@@ -27,7 +25,7 @@ void CollisionResolver::AddExitCollision(Collision collision)
 	{
 		for (auto iter = stayCollisions.begin(); iter != stayCollisions.end(); iter++)
 		{
-			if ((*iter).col == collision)
+			if ((*iter).col == collision && (*iter).isTrigger == true)
 			{
 				std::iter_swap(iter, stayCollisions.end() - 1);
 				stayCollisions.pop_back();
@@ -37,9 +35,57 @@ void CollisionResolver::AddExitCollision(Collision collision)
 		}
 	}
 
-	exitCollisions.push_back(CollisionResolveInfo(collision));
+	//Push to correct list
+	if(found)
+		exitCollisions.push_back(CollisionResolveInfo(collision, true));
+	else enterCollisions.push_back(CollisionResolveInfo(collision, true));
 }
 
+// Add a collision to the resolver
+void CollisionResolver::AddEnterCollision(Collision collision)
+{
+	enterCollisions.push_back(CollisionResolveInfo(collision, false));
+}
+
+// Exit a collision to the resolver. 
+// Will remove an existing collision and add it to the exit list
+void CollisionResolver::AddExitCollision(Collision collision)
+{
+	bool found = false;
+
+	//Try to find in enter list
+	for (auto iter = enterCollisions.begin(); iter != enterCollisions.end(); iter++)
+	{
+		if ((*iter).col == collision && (*iter).isTrigger == false)
+		{
+			std::iter_swap(iter, enterCollisions.end() - 1);
+			enterCollisions.pop_back();
+			found = true;
+			break;
+		}
+	}
+
+	//Try to find in stay list
+	if (!found)
+	{
+		for (auto iter = stayCollisions.begin(); iter != stayCollisions.end(); iter++)
+		{
+			if ((*iter).col == collision && (*iter).isTrigger == false)
+			{
+				std::iter_swap(iter, stayCollisions.end() - 1);
+				stayCollisions.pop_back();
+				found = true;
+				break;
+			}
+		}
+	}
+
+	exitCollisions.push_back(CollisionResolveInfo(collision, false));
+}
+
+// Resolve all collision events for this resolver
+// (OnCollisionEnter, OnCollisionStay, OnCollisionExit)
+// (OnTriggerEnter, OnTriggerStay, OnTriggerExit)
 void CollisionResolver::ResolveCollisions(const std::vector<UserComponent*>& ucs)
 {
 	//Don't run these if there's nothing to run
@@ -50,7 +96,9 @@ void CollisionResolver::ResolveCollisions(const std::vector<UserComponent*>& ucs
 		{
 			for each (UserComponent* uc in ucs)
 			{
-				uc->OnCollisionEnter((*iter).col);
+				if ((*iter).isTrigger)
+					uc->OnTriggerEnter((*iter).col);
+				else uc->OnCollisionEnter((*iter).col);
 			}
 		}
 		//Run all OnStays
@@ -58,7 +106,9 @@ void CollisionResolver::ResolveCollisions(const std::vector<UserComponent*>& ucs
 		{
 			for each (UserComponent* uc in ucs)
 			{
-				uc->OnCollisionStay((*iter).col);
+				if ((*iter).isTrigger)
+					uc->OnTriggerStay((*iter).col);
+				else uc->OnCollisionStay((*iter).col);
 			}
 		}
 	}
@@ -73,7 +123,9 @@ void CollisionResolver::ResolveCollisions(const std::vector<UserComponent*>& ucs
 			{
 				for each (UserComponent* uc in ucs)
 				{
-					uc->OnCollisionExit((*iter).col);
+					if ((*iter).isTrigger)
+						uc->OnTriggerExit((*iter).col);
+					else uc->OnCollisionExit((*iter).col);
 				}
 			}
 		}

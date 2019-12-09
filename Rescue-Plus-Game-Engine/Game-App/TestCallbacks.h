@@ -11,5 +11,9 @@ public:
 	void OnCollisionStay(Collision collision) override;
 	void OnCollisionExit(Collision collision) override;
 
+	void OnTriggerEnter(Collision collision) override;
+	void OnTriggerStay(Collision collision) override;
+	void OnTriggerExit(Collision collision) override;
+
 };
 

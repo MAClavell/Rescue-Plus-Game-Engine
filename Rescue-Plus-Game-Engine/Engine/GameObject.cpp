@@ -16,6 +16,9 @@ Component::Component(GameObject* gameObject)
 void UserComponent::OnCollisionEnter(Collision collision) {}
 void UserComponent::OnCollisionStay(Collision collision) {}
 void UserComponent::OnCollisionExit(Collision collision) {}
+void UserComponent::OnTriggerEnter(Collision collision) {}
+void UserComponent::OnTriggerStay(Collision collision) {}
+void UserComponent::OnTriggerExit(Collision collision) {}
 
 // Constructor - Set up the gameobject.
 GameObject::GameObject()

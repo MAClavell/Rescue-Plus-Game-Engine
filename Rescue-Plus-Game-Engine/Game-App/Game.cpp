@@ -224,7 +224,7 @@ void Game::Update(float deltaTime, float totalTime)
 
 	if (inputManager->GetKey('T'))
 	{
-		static float amt = 5;
+		static float amt = 4;
 		amt += 2 * deltaTime;
 		crate10C->SetLocalPosition(0, amt, 0);
 	}

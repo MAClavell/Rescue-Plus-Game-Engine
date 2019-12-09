@@ -26,7 +26,7 @@ FirstPersonMovement* FirstPersonMovement::CreateFirstPersonCharacter(const char*
 {
 	//Root object
 	GameObject* root = new GameObject(name);
-	root->AddComponent<RigidBody>(1);
+	root->AddComponent<RigidBody>(1.0f);
 	root->AddComponent<CapsuleCollider>();
 
 	//Camera object

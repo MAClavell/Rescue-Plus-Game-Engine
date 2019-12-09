@@ -277,7 +277,7 @@ static GameObject* CreateContainer(ResourceManager* rm, const char* name)
 	cont->AddComponent<MeshRenderer>(
 		rm->GetMesh("Assets\\Models\\Shipyard\\shipyard_container.obj"),
 		rm->GetMaterial("shipyard_container"));
-	cont->AddComponent<BoxCollider>(XMFLOAT3(25.5f, 10, 10), nullptr, XMFLOAT3(-0.2f, 5.1f, 0))->SetDebug(true);
+	cont->AddComponent<BoxCollider>(XMFLOAT3(25.5f, 10, 10), false, nullptr, XMFLOAT3(-0.2f, 5.1f, 0))->SetDebug(true);
 	return cont;
 }
 
@@ -289,7 +289,7 @@ static GameObject* CreateCrate(ResourceManager* rm, const char* name, float size
 		rm->GetMaterial("shipyard_crate")
 		);
 	crate->SetScale(size, size, size);
-	crate->AddComponent<RigidBody>(1.0f);
+	crate->AddComponent<RigidBody>(10.0f);
 	crate->AddComponent<BoxCollider>(crate->GetScale());
 	return crate;
 }
@@ -366,4 +366,10 @@ void Game::SetupScene()
 	crate10C->AddComponent<BoxCollider>(crate10C->GetScale())->SetDebug(true);
 
 	CreateCrane(resourceManager);
+
+	//Create trigger
+	GameObject* trigger = new GameObject("TriggerBox");
+	trigger->SetPosition(0, 3, 0);
+	trigger->AddComponent<BoxCollider>(XMFLOAT3(3, 3, 3), true)->SetDebug(true);
+	trigger->AddComponent<TestCallbacks>();
 }

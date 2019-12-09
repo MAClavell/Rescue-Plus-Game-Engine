@@ -43,12 +43,13 @@ protected:
 	physx::PxRigidStatic* staticActor;
 	DirectX::XMFLOAT3 center;
 	bool debug;
+	bool isTrigger;
 	bool isInChildObj;
 
 	// --------------------------------------------------------
 	// Create a collider and try to find a rigidbody
 	// --------------------------------------------------------
-	Collider(GameObject* gameObject, ColliderType type, 
+	Collider(GameObject* gameObject, ColliderType type, bool isTrigger,
 		PhysicsMaterial* physicsMaterial, DirectX::XMFLOAT3 center);
 
 	// --------------------------------------------------------
@@ -131,6 +132,15 @@ public:
 	void SetPhysicsMaterial(PhysicsMaterial* physicsMaterial);
 
 	// --------------------------------------------------------
+	// Get if this collider is a trigger shape
+	// --------------------------------------------------------
+	bool GetTrigger();
+	// --------------------------------------------------------
+	// Set if this collider is a trigger shape
+	// --------------------------------------------------------
+	void SetTrigger(bool isTrigger);
+
+	// --------------------------------------------------------
 	// WARNING: THIS IS FOR INTERNAL ENGINE USE ONLY. DO NOT USE
 	// Get the collision resolver for this collider.
 	// --------------------------------------------------------
@@ -164,7 +174,7 @@ private:
 	void Update(float deltaTime) override;
 
 public:
-	BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size = DirectX::XMFLOAT3(1, 1, 1), 
+	BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size = DirectX::XMFLOAT3(1, 1, 1), bool isTrigger = false,
 		PhysicsMaterial* physicsMaterial = nullptr, DirectX::XMFLOAT3 center = DirectX::XMFLOAT3(0, 0, 0));
 
 	// --------------------------------------------------------
@@ -199,7 +209,7 @@ private:
 	void Update(float deltaTime) override;
 
 public:
-	SphereCollider(GameObject* gameObject, float radius = 1.0f, 
+	SphereCollider(GameObject* gameObject, float radius = 1.0f, bool isTrigger = false,
 		PhysicsMaterial* physicsMaterial = nullptr, DirectX::XMFLOAT3 center = DirectX::XMFLOAT3(0, 0, 0));
 
 	// --------------------------------------------------------
@@ -235,7 +245,7 @@ private:
 
 public:
 	CapsuleCollider(GameObject* gameObject, float radius = 1.0f, float height = 2.0f,
-		CapsuleDirection dir = CapsuleDirection::X, 
+		CapsuleDirection dir = CapsuleDirection::X, bool isTrigger = false,
 		PhysicsMaterial* physicsMaterial = nullptr, DirectX::XMFLOAT3 center = DirectX::XMFLOAT3(0, 0, 0));
 
 	// --------------------------------------------------------
