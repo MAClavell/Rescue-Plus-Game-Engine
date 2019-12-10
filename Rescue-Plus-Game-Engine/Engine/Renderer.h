@@ -19,10 +19,16 @@ private:
 	//renderMap uses Mat/Mesh identifiers to point to the correct list
 	std::unordered_map<std::string, std::vector<MeshRenderer*>> renderMap;
 	std::vector<MeshRenderer*> transparentObjList;
+
+	//Debug meshes
 	Mesh* cubeMesh;
+	Mesh* sphereMesh;
+	Mesh* cylinderMesh;
 
 	//Debugging
-	std::vector<DirectX::XMFLOAT4X4> debugCubes;
+	std::vector<DirectX::XMFLOAT4X4> debugObjs[3]; //0 = cubes, 1 = spheres, 2 = cylinders 
+	std::vector<DirectX::XMFLOAT4X4> debugSpheres;
+	std::vector<DirectX::XMFLOAT4X4> debugCylinders;
 	SimpleVertexShader* vs_debug;
 	SimplePixelShader* ps_debug;
 	ID3D11RasterizerState* RS_wireframe;
@@ -135,19 +141,43 @@ public:
 	void RemoveMeshRenderer(MeshRenderer* mr);
 
 	// --------------------------------------------------------
-	// Tell the renderer to render a collider this frame
+	// Tell the renderer to render a cube this frame
 	// --------------------------------------------------------
 	void AddDebugCubeToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 scale);
-
 	// --------------------------------------------------------
-	// Tell the renderer to render a collider this frame
+	// Tell the renderer to render a cube this frame
 	// --------------------------------------------------------
 	void AddDebugCubeToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, DirectX::XMFLOAT3 scale);
+	// --------------------------------------------------------
+	// Tell the renderer to render a cube this frame
+	// --------------------------------------------------------
+	void AddDebugCubeToThisFrame(DirectX::XMFLOAT4X4 world);
 
+	// --------------------------------------------------------
+	// Tell the renderer to render a sphere this frame
+	// --------------------------------------------------------
+	void AddDebugSphereToThisFrame(DirectX::XMFLOAT3 position, float radius);
+	// --------------------------------------------------------
+	// Tell the renderer to render a cube this frame
+	// --------------------------------------------------------
+	void AddDebugSphereToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, float radius);
 	// --------------------------------------------------------
 	// Tell the renderer to render a collider this frame
 	// --------------------------------------------------------
-	void AddDebugCubeToThisFrame(DirectX::XMFLOAT4X4 world);
+	void AddDebugSphereToThisFrame(DirectX::XMFLOAT4X4 world);
+
+	// --------------------------------------------------------
+	// Tell the renderer to render a cylinder this frame
+	// --------------------------------------------------------
+	void AddDebugCylinderToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 scale);
+	// --------------------------------------------------------
+	// Tell the renderer to render a cylinder this frame
+	// --------------------------------------------------------
+	void AddDebugCylinderToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, DirectX::XMFLOAT3 scale);
+	// --------------------------------------------------------
+	// Tell the renderer to render a cylinder this frame
+	// --------------------------------------------------------
+	void AddDebugCylinderToThisFrame(DirectX::XMFLOAT4X4 world);
 
 	// --------------------------------------------------------
 	// Set clear color.

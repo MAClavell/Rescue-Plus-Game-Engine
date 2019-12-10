@@ -281,6 +281,7 @@ private:
 	float radius;
 	float height;
 	CapsuleDirection dir;
+	DirectX::XMFLOAT4 rot;
 
 	physx::PxShape* GenerateShape(physx::PxPhysics* physics);
 

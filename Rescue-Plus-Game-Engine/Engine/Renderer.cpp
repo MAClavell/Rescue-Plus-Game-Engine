@@ -1,7 +1,7 @@
 #include "Renderer.h"
 #include "LightManager.h"
 #include "ResourceManager.h"
-#include <algorithm>
+#include "ExtendedMath.h"
 
 #define FXAA_ENABLED 1
 #define FXAA_PRESET 5
@@ -19,6 +19,8 @@ void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
 	// --------------------------------------------------------
 	// Get debug shader information
 	cubeMesh = ResourceManager::GetInstance()->GetMesh("Assets\\Models\\Basic\\cube.obj");
+	sphereMesh = ResourceManager::GetInstance()->GetMesh("Assets\\Models\\Basic\\sphere.obj");
+	cylinderMesh = ResourceManager::GetInstance()->GetMesh("Assets\\Models\\Basic\\cylinder.obj");
 	vs_debug = ResourceManager::GetInstance()->GetVertexShader("VS_ColDebug.cso");
 	ps_debug = ResourceManager::GetInstance()->GetPixelShader("PS_ColDebug.cso");
 
@@ -358,29 +360,42 @@ void Renderer::DrawDebugColliders(ID3D11DeviceContext* context, Camera* camera)
 	vs_debug->SetMatrix4x4("view", camera->GetViewMatrix());
 	vs_debug->CopyBufferData("perFrame");
 
-	//Loop
-	for (auto const& world : debugCubes)
+	//Loop through all debug objs
+	//0 = cubes, 1 = spheres, 2 = cylinders
+	for (short i = 0; i < 3; i++)
 	{
-		// Assign collider world to VS
-		vs_debug->SetMatrix4x4("world", world);
-		vs_debug->CopyBufferData("perObject");
+		//Get correct mesh
+		Mesh* mesh = nullptr;
+		switch (i)
+		{
+			case 1: mesh = sphereMesh; break;
+			case 2: mesh = cylinderMesh; break;
+			default: mesh = cubeMesh; break;
+		}
 
 		// Set buffers in the input assembler
 		UINT stride = sizeof(Vertex);
 		UINT offset = 0;
-		ID3D11Buffer* vertexBuffer = cubeMesh->GetVertexBuffer();
-		ID3D11Buffer* indexBuffer = cubeMesh->GetIndexBuffer();
+		ID3D11Buffer* vertexBuffer = mesh->GetVertexBuffer();
+		ID3D11Buffer* indexBuffer = mesh->GetIndexBuffer();
 		context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 		context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-		// Draw object
-		context->DrawIndexed(
-			cubeMesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
-			0,     // Offset to the first index we want to use
-			0);    // Offset to add to each index when looking up vertices
+		for (auto const& world : debugObjs[i])
+		{
+			// Assign collider world to VS
+			vs_debug->SetMatrix4x4("world", world);
+			vs_debug->CopyBufferData("perObject");
+
+			// Draw object
+			context->DrawIndexed(
+				mesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
+				0,     // Offset to the first index we want to use
+				0);    // Offset to add to each index when looking up vertices
+		}
+		//Clear debug collider list and reset raster state
+		debugObjs[i].clear();
 	}
-	//Clear debug collider list and reset raster state
-	debugCubes.clear();
 	context->RSSetState(0);
 }
 
@@ -485,34 +500,57 @@ void Renderer::RemoveMeshRenderer(MeshRenderer* mr)
 	}
 }
 
+
+#pragma region Debug Shape Drawing
 // Tell the renderer to render a collider this frame
 void Renderer::AddDebugCubeToThisFrame(XMFLOAT3 position, XMFLOAT3 scale)
 {
-	XMMATRIX translation = XMMatrixTranslationFromVector(XMLoadFloat3(&position));
-	XMMATRIX scaling = XMMatrixScalingFromVector(XMLoadFloat3(&scale));
-	XMMATRIX world = XMMatrixTranspose(scaling * translation);
-	XMFLOAT4X4 cubeWorld;
-	XMStoreFloat4x4(&cubeWorld, world);
-	debugCubes.push_back(cubeWorld);
+	debugObjs[0].push_back(CreateWorldMatrix(position, scale));
 }
-
 // Tell the renderer to render a collider this frame
 void Renderer::AddDebugCubeToThisFrame(XMFLOAT3 position, XMFLOAT4 rotation, XMFLOAT3 scale)
 {
-	XMMATRIX translation = XMMatrixTranslationFromVector(XMLoadFloat3(&position));
-	XMMATRIX rot = XMMatrixRotationQuaternion(XMLoadFloat4(&rotation));
-	XMMATRIX scaling = XMMatrixScalingFromVector(XMLoadFloat3(&scale));
-	XMMATRIX world = XMMatrixTranspose(scaling * rot * translation);
-	XMFLOAT4X4 cubeWorld;
-	XMStoreFloat4x4(&cubeWorld, world);
-	debugCubes.push_back(cubeWorld);
+	debugObjs[0].push_back(CreateWorldMatrix(position, rotation, scale));
 }
-
 // Tell the renderer to render a collider this frame
 void Renderer::AddDebugCubeToThisFrame(XMFLOAT4X4 world)
 {
-	debugCubes.push_back(world);
+	debugObjs[0].push_back(world);
 }
+
+// Tell the renderer to render a sphere this frame
+void Renderer::AddDebugSphereToThisFrame(DirectX::XMFLOAT3 position, float radius)
+{
+	debugObjs[1].push_back(CreateWorldMatrix(position, XMFLOAT3(radius, radius, radius)));
+}
+// Tell the renderer to render a cube this frame
+void Renderer::AddDebugSphereToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, float radius)
+{
+	debugObjs[1].push_back(CreateWorldMatrix(position, rotation, XMFLOAT3(radius, radius, radius)));
+}
+// Tell the renderer to render a collider this frame
+void Renderer::AddDebugSphereToThisFrame(DirectX::XMFLOAT4X4 world)
+{
+	debugObjs[1].push_back(world);
+}
+
+// Tell the renderer to render a cylinder this frame
+void Renderer::AddDebugCylinderToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 scale)
+{
+	debugObjs[2].push_back(CreateWorldMatrix(position, scale));
+}
+// Tell the renderer to render a cylinder this frame
+void Renderer::AddDebugCylinderToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, DirectX::XMFLOAT3 scale)
+{
+	debugObjs[2].push_back(CreateWorldMatrix(position, rotation, scale));
+}
+// Tell the renderer to render a cylinder this frame
+void Renderer::AddDebugCylinderToThisFrame(DirectX::XMFLOAT4X4 world)
+{
+	debugObjs[2].push_back(world);
+}
+#pragma endregion
+
 
 // Set the clear color.
 void Renderer::SetClearColor(const float color[4])

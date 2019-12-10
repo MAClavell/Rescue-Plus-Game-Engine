@@ -26,23 +26,23 @@ FirstPersonMovement* FirstPersonMovement::CreateFirstPersonCharacter(const char*
 {
 	//Root object
 	GameObject* root = new GameObject(name);
-	root->AddComponent<RigidBody>(1.0f);
-	root->AddComponent<CapsuleCollider>();
+	root->AddComponent<RigidBody>(1.0f)->SetContraints(false, false, false, true, true, true);
+	root->AddComponent<CapsuleCollider>(1.0f, 2.0f, CapsuleDirection::Y)->SetDebug(true);
 
 	//Camera object
 	GameObject* camera = new GameObject("FPCamera");
-	camera->AddComponent<Camera>();
 	camera->SetParent(root);
+	camera->AddComponent<Camera>();
 
 	//Crouching collider
 	GameObject* crouchCol = new GameObject("CrouchingCollider");
-	crouchCol->AddComponent<CapsuleCollider>();
 	crouchCol->SetParent(root);
+	crouchCol->AddComponent<CapsuleCollider>()->SetDebug(true);
 
 	//Sliding collider
 	GameObject* slideCol = new GameObject("SlidingCollider");
-	slideCol->AddComponent<CapsuleCollider>();
 	slideCol->SetParent(root);
+	slideCol->AddComponent<CapsuleCollider>()->SetDebug(true);
 
 	//Add FirstPersonMovement component
 	FirstPersonMovement* fps = root->AddComponent<FirstPersonMovement>();

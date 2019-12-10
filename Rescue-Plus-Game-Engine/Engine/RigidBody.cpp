@@ -164,6 +164,28 @@ void RigidBody::SetMaxLinearVelocity(float max)
 	body->setMaxLinearVelocity(max);
 }
 
+// Set the contraints of the rigidbody
+// Restricts movement or rotation on the axis
+void RigidBody::SetContraints(bool lockPosX, bool lockPosY, bool lockPosZ,
+	bool lockRotX, bool lockRotY, bool lockRotZ)
+{
+	PxU16 flags = 0;
+	if (lockPosX)
+		flags |= PxRigidDynamicLockFlag::eLOCK_LINEAR_X;
+	if (lockPosY)
+		flags |= PxRigidDynamicLockFlag::eLOCK_LINEAR_Y;
+	if (lockPosZ)
+		flags |= PxRigidDynamicLockFlag::eLOCK_LINEAR_Z;
+	if (lockRotX)
+		flags |= PxRigidDynamicLockFlag::eLOCK_ANGULAR_X;
+	if (lockRotY)
+		flags |= PxRigidDynamicLockFlag::eLOCK_ANGULAR_Y;
+	if (lockRotZ)
+		flags |= PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z;
+
+	body->setRigidDynamicLockFlags(PxRigidDynamicLockFlags(flags));
+}
+
 // --------------------------------------------------------
 // WARNING: THIS IS FOR INTERNAL ENGINE USE ONLY. DO NOT USE
 // Get the collision resolver for this rigidbody.

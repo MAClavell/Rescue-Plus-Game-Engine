@@ -5,6 +5,7 @@
 #include "MAT_Basic.h"
 #include "TestBullet.h"
 #include "ShipyardCrane.h"
+#include "FirstPersonMovement.h"
 
 using namespace DirectX;
 
@@ -302,6 +303,9 @@ void Game::SetupScene()
 	camera->CreateProjectionMatrix(0.25f * XM_PI, (float)width / height, 0.1f, 10000.0f);
 	cameraGO->AddComponent<DebugMovement>();
 	cameraGO->AddComponent<TestBullet>();
+
+	//Create player
+	FirstPersonMovement* player = FirstPersonMovement::CreateFirstPersonCharacter("Player");
 
 	//Create the floor
 	floor = new GameObject("Floor");

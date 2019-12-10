@@ -304,7 +304,7 @@ void Collider::SetCollisionLayerType(CollisionLayer layerType)
 {
 	this->layerType = layerType;
 	//TODO: don't reattach, just get a pointer to the shape and edit it
-	ReAttach();
+	//ReAttach();
 }
 
 // Get this collider's collision layers 
@@ -326,7 +326,7 @@ void Collider::SetCollisionLayers(CollisionLayer layer)
 {
 	layers.Set(layer);
 	//TODO: don't reattach, just get a pointer to the shape and edit it
-	ReAttach();
+	//ReAttach();
 }
 // Set this collider's collision layers
 // (what layers this collider will collide with)
@@ -334,7 +334,7 @@ void Collider::SetCollisionLayers(CollisionLayers layers)
 {
 	this->layers = layers;
 	//TODO: don't reattach, just get a pointer to the shape and edit it
-	ReAttach();
+	//ReAttach();
 }
 // Set ALL COLLISION LAYERS for this collider
 // Based on the parameter, this will set all layers to collide
@@ -350,7 +350,7 @@ void Collider::SetCollisionLayers(bool ignoreCollisions)
 	}
 	this->layers = layers;
 	//TODO: don't reattach, just get a pointer to the shape and edit it
-	ReAttach();
+	//ReAttach();
 }
 
 // WARNING: THIS IS FOR INTERNAL ENGINE USE ONLY. DO NOT USE
@@ -505,8 +505,19 @@ void SphereCollider::SetRadius(float radius)
 	ReAttach();
 }
 
+// Update debug view
 void SphereCollider::Update(float deltaTime)
 {
+	if (debug)
+	{
+		XMFLOAT3 pos;
+		XMStoreFloat3(&pos, XMVectorAdd(XMLoadFloat3(&gameObject()->GetPosition()),
+			XMVector3Rotate(XMLoadFloat3(&center), XMLoadFloat4(&gameObject()->GetRotation()))));
+		Renderer::GetInstance()->AddDebugSphereToThisFrame(
+			pos,
+			gameObject()->GetRotation(),
+			radius);
+	}
 }
 #pragma endregion
 
@@ -559,9 +570,11 @@ physx::PxShape* CapsuleCollider::GenerateShape(physx::PxPhysics * physics)
 			break;
 
 		default:
+			tr.q = tr.q * PxQuat(PxHalfPi, PxVec3(1, 0, 0));
 			shape->setLocalPose(tr);
 			break;
 	}
+	rot = QuatToFloat4(tr.q);
 	
 	if (isTrigger)
 	{
@@ -607,7 +620,38 @@ void CapsuleCollider::SetCapsuleDirection(CapsuleDirection dir)
 	ReAttach();
 }
 
+// Update debug view
 void CapsuleCollider::Update(float deltaTime)
 {
+	if (debug)
+	{
+		Renderer* renderer = Renderer::GetInstance();
+
+		//Cylinder
+		XMFLOAT4 cylRot;
+		XMVECTOR cylRotVec = XMQuaternionMultiply(XMLoadFloat4(&rot), 
+			XMLoadFloat4(&gameObject()->GetRotation()));
+		XMStoreFloat4(&cylRot, cylRotVec);
+		XMFLOAT3 cylPos;
+		XMVECTOR cylPosVec = XMVectorAdd(XMLoadFloat3(&gameObject()->GetPosition()),
+			XMVector3Rotate(XMLoadFloat3(&center), cylRotVec));
+			XMStoreFloat3(&cylPos, cylPosVec);
+		renderer->AddDebugCylinderToThisFrame(
+			cylPos,
+			cylRot,
+			XMFLOAT3(radius * 2, height, radius * 2));
+
+		//Top sphere
+		XMFLOAT3 topSpherePos;
+		XMStoreFloat3(&topSpherePos, XMVectorAdd(cylPosVec,
+			XMVector3Rotate(XMVectorSet(height - radius, 0, 0, 0), cylRotVec)));
+		renderer->AddDebugSphereToThisFrame(topSpherePos, cylRot, radius * 2);
+
+		//Bottom sphere
+		XMFLOAT3 botSpherePos;
+		XMStoreFloat3(&botSpherePos, XMVectorAdd(cylPosVec,
+			XMVector3Rotate(XMVectorSet(-(height - radius), 0, 0, 0), cylRotVec)));
+		renderer->AddDebugSphereToThisFrame(botSpherePos, cylRot, radius * 2);
+	}
 }
 #pragma endregion
