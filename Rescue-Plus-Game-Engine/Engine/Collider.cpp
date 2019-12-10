@@ -23,10 +23,13 @@ Collider::Collider(GameObject* gameObject, ColliderType type, bool isTrigger,
 	this->physicsMaterial = physicsMaterial;
 	this->center = center;
 	this->isTrigger = isTrigger;
+
 	debug = false;
 	collisionResolver = new CollisionResolver();
 	staticActor = nullptr;
 	attachedRigidBody = nullptr;
+	SetCollisionLayers(false);
+
 	gameObject->AddListenerOnPositionChanged(std::bind(&Collider::OnPositionChanged, this,
 			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	gameObject->AddListenerOnRotationChanged(std::bind(&Collider::OnRotationChanged, this,
@@ -100,6 +103,14 @@ void Collider::OnScaleChanged(DirectX::XMFLOAT3 scale)
 	ReAttach();
 }
 
+void Collider::SetFilterData(physx::PxShape* shape)
+{
+	PxFilterData filterData;
+	filterData.word0 = 1 << (PxU32)layerType.value();
+	filterData.word1 = layers.layers;
+	shape->setSimulationFilterData(filterData);
+}
+
 // DeAttach this collider from it's rigidbody and make it a static collider
 void Collider::DeAttachFromRB(bool makeStatic)
 {
@@ -163,6 +174,11 @@ void Collider::AttachToRB(RigidBody* rigidBody, bool isChildObj)
 	attachedRigidBody = rigidBody;
 	shape = GenerateShape(physics);
 	shape->userData = this;
+	
+	//Set filter data
+	if (!layerType.has_value())
+		layerType = CollisionLayer::WorldDynamic;
+	SetFilterData(shape);
 
 	//Attach
 	rigidBody->GetRigidBody()->attachShape(*shape);
@@ -182,6 +198,11 @@ void Collider::AttachToStatic()
 	//Create shape
 	shape = GenerateShape(physics);
 	shape->userData = this;
+	
+	//Set filter data
+	if (!layerType.has_value())
+		layerType = CollisionLayer::WorldStatic;
+	SetFilterData(shape);
 
 	//Calc transform
 	PxTransform tr = PxTransform(Float3ToVec3(gameObject()->GetPosition()),
@@ -268,6 +289,68 @@ void Collider::SetTrigger(bool isTrigger)
 			DeAttachFromRB(true);
 		else ReAttach();
 	}
+}
+
+// Get this collider's collision layer type 
+// (what type of layer this collider belongs to)
+CollisionLayer Collider::GetCollisionLayerType()
+{
+	//Will always have a value, it is just empty for initial purposes
+	return layerType.value();
+}
+// Set this collider's collision layer type
+// (what type of layer this collider belongs to)
+void Collider::SetCollisionLayerType(CollisionLayer layerType)
+{
+	this->layerType = layerType;
+	//TODO: don't reattach, just get a pointer to the shape and edit it
+	ReAttach();
+}
+
+// Get this collider's collision layers 
+// (what layers this collider will collide with)
+CollisionLayers Collider::GetCollisionLayers()
+{
+	return layers;
+}
+// Get if this collider has the collision layer set 
+// (what layers this collider will collide with)
+bool Collider::GetIfCollisionLayerSet(CollisionLayer layer)
+{
+	return layers.IsSet(layer);
+}
+
+// Set a SINGLE collision layer for this collider 
+// (what layers this collider will collide with)
+void Collider::SetCollisionLayers(CollisionLayer layer)
+{
+	layers.Set(layer);
+	//TODO: don't reattach, just get a pointer to the shape and edit it
+	ReAttach();
+}
+// Set this collider's collision layers
+// (what layers this collider will collide with)
+void Collider::SetCollisionLayers(CollisionLayers layers)
+{
+	this->layers = layers;
+	//TODO: don't reattach, just get a pointer to the shape and edit it
+	ReAttach();
+}
+// Set ALL COLLISION LAYERS for this collider
+// Based on the parameter, this will set all layers to collide
+// or ignore collisions
+void Collider::SetCollisionLayers(bool ignoreCollisions)
+{
+	CollisionLayers layers;
+	for (uint32_t lay = (uint32_t)CollisionLayer::WorldStatic; lay <= (uint32_t)CollisionLayer::WorldDynamic; lay++)
+	{
+		if (ignoreCollisions)
+			layers.Unset((CollisionLayer)lay);
+		else layers.Set((CollisionLayer)lay);
+	}
+	this->layers = layers;
+	//TODO: don't reattach, just get a pointer to the shape and edit it
+	ReAttach();
 }
 
 // WARNING: THIS IS FOR INTERNAL ENGINE USE ONLY. DO NOT USE

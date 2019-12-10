@@ -1,7 +1,8 @@
 #pragma once
 #include "PhysicsMaterial.h"
 #include "RigidBody.h"
-#include "Messenger.hpp"
+#include "CollisionLayers.h"
+#include <optional>
 
 enum class ColliderType { Box = 0, Sphere = 1, Capsule = 2 };
 
@@ -16,6 +17,10 @@ private:
 	physx::PxShape* shape;
 	ColliderType type;
 	CollisionResolver* collisionResolver;
+	
+	//Filtering
+	CollisionLayers layers;
+	std::optional<CollisionLayer> layerType;
 
 	// --------------------------------------------------------
 	// Update collisions
@@ -36,6 +41,8 @@ private:
 	// The attached GameObject's scale changed
 	// --------------------------------------------------------
 	void OnScaleChanged(DirectX::XMFLOAT3 scale);
+
+	void SetFilterData(physx::PxShape* shape);
 
 protected:
 	PhysicsMaterial* physicsMaterial;
@@ -139,6 +146,45 @@ public:
 	// Set if this collider is a trigger shape
 	// --------------------------------------------------------
 	void SetTrigger(bool isTrigger);
+
+	// --------------------------------------------------------
+	// Get this collider's collision layer type 
+	// (what type of layer this collider belongs to)
+	// --------------------------------------------------------
+	CollisionLayer GetCollisionLayerType();
+	// --------------------------------------------------------
+	// Set this collider's collision layer type
+	// (what type of layer this collider belongs to)
+	// --------------------------------------------------------
+	void SetCollisionLayerType(CollisionLayer layerType);
+
+	// --------------------------------------------------------
+	// Get this collider's collision layers 
+	// (what layers this collider will collide with)
+	// --------------------------------------------------------
+	CollisionLayers GetCollisionLayers();
+	// --------------------------------------------------------
+	// Get if this collider has the collision layer set 
+	// (what layers this collider will collide with)
+	// --------------------------------------------------------
+	bool GetIfCollisionLayerSet(CollisionLayer layer);
+	// --------------------------------------------------------
+	// Set a SINGLE collision layer for this collider 
+	// (what layers this collider will collide with)
+	// --------------------------------------------------------
+	void SetCollisionLayers(CollisionLayer layer);
+	// --------------------------------------------------------
+	// Set this collider's collision layers
+	// (what layers this collider will collide with)
+	// --------------------------------------------------------
+	void SetCollisionLayers(CollisionLayers layers);
+	// --------------------------------------------------------
+	// Set ALL COLLISION LAYERS for this collider
+	// Based on the parameter, this will set all layers to collide
+	// or ignore collisions
+	// --------------------------------------------------------
+	void SetCollisionLayers(bool ignoreCollisions);
+
 
 	// --------------------------------------------------------
 	// WARNING: THIS IS FOR INTERNAL ENGINE USE ONLY. DO NOT USE
