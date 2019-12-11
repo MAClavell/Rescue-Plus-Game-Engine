@@ -10,11 +10,15 @@ private:
 	InputManager* inputManager;
 
 	//Components
+	GameObject* go;
 	Camera* camera;
+	GameObject* cameraGO;
 	RigidBody* rb;
 	CapsuleCollider* standCol;
 	CapsuleCollider* crouchCol;
 	CapsuleCollider* slideCol;
+
+	float yRot = 0;
 
 	//Speeds
 	float baseSpeed = 10;
@@ -26,6 +30,7 @@ private:
 	bool crouching;
 	bool sliding;
 
+	void FixedUpdate(float deltaTime) override;
 	void Update(float deltaTime) override;
 
 	// --------------------------------------------------------
@@ -55,6 +60,11 @@ private:
 	// --------------------------------------------------------
 	void EndSlide();
 
+	// --------------------------------------------------------
+	// Calculate the camera's rotation when the player moves the mouse
+	// --------------------------------------------------------
+	void CalculateCameraRotFromMouse();
+
 public:
 	FirstPersonMovement(GameObject* gameObject);
 	~FirstPersonMovement();
@@ -64,6 +74,12 @@ public:
 	//
 	// name - the name of the root game object
 	// --------------------------------------------------------
-	static FirstPersonMovement* CreateFirstPersonCharacter(const char* name);
+	static FirstPersonMovement* CreateFirstPersonCharacter(const char* name,
+		int screenWidth, int screenHeight);
+
+	// --------------------------------------------------------
+	// Get the controller's camera
+	// --------------------------------------------------------
+	Camera* GetCamera();
 };
 

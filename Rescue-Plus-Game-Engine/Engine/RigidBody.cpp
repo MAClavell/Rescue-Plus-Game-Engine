@@ -23,6 +23,8 @@ RigidBody::RigidBody(GameObject* gameObject, float mass) : Component::Component(
 
 	gameObject->AddListenerOnPositionChanged(std::bind(&RigidBody::UpdateRigidbodyPosition, this,
 		std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	gameObject->AddListenerOnRotationChanged(std::bind(&RigidBody::UpdateRigidbodyRotation, this,
+		std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
 	//See if there is already a collider attached to this or any child gameobjects
 	FindChildrenColliders(gameObject, true);
@@ -87,16 +89,27 @@ void RigidBody::UpdateWorldPosition()
 	gameObject()->SetPositionFromRigidBody(Vec3ToFloat3(tr.p));
 }
 
-// Update the gameobject's rigidbody from it's world position
+// Update the rigidbody from it's world position
+void RigidBody::UpdateRigidbodyWorld()
+{
+	PxTransform tr;
+	tr.p = Float3ToVec3(gameObject()->GetPosition());
+	tr.q = Float4ToQuat(gameObject()->GetRotation());
+	body->setGlobalPose(tr);
+}
+
+// Update the rigidbody from it's world position
 void RigidBody::UpdateRigidbodyPosition(XMFLOAT3 pos, bool fromParent, bool fromRigidBody)
 {
 	if (!fromRigidBody)
-	{
-		PxTransform tr;
-		tr.p = Float3ToVec3(gameObject()->GetPosition());
-		tr.q = Float4ToQuat(gameObject()->GetRotation());
-		body->setGlobalPose(tr);
-	}
+		UpdateRigidbodyWorld();
+}
+
+// Update the rigidbody from it's world position
+void RigidBody::UpdateRigidbodyRotation(XMFLOAT4 rot, bool fromParent, bool fromRigidBody)
+{
+	if (!fromRigidBody)
+		UpdateRigidbodyWorld();
 }
 
 // Set the mass of this rigid body

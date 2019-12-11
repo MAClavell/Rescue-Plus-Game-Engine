@@ -24,6 +24,21 @@ private:
 	// --------------------------------------------------------
 	void FixedUpdate(float deltaTime) override;
 
+	// --------------------------------------------------------
+	// Update the rigidbody from it's world position and rotation
+	// --------------------------------------------------------
+	void UpdateRigidbodyWorld();
+
+	// --------------------------------------------------------
+	// Update the rigidbody from it's world position
+	// --------------------------------------------------------
+	void UpdateRigidbodyPosition(DirectX::XMFLOAT3 pos, bool fromParent, bool fromRigidBody);
+
+	// --------------------------------------------------------
+	// Update the rigidbody from it's world rotation
+	// --------------------------------------------------------
+	void UpdateRigidbodyRotation(DirectX::XMFLOAT4 rot, bool fromParent, bool fromRigidBody);
+
 public:
 	RigidBody(GameObject* gameObject, float mass);
 
@@ -33,11 +48,6 @@ public:
 	// Update the gameobject's world position from an inputted transform
 	// --------------------------------------------------------
 	void UpdateWorldPosition();
-
-	// --------------------------------------------------------
-	// Update the gameobject's rigidbody from it's world position
-	// --------------------------------------------------------
-	void UpdateRigidbodyPosition(DirectX::XMFLOAT3 pos, bool fromParent, bool fromRigidBody);
 
 	// --------------------------------------------------------
 	// Set the mass of this rigid body
