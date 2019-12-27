@@ -8,6 +8,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Game-App", "Game-App\Game-App.vcxproj", "{EB73F8F5-BECE-4FEC-BA29-AE261379F510}"
 EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Engine\Engine.vcxitems*{d1d54c58-6246-45f0-85ee-fe8c76190775}*SharedItemsImports = 9
 		Engine\Engine.vcxitems*{eb73f8f5-bece-4fec-ba29-ae261379f510}*SharedItemsImports = 4

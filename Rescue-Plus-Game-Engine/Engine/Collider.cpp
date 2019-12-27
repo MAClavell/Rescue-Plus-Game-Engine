@@ -119,11 +119,7 @@ void Collider::DeAttachFromRB(bool makeStatic)
 		attachedRigidBody->GetRigidBody()->detachShape(*shape);
 		attachedRigidBody = nullptr;
 	}
-	if (shape != nullptr)
-	{
-		shape->release();
-		shape = nullptr;
-	}
+	shape = nullptr;
 
 	if (makeStatic)
 		AttachToStatic();
@@ -138,11 +134,7 @@ void Collider::DeAttachFromStatic()
 		staticActor->release();
 		staticActor = nullptr;
 	}
-	if (shape != nullptr)
-	{
-		shape->release();
-		shape = nullptr;
-	}
+	shape = nullptr;
 }
 
 // Re-calculate the shape and re-attach this collider to a rigidbody
@@ -172,19 +164,31 @@ void Collider::AttachToRB(RigidBody* rigidBody, bool isChildObj)
 	//Create shape
 	isInChildObj = isChildObj;
 	attachedRigidBody = rigidBody;
-	shape = GenerateShape(physics);
-	shape->userData = this;
+	PxShape* tempShape = GenerateShape(physics);
+	tempShape->userData = this;
 	
 	//Set filter data
 	if (!layerType.has_value())
 		layerType = CollisionLayer::WorldDynamic;
-	SetFilterData(shape);
+	SetFilterData(tempShape);
 
 	//Attach
-	rigidBody->GetRigidBody()->attachShape(*shape);
+	PxRigidDynamic* rb = rigidBody->GetRigidBody();
+	rb->attachShape(*tempShape);
 
-	if (!(rigidBody->GetRigidBody()->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
-		rigidBody->GetRigidBody()->wakeUp();
+	if (!(rb->getRigidBodyFlags() & PxRigidBodyFlag::eKINEMATIC))
+		rb->wakeUp();
+
+	//Get the actual shape and store it
+	PxShape** shapes = new PxShape*[rb->getNbShapes()];
+	PxU32 nbShapes = rb->getShapes(shapes, rb->getNbShapes());
+	for (PxU32 i = 0; i < nbShapes; i++)
+	{
+		if (shapes[i] == tempShape)
+			shape = shapes[i];
+	}
+	tempShape->release();
+	delete[] shapes;
 }
 
 // Attach this collider to a static shape
@@ -196,13 +200,13 @@ void Collider::AttachToStatic()
 	PxPhysics* physics = PhysicsManager::GetInstance()->GetPhysics();
 
 	//Create shape
-	shape = GenerateShape(physics);
-	shape->userData = this;
+	PxShape* tempShape = GenerateShape(physics);
+	tempShape->userData = this;
 	
 	//Set filter data
 	if (!layerType.has_value())
 		layerType = CollisionLayer::WorldStatic;
-	SetFilterData(shape);
+	SetFilterData(tempShape);
 
 	//Calc transform
 	PxTransform tr = PxTransform(Float3ToVec3(gameObject()->GetPosition()),
@@ -211,8 +215,19 @@ void Collider::AttachToStatic()
 	//Attach
 	if (staticActor != nullptr)
 		staticActor->release();
-	staticActor = PxCreateStatic(*physics, tr, *shape);
+	staticActor = PxCreateStatic(*physics, tr, *tempShape);
 	PhysicsManager::GetInstance()->AddActor(staticActor);
+	
+	//Get the actual shape and store it
+	PxShape** shapes = new PxShape*[staticActor->getNbShapes()];
+	PxU32 nbShapes = staticActor->getShapes(shapes, staticActor->getNbShapes());
+	for (PxU32 i = 0; i < nbShapes; i++)
+	{
+		if (shapes[i] == tempShape)
+			shape = shapes[i];
+	}
+	tempShape->release();
+	delete[] shapes;
 }
 
 // Get this shape's transform based on its position from the parent

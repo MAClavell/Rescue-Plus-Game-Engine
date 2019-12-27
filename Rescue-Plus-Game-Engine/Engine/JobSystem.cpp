@@ -15,9 +15,9 @@ static unsigned workerThreadCount;
 //Condition variable management
 // YES this is a lock in a lockless pool, but we need it for
 //	when there's nothing in the queues and when the program terminates
+static std::atomic_uint64_t availibleJobs;
 static condition_variable threadCondition;
 static mutex mtx;
-static bool running = true;
 static std::atomic_bool workerThreadsActive = true;
 
 //Job deletion
@@ -135,6 +135,7 @@ static void Finish(Job* job)
 // Execute a job
 static void Execute(Job* job)
 {
+	availibleJobs -= 1;
 	(job->function)(job, job->data);
 	Finish(job);
 }
@@ -159,11 +160,15 @@ static void WorkerThreadLoop(unsigned i)
 		}
 
 		//Lock releases when out of scope
-		//TODO: put threads to sleep when not in use
 		{
 			std::unique_lock<std::mutex> lck(mtx);
-			while (!running) threadCondition.wait(lck);
+			threadCondition.wait(lck, [] {
+				if (!workerThreadsActive)
+					return true;
+				return availibleJobs > 0;
+			});
 		}
+
 	}
 }
 
@@ -172,6 +177,8 @@ static void WorkerThreadLoop(unsigned i)
 // --------------------------------------------------------
 void JobSystem::Init()
 {
+	availibleJobs = 0;
+
 	// only create number_of_cores - 1 threads
 	workerThreadCount = thread::hardware_concurrency() - 1;
 	if (workerThreadCount < 1)
@@ -200,10 +207,10 @@ void JobSystem::Release()
 {
 	//Lock releases when out of scope
 	workerThreadsActive = false;
+
+	//Wake up all the threads
 	{
-		//Wake up all the threads
 		std::unique_lock<std::mutex> lck(mtx);
-		running = true;
 		threadCondition.notify_all();
 	}
 
@@ -272,16 +279,11 @@ void JobSystem::Run(Job* job)
 {
 	WorkStealingQueue* queue = GetWorkerThreadQueue();
 	queue->Push(job);
-
-	//Lock releases when out of scope
+	
+	availibleJobs += 1;
 	{
 		std::unique_lock<std::mutex> lck(mtx);
-		if (running == false)
-		{
-			std::unique_lock<std::mutex> lck(mtx);
-			running = true;
-			threadCondition.notify_all();
-		}
+		threadCondition.notify_all();
 	}
 }
 
