@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include "Messenger.hpp"
+#include "MiscHelpers.h"
 
 // --------------------------------------------------------
 // A GameObject definition.
@@ -40,7 +41,18 @@ private:
 
 	//Components
 	std::vector<Component*> components;
-	std::vector<UserComponent*> userComponents;
+	//Make separate lists for components that implement
+	// each overrideable function. This prevents looping
+	// and function calls on components that don't implement
+	// a certain overrideable function
+	std::vector<Component*> updateComponents;
+	std::vector<Component*> fixedUpdateComponents;
+	std::vector<UserComponent*> onCollisionEnterComponents;
+	std::vector<UserComponent*> onCollisionStayComponents;
+	std::vector<UserComponent*> onCollisionExitComponents;
+	std::vector<UserComponent*> onTriggerEnterComponents;
+	std::vector<UserComponent*> onTriggerStayComponents;
+	std::vector<UserComponent*> onTriggerExitComponents;
 
 	// --------------------------------------------------------
 	// Remove a child from a gameobject
@@ -155,14 +167,37 @@ public:
 	T* AddComponent(Args... args)
 	{
 		static_assert(std::is_base_of<Component, T>::value, "Can't add a component not derived from Component\n");
-
+		
 		//Push new T
 		T* component = new T(this, args...);
 		components.push_back(component);
+
+		//Update and fixed update
+		if (&Component::Update != &T::Update)
+			updateComponents.push_back(component);
+		if (&Component::FixedUpdate != &T::FixedUpdate)
+			fixedUpdateComponents.push_back(component);
+
+		//User componenets
 		if constexpr(std::is_base_of<UserComponent, T>())
 		{
-			userComponents.push_back(component);
+			//Collisions
+			if (&UserComponent::OnCollisionEnter != &T::OnCollisionEnter)
+				onCollisionEnterComponents.push_back(component);
+			if (&UserComponent::OnCollisionStay != &T::OnCollisionStay)
+				onCollisionStayComponents.push_back(component);
+			if (&UserComponent::OnCollisionExit != &T::OnCollisionExit)
+				onCollisionExitComponents.push_back(component);
+
+			//Triggers
+			if (&UserComponent::OnTriggerEnter != &T::OnTriggerEnter)
+				onTriggerEnterComponents.push_back(component);
+			if (&UserComponent::OnTriggerStay != &T::OnTriggerStay)
+				onTriggerStayComponents.push_back(component);
+			if (&UserComponent::OnTriggerExit != &T::OnTriggerExit)
+				onTriggerExitComponents.push_back(component);
 		}
+
 		return component;
 	}
 
@@ -199,60 +234,59 @@ public:
 	void RemoveComponent()
 	{
 		static_assert(std::is_base_of<Component, T>::value, "Can't remove a component not derived from Component\n");
-		bool isUC = std::is_base_of<UserComponent, T>::value;
 
 		//Try to find it
-		bool found = false;
-		T& c;
-		for (auto iter = components.begin(); iter != components.end(); iter++)
+		T* c;
+		bool found = RemoveTypeFromVector(&components, &c);
+		
+		if (found)
 		{
-			try
+			//Remove update and fixed update
+			if (&Component::Update != &T::Update)
+				RemoveTypeFromVector(&updateComponents);
+			if (&Component::FixedUpdate != &T::FixedUpdate)
+				RemoveTypeFromVector(&fixedUpdateComponents);
+
+			//Remove user components
+			if constexpr (std::is_base_of<UserComponent, T>())
 			{
-				c = dynamic_cast<T&>(**iter); // try to cast
-				found = true;
+				//Collisions
+				if (&UserComponent::OnCollisionEnter != &T::OnCollisionEnter)
+					RemoveTypeFromVector(&OnCollisionEnterComponents);
+				if (&UserComponent::OnCollisionStay != &T::OnCollisionStay)
+					RemoveTypeFromVector(&OnCollisionStayComponents);
+				if (&UserComponent::OnCollisionExit != &T::OnCollisionExit)
+					RemoveTypeFromVector(&OnCollisionExitComponents);
 
-				//Swap with the last and pop
-				std::iter_swap(iter, components.end());
-				components.pop_back();
-				break;
+				//Triggers
+				if (&UserComponent::OnTriggerEnter != &T::OnTriggerEnter)
+					RemoveTypeFromVector(&OnTriggerEnterComponents);
+				if (&UserComponent::OnTriggerStay != &T::OnTriggerStay)
+					RemoveTypeFromVector(&OnTriggerStayComponents);
+				if (&UserComponent::OnTriggerExit != &T::OnTriggerExit)
+					RemoveTypeFromVector(&OnTriggerExitComponents);
 			}
-			catch (...)
-			{
-			}
-		}
 
-		//Remove user components
-		if constexpr (std::is_base_of<UserComponent, T>() && found)
-		{
-			for (auto iter = userComponents.begin(); iter != userComponents.end(); iter++)
-			{
-				try
-				{
-					T& c = dynamic_cast<T&>(**iter); // try to cast
-
-					//Swap with the last and pop
-					std::iter_swap(iter, userComponents.end());
-					userComponents.pop_back();
-					break;
-				}
-				catch (...)
-				{
-				}
-			}
-		}
-
-		if (!found)
-			printf("Could not find a component of type '%s' in %s\n", typeid(T).name(), name.c_str());
-
-		//Delete
-		else
+			//Delete
 			delete c;
+		}
+#if defined(DEBUG) || defined(_DEBUG)
+		else 
+			printf("Could not find a component of type '%s' in %s\n", typeid(T).name(), name.c_str());
+#endif // DEBUG
 	}
 
 	// --------------------------------------------------------
-	// Get a readonly list of all user components
+	// Get lists of all user components that have collision or
+	// trigger callbacks
 	// --------------------------------------------------------
-	const std::vector<UserComponent*>& GetAllUserComponents();
+	void GetCollisionAndTriggerCallbackComponents(
+		std::vector<UserComponent*>* colEnt,
+		std::vector<UserComponent*>* colSty,
+		std::vector<UserComponent*>* colExt,
+		std::vector<UserComponent*>* trigEnt,
+		std::vector<UserComponent*>* trigSty,
+		std::vector<UserComponent*>* trigExt);
 
 	// --------------------------------------------------------
 	// Update all componenets in this gameObject

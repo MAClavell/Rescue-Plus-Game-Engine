@@ -28,7 +28,6 @@ Collider::Collider(GameObject* gameObject, ColliderType type, bool isTrigger,
 	collisionResolver = new CollisionResolver();
 	staticActor = nullptr;
 	attachedRigidBody = nullptr;
-	SetCollisionLayers(false);
 
 	gameObject->AddListenerOnPositionChanged(std::bind(&Collider::OnPositionChanged, this,
 			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -81,7 +80,7 @@ void Collider::FindParentRigidBody()
 void Collider::FixedUpdate(float deltaTime)
 {
 	if(staticActor != nullptr)
-		collisionResolver->ResolveCollisions(gameObject()->GetAllUserComponents());
+		collisionResolver->ResolveCollisions(gameObject());
 }
 
 void Collider::OnPositionChanged(DirectX::XMFLOAT3 position, bool fromParent, bool fromRigidBody)
@@ -302,7 +301,11 @@ void Collider::SetTrigger(bool isTrigger)
 		//Must be recalculated
 		if (attachedRigidBody != nullptr)
 			DeAttachFromRB(true);
-		else ReAttach();
+		else
+		{
+			shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+			shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+		}
 	}
 }
 
@@ -318,8 +321,7 @@ CollisionLayer Collider::GetCollisionLayerType()
 void Collider::SetCollisionLayerType(CollisionLayer layerType)
 {
 	this->layerType = layerType;
-	//TODO: don't reattach, just get a pointer to the shape and edit it
-	//ReAttach();
+	SetFilterData(shape);
 }
 
 // Get this collider's collision layers 
@@ -340,16 +342,14 @@ bool Collider::GetIfCollisionLayerSet(CollisionLayer layer)
 void Collider::SetCollisionLayers(CollisionLayer layer)
 {
 	layers.Set(layer);
-	//TODO: don't reattach, just get a pointer to the shape and edit it
-	//ReAttach();
+	SetFilterData(shape);
 }
 // Set this collider's collision layers
 // (what layers this collider will collide with)
 void Collider::SetCollisionLayers(CollisionLayers layers)
 {
 	this->layers = layers;
-	//TODO: don't reattach, just get a pointer to the shape and edit it
-	//ReAttach();
+	SetFilterData(shape);
 }
 // Set ALL COLLISION LAYERS for this collider
 // Based on the parameter, this will set all layers to collide
@@ -364,8 +364,7 @@ void Collider::SetCollisionLayers(bool ignoreCollisions)
 		else layers.Set((CollisionLayer)lay);
 	}
 	this->layers = layers;
-	//TODO: don't reattach, just get a pointer to the shape and edit it
-	//ReAttach();
+	SetFilterData(shape);
 }
 
 // WARNING: THIS IS FOR INTERNAL ENGINE USE ONLY. DO NOT USE
@@ -399,6 +398,7 @@ BoxCollider::BoxCollider(GameObject* gameObject, DirectX::XMFLOAT3 size, bool is
 {
 	this->size = size;
 	FindParentRigidBody(); //has to be in derived constructor because of GenerateShape pure virtual
+	SetCollisionLayers(false);
 }
 
 // Get the size of the BoxCollider
@@ -477,6 +477,7 @@ SphereCollider::SphereCollider(GameObject* gameObject, float radius, bool isTrig
 {
 	this->radius = radius;
 	FindParentRigidBody();
+	SetCollisionLayers(false);
 }
 
 // Implementation of the abstract function for generating the collider's physx shape
@@ -549,6 +550,7 @@ CapsuleCollider::CapsuleCollider(GameObject* gameObject, float radius, float hei
 	this->height = height;
 	this->dir = dir;
 	FindParentRigidBody();
+	SetCollisionLayers(false);
 }
 
 // Implementation of the abstract function for generating the collider's physx shape

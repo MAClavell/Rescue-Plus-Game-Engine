@@ -30,9 +30,6 @@ private:
 	bool crouching;
 	bool sliding;
 
-	void FixedUpdate(float deltaTime) override;
-	void Update(float deltaTime) override;
-
 	// --------------------------------------------------------
 	// Changes for when we start a sprint
 	// --------------------------------------------------------
@@ -68,6 +65,9 @@ private:
 public:
 	FirstPersonMovement(GameObject* gameObject);
 	~FirstPersonMovement();
+
+	void FixedUpdate(float deltaTime) override;
+	void Update(float deltaTime) override;
 
 	// --------------------------------------------------------
 	// Factory function to safely create a First Person Movement object

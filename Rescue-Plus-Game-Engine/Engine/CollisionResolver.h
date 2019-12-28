@@ -67,6 +67,6 @@ public:
 	// (OnCollisionEnter, OnCollisionStay, OnCollisionExit)
 	// (OnTriggerEnter, OnTriggerStay, OnTriggerExit)
 	// --------------------------------------------------------
-	void ResolveCollisions(const std::vector<UserComponent*>& ucs);
+	void ResolveCollisions(GameObject* obj);
 };
 

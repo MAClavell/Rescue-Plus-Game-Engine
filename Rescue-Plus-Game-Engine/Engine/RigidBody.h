@@ -20,11 +20,6 @@ private:
 	void FindChildrenColliders(GameObject*, bool firstObj);
 
 	// --------------------------------------------------------
-	// Update collisions
-	// --------------------------------------------------------
-	void FixedUpdate(float deltaTime) override;
-
-	// --------------------------------------------------------
 	// Update the rigidbody from it's world position and rotation
 	// --------------------------------------------------------
 	void UpdateRigidbodyWorld();
@@ -43,6 +38,11 @@ public:
 	RigidBody(GameObject* gameObject, float mass);
 
 	~RigidBody();
+
+	// --------------------------------------------------------
+	// Update collisions
+	// --------------------------------------------------------
+	void FixedUpdate(float deltaTime) override;
 
 	// --------------------------------------------------------
 	// Update the gameobject's world position from an inputted transform

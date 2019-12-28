@@ -1,5 +1,7 @@
 #include "CollisionResolver.h"
-#include "Component.h"
+#include "GameObject.h"
+
+using namespace std;
 
 // Send a trigger to the resolver and have it decide what events to run.
 // Since PhysX doesn't have PxTriggerPairFlags for enter and exit,
@@ -13,7 +15,7 @@ void CollisionResolver::SendTriggerCollision(Collision collision)
 	{
 		if ((*iter).col == collision && (*iter).isTrigger == true)
 		{
-			std::iter_swap(iter, enterCollisions.end() - 1);
+			iter_swap(iter, enterCollisions.end() - 1);
 			enterCollisions.pop_back();
 			found = true;
 			break;
@@ -27,7 +29,7 @@ void CollisionResolver::SendTriggerCollision(Collision collision)
 		{
 			if ((*iter).col == collision && (*iter).isTrigger == true)
 			{
-				std::iter_swap(iter, stayCollisions.end() - 1);
+				iter_swap(iter, stayCollisions.end() - 1);
 				stayCollisions.pop_back();
 				found = true;
 				break;
@@ -58,7 +60,7 @@ void CollisionResolver::AddExitCollision(Collision collision)
 	{
 		if ((*iter).col == collision && (*iter).isTrigger == false)
 		{
-			std::iter_swap(iter, enterCollisions.end() - 1);
+			iter_swap(iter, enterCollisions.end() - 1);
 			enterCollisions.pop_back();
 			found = true;
 			break;
@@ -72,7 +74,7 @@ void CollisionResolver::AddExitCollision(Collision collision)
 		{
 			if ((*iter).col == collision && (*iter).isTrigger == false)
 			{
-				std::iter_swap(iter, stayCollisions.end() - 1);
+				iter_swap(iter, stayCollisions.end() - 1);
 				stayCollisions.pop_back();
 				found = true;
 				break;
@@ -86,47 +88,53 @@ void CollisionResolver::AddExitCollision(Collision collision)
 // Resolve all collision events for this resolver
 // (OnCollisionEnter, OnCollisionStay, OnCollisionExit)
 // (OnTriggerEnter, OnTriggerStay, OnTriggerExit)
-void CollisionResolver::ResolveCollisions(const std::vector<UserComponent*>& ucs)
+void CollisionResolver::ResolveCollisions(GameObject* obj)
 {
-	//Don't run these if there's nothing to run
-	if (ucs.size() > 0)
+	vector<UserComponent*> colEnt, colSty, colExt, trigEnt, trigSty, trigExt;
+	obj->GetCollisionAndTriggerCallbackComponents(&colEnt, &colSty, &colExt,
+		&trigEnt, &trigSty, &trigExt);
+
+	if (colEnt.size() > 0 || trigEnt.size() > 0)
 	{
 		//Run all OnEnters
 		for (auto iter = enterCollisions.begin(); iter != enterCollisions.end(); iter++)
 		{
-			for each (UserComponent* uc in ucs)
-			{
-				if ((*iter).isTrigger)
+			if ((*iter).isTrigger)
+				for each(UserComponent* uc in trigEnt)
 					uc->OnTriggerEnter((*iter).col);
-				else uc->OnCollisionEnter((*iter).col);
-			}
+			else
+				for each (UserComponent* uc in colEnt)
+					uc->OnCollisionEnter((*iter).col);
 		}
+	}
+	
+	if (colSty.size() > 0 || trigSty.size() > 0)
+	{
 		//Run all OnStays
 		for (auto iter = stayCollisions.begin(); iter != stayCollisions.end(); iter++)
 		{
-			for each (UserComponent* uc in ucs)
-			{
-				if ((*iter).isTrigger)
+			if ((*iter).isTrigger)
+				for each(UserComponent* uc in trigSty)
 					uc->OnTriggerStay((*iter).col);
-				else uc->OnCollisionStay((*iter).col);
-			}
+			else
+				for each (UserComponent* uc in colSty)
+					uc->OnCollisionStay((*iter).col);
 		}
 	}
 
 	//Run all OnExits
 	if (exitCollisions.size() > 0)
 	{
-		//Don't run if there's nothing to run
-		if (ucs.size() > 0)
+		if (colExt.size() > 0 || trigExt.size() > 0)
 		{
 			for (auto iter = exitCollisions.begin(); iter != exitCollisions.end(); iter++)
 			{
-				for each (UserComponent* uc in ucs)
-				{
-					if ((*iter).isTrigger)
+				if ((*iter).isTrigger)
+					for each(UserComponent* uc in trigExt)
 						uc->OnTriggerExit((*iter).col);
-					else uc->OnCollisionExit((*iter).col);
-				}
+				else
+					for each (UserComponent* uc in colExt)
+						uc->OnCollisionExit((*iter).col);
 			}
 		}
 		//Still need to clear

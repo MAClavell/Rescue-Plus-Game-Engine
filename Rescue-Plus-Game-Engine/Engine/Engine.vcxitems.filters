@@ -194,6 +194,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)CollisionLayers.h">
       <Filter>Header Files\Physics</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)MiscHelpers.h">
+      <Filter>Header Files\Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="$(MSBuildThisFileDirectory)PS_ColDebug.hlsl">

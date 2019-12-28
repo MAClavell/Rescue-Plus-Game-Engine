@@ -78,7 +78,7 @@ void RigidBody::FindChildrenColliders(GameObject* go, bool firstObj)
 
 void RigidBody::FixedUpdate(float deltaTime)
 {
-	collisionResolver->ResolveCollisions(gameObject()->GetAllUserComponents());
+	collisionResolver->ResolveCollisions(gameObject());
 }
 
 // Update the gameobject's world position from an inputted transform

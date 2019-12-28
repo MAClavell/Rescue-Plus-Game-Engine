@@ -5,6 +5,7 @@
 
 // For the DirectX Math library
 using namespace DirectX;
+using namespace std;
 
 //Construct a component
 Component::Component(GameObject* gameObject)
@@ -40,7 +41,7 @@ GameObject::GameObject()
 }
 
 // Constructor - Set up the gameobject.
-GameObject::GameObject(std::string name)
+GameObject::GameObject(string name)
 	: GameObject()
 {
 	this->name = name;
@@ -70,13 +71,13 @@ void GameObject::SetEnabled(bool enabled)
 }
 
 // Set the name of this gameobject
-void GameObject::SetName(std::string name)
+void GameObject::SetName(string name)
 {
 	this->name = name;
 }
 
 // Get the name of this gameobject
-std::string GameObject::GetName()
+string GameObject::GetName()
 {
 	return name;
 }
@@ -111,7 +112,7 @@ void GameObject::RemoveChild(GameObject* child)
 		if (*iter == child)
 		{
 			//Swap with the last and pop
-			std::iter_swap(iter, children.end());
+			iter_swap(iter, children.end());
 			children.pop_back();
 
 			//Delete
@@ -122,7 +123,7 @@ void GameObject::RemoveChild(GameObject* child)
 }
 
 // Get the children of this gameobject
-std::vector<GameObject*> GameObject::GetChildren()
+vector<GameObject*> GameObject::GetChildren()
 {
 	return children;
 }
@@ -135,25 +136,33 @@ void GameObject::AddChild(GameObject* child)
 	children.push_back(child);
 }
 
-// Get a readonly list of all user components
-const std::vector<UserComponent*>& GameObject::GetAllUserComponents()
+// Get lists of all user components that have collision or trigger callbacks
+void GameObject::GetCollisionAndTriggerCallbackComponents(vector<UserComponent*>* colEnt, 
+	vector<UserComponent*>* colSty, vector<UserComponent*>* colExt, 
+	vector<UserComponent*>* trigEnt, vector<UserComponent*>* trigSty, 
+	vector<UserComponent*>* trigExt)
 {
-	return userComponents;
+	*colEnt = onCollisionEnterComponents;
+	*colSty = onCollisionStayComponents;
+	*colExt = onCollisionExitComponents;
+	*trigEnt = onTriggerEnterComponents;
+	*trigSty = onTriggerStayComponents;
+	*trigExt = onTriggerExitComponents;
 }
 
-// Update this component
+// Update this gameobject's components
 void GameObject::Update(float deltaTime)
 { 
-	for (auto c : components)
+	for (auto c : updateComponents)
 	{
 		c->Update(deltaTime);
 	}
 }
 
-// Update this component at the fixed timestep
+// Update this gameobject's components at the fixed timestep
 void GameObject::FixedUpdate(float deltaTime)
 {
-	for (auto c : components)
+	for (auto c : fixedUpdateComponents)
 	{
 		c->FixedUpdate(deltaTime);
 	}
@@ -215,34 +224,34 @@ void GameObject::RebuildWorld()
 //TODO: Add removal to the messenger
 
 // Add a listener to onPositionChanged
-void GameObject::AddListenerOnPositionChanged(std::function<void(DirectX::XMFLOAT3, bool, bool)> function)
+void GameObject::AddListenerOnPositionChanged(function<void(DirectX::XMFLOAT3, bool, bool)> function)
 {
 	onPositionChanged.AddListener(function);
 }
 // Remove a listener from onPositionChanged
-void GameObject::RemoveListenerOnPositionChanged(std::function<void(DirectX::XMFLOAT3, bool, bool)> function)
+void GameObject::RemoveListenerOnPositionChanged(function<void(DirectX::XMFLOAT3, bool, bool)> function)
 {
 	onPositionChanged.RemoveListener(function);
 }
 
 // Add a listener to onRotationChanged
-void GameObject::AddListenerOnRotationChanged(std::function<void(DirectX::XMFLOAT4, bool, bool)> function)
+void GameObject::AddListenerOnRotationChanged(function<void(DirectX::XMFLOAT4, bool, bool)> function)
 {
 	onRotationChanged.AddListener(function);
 }
 // Remove a listener from onScaleChanged
-void GameObject::RemoveListenerOnRotationChanged(std::function<void(DirectX::XMFLOAT4, bool, bool)> function)
+void GameObject::RemoveListenerOnRotationChanged(function<void(DirectX::XMFLOAT4, bool, bool)> function)
 {
 	onRotationChanged.RemoveListener(function);
 }
 
 // Remove a listener from onRotationChanged
-void GameObject::AddListenerOnScaleChanged(std::function<void(DirectX::XMFLOAT3)> function)
+void GameObject::AddListenerOnScaleChanged(function<void(DirectX::XMFLOAT3)> function)
 {
 	onScaleChanged.AddListener(function);
 }
 // Add a listener to onScaleChanged
-void GameObject::RemoveListenerOnScaleChanged(std::function<void(DirectX::XMFLOAT3)> function)
+void GameObject::RemoveListenerOnScaleChanged(function<void(DirectX::XMFLOAT3)> function)
 {
 	onScaleChanged.RemoveListener(function);
 }

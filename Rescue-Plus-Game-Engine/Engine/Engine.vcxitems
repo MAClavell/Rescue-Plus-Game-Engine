@@ -54,6 +54,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Material.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MAT_Skybox.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Mesh.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)MiscHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ParallelFor.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ParallelForSplitters.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsHelper.h" />
