@@ -1,6 +1,7 @@
 #pragma once
 #include <DirectXMath.h>
-#include "Collider.h"
+#include <limits>
+#include "Raycast.h"
 #include "PxSimulationEventCallback.h"
 
 class PhysicsManager : public physx::PxSimulationEventCallback
@@ -67,6 +68,11 @@ public:
 	physx::PxPhysics* GetPhysics();
 
 	// --------------------------------------------------------
+	// Get the physx Scene of this world
+	// --------------------------------------------------------
+	physx::PxScene* GetScene();
+
+	// --------------------------------------------------------
 	// Set the gravity of the physics engine
 	// --------------------------------------------------------
 	void SetGravity(float y);
@@ -85,6 +91,5 @@ public:
 	// Remove a rigidbody from the sim
 	// --------------------------------------------------------
 	void RemoveActor(physx::PxActor* actor);
-
 };
 

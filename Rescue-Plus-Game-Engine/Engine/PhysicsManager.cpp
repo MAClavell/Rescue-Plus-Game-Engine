@@ -1,7 +1,10 @@
 #include "PhysicsManager.h"
+#include "PhysicsHelper.h"
 #include "JobSystem.h"
+#include "Raycast.h"
 
 using namespace physx;
+using namespace DirectX;
 
 #define PX_RELEASE(x)	if(x)	{ x->release(); x = NULL;	}
 
@@ -212,6 +215,11 @@ PxPhysics* PhysicsManager::GetPhysics()
 	return physics;
 }
 
+PxScene* PhysicsManager::GetScene()
+{
+	return scene;
+}
+
 // Set the gravity of the physics engine
 void PhysicsManager::SetGravity(float gravity)
 {
@@ -238,3 +246,43 @@ void PhysicsManager::RemoveActor(PxActor* actor)
 		scene->removeActor(*actor);
 }
 
+bool Raycast(XMFLOAT3 origin, XMFLOAT3 direction,
+	float maxDistance)
+{
+	PxRaycastBuffer hit;
+	return PhysicsManager::GetInstance()->GetScene()->raycast(
+		Float3ToVec3(origin), Float3ToVec3(direction),
+		maxDistance, hit);
+}
+
+bool Raycast(DirectX::XMFLOAT3 origin, DirectX::XMFLOAT3 direction, RaycastHit* hitInfo, float maxDistance)
+{
+	PxRaycastBuffer pxHit;
+	if (PhysicsManager::GetInstance()->GetScene()->raycast(
+		Float3ToVec3(origin), Float3ToVec3(direction),
+		maxDistance, pxHit))
+	{
+		RaycastHit hit;
+		auto flags = pxHit.block.flags;
+
+		//Point
+		if (flags.isSet(PxHitFlag::ePOSITION))
+			hit.point = Vec3ToFloat3(pxHit.block.position);
+		//Normal
+		if (flags.isSet(PxHitFlag::eNORMAL))
+			hit.normal = Vec3ToFloat3(pxHit.block.normal);
+		//Distance
+		hit.distance = pxHit.block.distance;
+		
+		//GameObject info
+		hit.collider = (Collider*)pxHit.block.shape->userData;
+		hit.rigidBody = hit.collider->GetAttachedRigidBody();
+		if (hit.rigidBody != nullptr)
+			hit.gameObject = hit.rigidBody->gameObject();
+		else hit.gameObject = hit.collider->gameObject();
+
+		*hitInfo = hit;
+		return true;
+	}
+	else return false;
+}

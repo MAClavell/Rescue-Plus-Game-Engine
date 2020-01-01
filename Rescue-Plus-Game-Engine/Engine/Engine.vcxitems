@@ -60,6 +60,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsHelper.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsManager.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsMaterial.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Raycast.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Renderer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ResourceManager.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)RigidBody.h" />
