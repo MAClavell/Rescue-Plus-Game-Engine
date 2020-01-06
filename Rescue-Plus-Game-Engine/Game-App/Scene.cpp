@@ -26,9 +26,6 @@ void Game::LoadAssets()
 	resourceManager->LoadVertexShaderAsync("VertexShader.cso", device, context, root);
 	resourceManager->LoadPixelShaderAsync("PixelShader.cso", device, context, root);
 
-	resourceManager->LoadVertexShaderAsync("VS_ColDebug.cso", device, context, root);
-	resourceManager->LoadPixelShaderAsync("PS_ColDebug.cso", device, context, root);
-
 	resourceManager->LoadVertexShaderAsync("VS_Sky.cso", device, context, root);
 	resourceManager->LoadPixelShaderAsync("PS_Sky.cso", device, context, root);
 
@@ -359,7 +356,7 @@ void Game::SetupScene()
 
 	GameObject* crate10 = CreateCrate(resourceManager, "Crate10", 5);
 	crate10->SetPosition(-20, 3, 17);
-	crate10->AddComponent<TestCallbacks>();
+	//crate10->AddComponent<TestCallbacks>();
 	crate10C = new GameObject("Crate10Child");
 	crate10C->AddComponent<MeshRenderer>(
 		resourceManager->GetMesh("Assets\\Models\\Basic\\cube.obj"),

@@ -126,7 +126,7 @@ void Game::Init()
 	//Initialize singletons
 	inputManager = InputManager::GetInstance();
 	renderer = Renderer::GetInstance();
-	renderer->Init(device, width, height);
+	renderer->Init(device, context, width, height);
 	entityManager = EntityManager::GetInstance();
 	physicsManager = PhysicsManager::GetInstance();
 
@@ -144,11 +144,6 @@ void Game::Init()
 	//Directional lights
 	DirectionalLight* dLight = lightManager->CreateDirectionalLight(true, XMFLOAT3(1, 1, 1), 1);
 	dLight->gameObject()->SetRotation(60, -45, 0);
-
-	// Tell the input assembler stage of the pipeline what kind of
-	// geometric primitives (points, lines or triangles) we want to draw.
-	// Essentially: "What kind of shape should the GPU draw with our data?"
-	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	//Clear loading jobs
 	JobSystem::DeleteFinishedJobs();
@@ -254,8 +249,7 @@ void Game::Update(float deltaTime, float totalTime)
 void Game::Draw(float deltaTime, float totalTime)
 {
 	//Draw all entities in the renderer
-	renderer->SetClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Needed for clearing the post process buffer texture and the back buffer.
-	renderer->Draw(context, device, camera, backBufferRTV, depthStencilView, samplerState, width, height);
+	renderer->Draw(context, device, camera, backBufferRTV, depthStencilView, samplerState, width, height, deltaTime);
 
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it

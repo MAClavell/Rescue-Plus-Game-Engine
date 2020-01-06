@@ -458,10 +458,10 @@ void BoxCollider::Update(float deltaTime)
 		XMFLOAT3 pos;
 		XMStoreFloat3(&pos, XMVectorAdd(XMLoadFloat3(&gameObject()->GetPosition()),
 			XMVector3Rotate(XMLoadFloat3(&center), XMLoadFloat4(&gameObject()->GetRotation()))));
-		Renderer::GetInstance()->AddDebugCubeToThisFrame(
+		Renderer::GetInstance()->AddDebugCube(
 			pos,
 			gameObject()->GetRotation(),
-			size);
+			size, Renderer::DebugDrawType::SingleFrame);
 	}
 }
 #pragma endregion
@@ -529,10 +529,10 @@ void SphereCollider::Update(float deltaTime)
 		XMFLOAT3 pos;
 		XMStoreFloat3(&pos, XMVectorAdd(XMLoadFloat3(&gameObject()->GetPosition()),
 			XMVector3Rotate(XMLoadFloat3(&center), XMLoadFloat4(&gameObject()->GetRotation()))));
-		Renderer::GetInstance()->AddDebugSphereToThisFrame(
+		Renderer::GetInstance()->AddDebugSphere(
 			pos,
 			gameObject()->GetRotation(),
-			radius);
+			radius, Renderer::DebugDrawType::SingleFrame);
 	}
 }
 #pragma endregion
@@ -653,22 +653,26 @@ void CapsuleCollider::Update(float deltaTime)
 		XMVECTOR cylPosVec = XMVectorAdd(XMLoadFloat3(&gameObject()->GetPosition()),
 			XMVector3Rotate(XMLoadFloat3(&center), cylRotVec));
 			XMStoreFloat3(&cylPos, cylPosVec);
-		renderer->AddDebugCylinderToThisFrame(
+		renderer->AddDebugCylinder(
 			cylPos,
 			cylRot,
-			XMFLOAT3(radius * 2, height, radius * 2));
+			XMFLOAT3(radius * 2, height, radius * 2),
+			Renderer::DebugDrawType::SingleFrame);
 
 		//Top sphere
 		XMFLOAT3 topSpherePos;
 		XMStoreFloat3(&topSpherePos, XMVectorAdd(cylPosVec,
 			XMVector3Rotate(XMVectorSet(height - radius, 0, 0, 0), cylRotVec)));
-		renderer->AddDebugSphereToThisFrame(topSpherePos, cylRot, radius * 2);
+		renderer->AddDebugSphere(topSpherePos, cylRot, radius * 2, 
+			Renderer::DebugDrawType::SingleFrame
+);
 
 		//Bottom sphere
 		XMFLOAT3 botSpherePos;
 		XMStoreFloat3(&botSpherePos, XMVectorAdd(cylPosVec,
 			XMVector3Rotate(XMVectorSet(-(height - radius), 0, 0, 0), cylRotVec)));
-		renderer->AddDebugSphereToThisFrame(botSpherePos, cylRot, radius * 2);
+		renderer->AddDebugSphere(botSpherePos, cylRot, radius * 2, 
+			Renderer::DebugDrawType::SingleFrame);
 	}
 }
 #pragma endregion

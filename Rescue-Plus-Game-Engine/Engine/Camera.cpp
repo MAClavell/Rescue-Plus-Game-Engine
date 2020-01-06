@@ -24,9 +24,9 @@ void Camera::CreateViewMatrix()
 	XMVECTOR up = XMVector3Cross(XMVector3Cross(forward, XMLoadFloat3(&(this->up))), forward);
 
 	//Create view matrix (transpose for HLSL)
-	XMStoreFloat4x4(&view, XMMatrixTranspose(
-		XMMatrixLookToLH(XMLoadFloat3(&gameObject()->GetPosition()),
-		forward, up)));
+	XMMATRIX viewMat = XMMatrixLookToLH(XMLoadFloat3(&gameObject()->GetPosition()), forward, up);
+	XMStoreFloat4x4(&rawView, viewMat);
+	XMStoreFloat4x4(&view, XMMatrixTranspose(viewMat));
 }
 
 // Get the camera's view matrix
@@ -34,6 +34,13 @@ XMFLOAT4X4 Camera::GetViewMatrix()
 {
 	CreateViewMatrix();
 	return view;
+}
+
+// Get the camera's raw (untransposed) view matrix
+XMFLOAT4X4 Camera::GetRawViewMatrix()
+{
+	CreateViewMatrix();
+	return rawView;
 }
 
 // Create the camera's projection matrix from parameters
@@ -45,6 +52,7 @@ void Camera::CreateProjectionMatrix(float fov, float aspectRatio,
 		aspectRatio,	// Aspect ratio
 		nearClip,		// Near clip plane distance
 		farClip);		// Far clip plane distance
+	XMStoreFloat4x4(&rawProjection, P);
 	XMStoreFloat4x4(&projection, XMMatrixTranspose(P)); // Transpose for HLSL!
 }
 
@@ -52,4 +60,10 @@ void Camera::CreateProjectionMatrix(float fov, float aspectRatio,
 XMFLOAT4X4 Camera::GetProjectionMatrix()
 {
 	return projection;
+}
+
+// Get the camera's raw (untransposed) projection matrix
+XMFLOAT4X4 Camera::GetRawProjectionMatrix()
+{
+	return rawProjection;
 }

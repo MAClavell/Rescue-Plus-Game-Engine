@@ -10,7 +10,9 @@ class Camera : public Component
 private:
 	//Matrices
 	DirectX::XMFLOAT4X4 view;
+	DirectX::XMFLOAT4X4 rawView;
 	DirectX::XMFLOAT4X4 projection;
+	DirectX::XMFLOAT4X4 rawProjection;
 
 	//Transformation data
 	DirectX::XMFLOAT3 up;
@@ -38,6 +40,11 @@ public:
 	DirectX::XMFLOAT4X4 GetViewMatrix();
 
 	// --------------------------------------------------------
+	// Get the camera's raw (untransposed) view matrix
+	// --------------------------------------------------------
+	DirectX::XMFLOAT4X4 GetRawViewMatrix();
+
+	// --------------------------------------------------------
 	// Create the camera's projection matrix from parameters
 	//
 	// fov - FOV of the camera
@@ -52,5 +59,10 @@ public:
 	// Get the camera's projection matrix
 	// --------------------------------------------------------
 	DirectX::XMFLOAT4X4 GetProjectionMatrix();
+
+	// --------------------------------------------------------
+	// Get the raw (untransposed) camera's projection matrix
+	// --------------------------------------------------------
+	DirectX::XMFLOAT4X4 GetRawProjectionMatrix();
 };
 

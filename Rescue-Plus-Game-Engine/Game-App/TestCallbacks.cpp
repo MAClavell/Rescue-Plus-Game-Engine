@@ -27,15 +27,15 @@ void TestCallbacks::OnCollisionExit(Collision collision)
 
 void TestCallbacks::OnTriggerEnter(Collision collision)
 {
-	//printf("%s trigger entered %s\n", collision.gameObject->GetName().c_str(), gameObject()->GetName().c_str());
+	printf("%s trigger entered %s\n", collision.gameObject->GetName().c_str(), gameObject()->GetName().c_str());
 }
 
 void TestCallbacks::OnTriggerStay(Collision collision)
 {
-	//printf("%s trigger stayed on %s\n", collision.gameObject->GetName().c_str(), gameObject()->GetName().c_str());
+	printf("%s trigger stayed on %s\n", collision.gameObject->GetName().c_str(), gameObject()->GetName().c_str());
 }
 
 void TestCallbacks::OnTriggerExit(Collision collision)
 {
-	//printf("%s trigger exited %s\n", collision.gameObject->GetName().c_str(), gameObject()->GetName().c_str());
+	printf("%s trigger exited %s\n", collision.gameObject->GetName().c_str(), gameObject()->GetName().c_str());
 }

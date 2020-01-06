@@ -2,32 +2,25 @@
 #include "LightManager.h"
 #include "ResourceManager.h"
 #include "ExtendedMath.h"
-
-#define FXAA_ENABLED 1
-#define FXAA_PRESET 5
-#define FXAA_DEBUG 0
+#include "DebugShapes.h"
 
 using namespace DirectX;
 
 // Initialize values in the renderer
-void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
+void Renderer::Init(ID3D11Device* device, ID3D11DeviceContext* context, UINT width, UINT height)
 {
 	// Assign default clear color
 	this->SetClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-
-	// --------------------------------------------------------
-	// Get debug shader information
-	cubeMesh = ResourceManager::GetInstance()->GetMesh("Assets\\Models\\Basic\\cube.obj");
-	sphereMesh = ResourceManager::GetInstance()->GetMesh("Assets\\Models\\Basic\\sphere.obj");
-	cylinderMesh = ResourceManager::GetInstance()->GetMesh("Assets\\Models\\Basic\\cylinder.obj");
-	vs_debug = ResourceManager::GetInstance()->GetVertexShader("VS_ColDebug.cso");
-	ps_debug = ResourceManager::GetInstance()->GetPixelShader("PS_ColDebug.cso");
-
+	// Tell the input assembler stage of the pipeline what kind of
+	// geometric primitives (points, lines or triangles) we want to draw.
+	// Essentially: "What kind of shape should the GPU draw with our data?"
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// --------------------------------------------------------
 	//Get skybox information
 	skyboxMat = ResourceManager::GetInstance()->GetMaterial("skybox");
+	cubeMesh = ResourceManager::GetInstance()->GetMesh("Assets\\Models\\Basic\\cube.obj");
 
 	D3D11_RASTERIZER_DESC skyRD = {};
 	skyRD.CullMode = D3D11_CULL_FRONT;
@@ -40,6 +33,27 @@ void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
 	skyDS.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
 	skyDS.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	device->CreateDepthStencilState(&skyDS, &skyDepthState);
+
+
+	// --------------------------------------------------------
+	//Create batch for debug drawing
+	db_states = std::make_unique<CommonStates>(device);
+	db_batch = std::make_unique<PrimitiveBatch<VertexPositionColor>>(context);
+
+	db_effect = std::make_unique<BasicEffect>(device);
+	db_effect->SetVertexColorEnabled(true);
+
+	{
+		void const* shaderByteCode;
+		size_t byteCodeLength;
+
+		db_effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
+
+		device->CreateInputLayout(
+			VertexPositionColor::InputElements, VertexPositionColor::InputElementCount,
+			shaderByteCode, byteCodeLength,
+			db_inputLayout.ReleaseAndGetAddressOf());
+	}
 
 
 	// --------------------------------------------------------
@@ -81,21 +95,11 @@ void Renderer::Init(ID3D11Device* device, UINT width, UINT height)
 	shadowRastDesc.DepthBiasClamp = 0.0f;
 	shadowRastDesc.SlopeScaledDepthBias = 1.0f;
 	device->CreateRasterizerState(&shadowRastDesc, &shadowRasterizer);
-
-
-	//Wireframe rasterizer state
-	D3D11_RASTERIZER_DESC RD_wireframe = {};
-	RD_wireframe.FillMode = D3D11_FILL_WIREFRAME;
-	RD_wireframe.CullMode = D3D11_CULL_NONE;
-	device->CreateRasterizerState(&RD_wireframe, &RS_wireframe);
 }
 
 // Destructor for when the singleton instance is deleted
 void Renderer::Release()
 {
-	// Clean up rasterizer state.
-	RS_wireframe->Release();
-
 	//Clean up skybox
 	skyDepthState->Release();
 	skyRasterState->Release();
@@ -115,7 +119,7 @@ void Renderer::Draw(ID3D11DeviceContext* context,
 					ID3D11RenderTargetView* backBufferRTV,
 					ID3D11DepthStencilView* depthStencilView,
 					ID3D11SamplerState* sampler,
-					UINT width, UINT height)
+					UINT width, UINT height, float deltaTime)
 {
 	// Clear the render target and depth buffer (erases what's on the screen)
 	//  - Do this ONCE PER FRAME
@@ -132,10 +136,10 @@ void Renderer::Draw(ID3D11DeviceContext* context,
 	DrawOpaqueObjects(context, camera);
 
 	DrawSky(context, camera);
+	
+	DrawDebugShapes(context, camera, deltaTime);
 
 	DrawTransparentObjects(context, camera);
-
-	DrawDebugColliders(context, camera);
 
 	// Need to unbind the shadow map from pixel shader stage
 	// so it can be rendered into properly next frame
@@ -297,6 +301,9 @@ void Renderer::DrawOpaqueObjects(ID3D11DeviceContext* context, Camera* camera)
 //TODO: Sort objects by distance from camera
 void Renderer::DrawTransparentObjects(ID3D11DeviceContext * context, Camera * camera)
 {
+	if (transparentObjList.size() < 1)
+		return;
+
 	//Set render states
 	context->OMSetBlendState(transparentBlendState, 0, 0xFFFFFFFF);
 	context->OMSetDepthStencilState(transparentDepthState, 0);
@@ -346,57 +353,67 @@ void Renderer::DrawTransparentObjects(ID3D11DeviceContext * context, Camera * ca
 }
 
 // Draw debug rectangles
-void Renderer::DrawDebugColliders(ID3D11DeviceContext* context, Camera* camera)
+void Renderer::DrawDebugShapes(ID3D11DeviceContext* context, Camera* camera, float deltaTime)
 {
-	//Set wireframe
-	context->RSSetState(RS_wireframe);
+	if (debugObjs[0].size() < 1 && debugObjs[1].size() < 1 && debugObjs[2].size() < 1
+		&& debugObjs[3].size() < 1)
+		return;
+	
+	db_effect->SetProjection(XMLoadFloat4x4(&camera->GetRawProjectionMatrix()));
+	db_effect->SetView(XMLoadFloat4x4(&camera->GetRawViewMatrix()));
 
-	//Set shaders
-	vs_debug->SetShader();
-	ps_debug->SetShader();
+	context->OMSetBlendState(db_states->Opaque(), nullptr, 0xFFFFFFFF);
+	context->RSSetState(db_states->CullCounterClockwise());
 
-	//Set camera data
-	vs_debug->SetMatrix4x4("projection", camera->GetProjectionMatrix());
-	vs_debug->SetMatrix4x4("view", camera->GetViewMatrix());
-	vs_debug->CopyBufferData("perFrame");
+	db_effect->Apply(context);
+
+	context->IASetInputLayout(db_inputLayout.Get());
+
+	db_batch->Begin();
 
 	//Loop through all debug objs
-	//0 = cubes, 1 = spheres, 2 = cylinders
-	for (short i = 0; i < 3; i++)
+	//0 = cubes, 1 = spheres, 2 = capsules, 3 = rays
+	for (short i = 0; i < 4; i++)
 	{
-		//Get correct mesh
-		Mesh* mesh = nullptr;
-		switch (i)
+		if (debugObjs[i].size() > 0)
 		{
-			case 1: mesh = sphereMesh; break;
-			case 2: mesh = cylinderMesh; break;
-			default: mesh = cubeMesh; break;
+			auto iter = debugObjs[i].end();
+			while (iter > debugObjs[i].begin())
+			{
+				iter--;
+				switch (i)
+				{
+					case 0:
+						DrawShape(db_batch.get(), iter->world, DirectX::Colors::Blue);
+						break;
+					case 1: 
+						//Draw sphere
+						break;
+					case 2:
+						//Draw capsule
+						break;
+					case 3:
+						//Draw rays
+						break;
+					default: break;
+				}
+				if (iter->type == DebugDrawType::ForDuration)
+					iter->duration -= deltaTime;
+				
+				//Erase objs that need to be
+				if (iter->type == DebugDrawType::SingleFrame ||
+					(iter->type == DebugDrawType::ForDuration && iter->duration <= 0))
+					iter = debugObjs[i].erase(iter);
+			}
 		}
-
-		// Set buffers in the input assembler
-		UINT stride = sizeof(Vertex);
-		UINT offset = 0;
-		ID3D11Buffer* vertexBuffer = mesh->GetVertexBuffer();
-		ID3D11Buffer* indexBuffer = mesh->GetIndexBuffer();
-		context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-		context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-		for (auto const& world : debugObjs[i])
-		{
-			// Assign collider world to VS
-			vs_debug->SetMatrix4x4("world", world);
-			vs_debug->CopyBufferData("perObject");
-
-			// Draw object
-			context->DrawIndexed(
-				mesh->GetIndexCount(),     // The number of indices to use (we could draw a subset if we wanted)
-				0,     // Offset to the first index we want to use
-				0);    // Offset to add to each index when looking up vertices
-		}
-		//Clear debug collider list and reset raster state
-		debugObjs[i].clear();
 	}
+
+	db_batch->End();
+
+	context->IASetInputLayout(0);
 	context->RSSetState(0);
+	context->OMSetBlendState(0, 0, 0xFFFFFFFF);
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 void Renderer::DrawSky(ID3D11DeviceContext* context, Camera* camera)
@@ -503,51 +520,67 @@ void Renderer::RemoveMeshRenderer(MeshRenderer* mr)
 
 #pragma region Debug Shape Drawing
 // Tell the renderer to render a collider this frame
-void Renderer::AddDebugCubeToThisFrame(XMFLOAT3 position, XMFLOAT3 scale)
+void Renderer::AddDebugCube(XMFLOAT3 position, XMFLOAT3 scale, DebugDrawType drawType, float duration)
 {
-	debugObjs[0].push_back(CreateWorldMatrix(position, scale));
+	if (drawType == DebugDrawType::None) return;
+	debugObjs[0].push_back(DebugDrawData(CreateWorldMatrix(position, scale), drawType, duration));
 }
 // Tell the renderer to render a collider this frame
-void Renderer::AddDebugCubeToThisFrame(XMFLOAT3 position, XMFLOAT4 rotation, XMFLOAT3 scale)
+void Renderer::AddDebugCube(XMFLOAT3 position, XMFLOAT4 rotation, XMFLOAT3 scale,
+	DebugDrawType drawType, float duration)
 {
-	debugObjs[0].push_back(CreateWorldMatrix(position, rotation, scale));
+	if (drawType == DebugDrawType::None) return;
+	debugObjs[0].push_back(DebugDrawData(CreateWorldMatrix(position, rotation, scale), drawType, duration));
 }
 // Tell the renderer to render a collider this frame
-void Renderer::AddDebugCubeToThisFrame(XMFLOAT4X4 world)
+void Renderer::AddDebugCube(XMFLOAT4X4 world, DebugDrawType drawType, float duration)
 {
-	debugObjs[0].push_back(world);
+	if (drawType == DebugDrawType::None) return;
+	debugObjs[0].push_back(DebugDrawData(world, drawType, duration));
 }
 
 // Tell the renderer to render a sphere this frame
-void Renderer::AddDebugSphereToThisFrame(DirectX::XMFLOAT3 position, float radius)
+void Renderer::AddDebugSphere(DirectX::XMFLOAT3 position, float radius, DebugDrawType drawType, float duration)
 {
-	debugObjs[1].push_back(CreateWorldMatrix(position, XMFLOAT3(radius, radius, radius)));
+	if (drawType == DebugDrawType::None) return;
+	debugObjs[1].push_back(DebugDrawData(CreateWorldMatrix(position, XMFLOAT3(radius, radius, radius)),
+		drawType, duration));
 }
 // Tell the renderer to render a cube this frame
-void Renderer::AddDebugSphereToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, float radius)
+void Renderer::AddDebugSphere(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, float radius,
+	DebugDrawType drawType, float duration)
 {
-	debugObjs[1].push_back(CreateWorldMatrix(position, rotation, XMFLOAT3(radius, radius, radius)));
+	if (drawType == DebugDrawType::None) return;
+	debugObjs[1].push_back(DebugDrawData(CreateWorldMatrix(position, rotation, XMFLOAT3(radius, radius, radius)),
+		drawType, duration));
 }
 // Tell the renderer to render a collider this frame
-void Renderer::AddDebugSphereToThisFrame(DirectX::XMFLOAT4X4 world)
+void Renderer::AddDebugSphere(DirectX::XMFLOAT4X4 world, DebugDrawType drawType, float duration)
 {
-	debugObjs[1].push_back(world);
+	if (drawType == DebugDrawType::None) return;
+	debugObjs[1].push_back(DebugDrawData(world, drawType, duration));
 }
 
 // Tell the renderer to render a cylinder this frame
-void Renderer::AddDebugCylinderToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 scale)
+void Renderer::AddDebugCylinder(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 scale, 
+	DebugDrawType drawType, float duration)
 {
-	debugObjs[2].push_back(CreateWorldMatrix(position, scale));
+	if (drawType == DebugDrawType::None) return;
+	debugObjs[2].push_back(DebugDrawData(CreateWorldMatrix(position, scale), drawType, duration));
 }
 // Tell the renderer to render a cylinder this frame
-void Renderer::AddDebugCylinderToThisFrame(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, DirectX::XMFLOAT3 scale)
+void Renderer::AddDebugCylinder(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, DirectX::XMFLOAT3 scale,
+	DebugDrawType drawType, float duration)
 {
-	debugObjs[2].push_back(CreateWorldMatrix(position, rotation, scale));
+	if (drawType == DebugDrawType::None) return;
+	debugObjs[2].push_back(DebugDrawData(CreateWorldMatrix(position, rotation, scale), drawType, duration));
 }
 // Tell the renderer to render a cylinder this frame
-void Renderer::AddDebugCylinderToThisFrame(DirectX::XMFLOAT4X4 world)
+void Renderer::AddDebugCylinder(DirectX::XMFLOAT4X4 world,
+	DebugDrawType drawType, float duration)
 {
-	debugObjs[2].push_back(world);
+	if (drawType == DebugDrawType::None) return;
+	debugObjs[2].push_back(DebugDrawData(world, drawType, duration));
 }
 #pragma endregion
 

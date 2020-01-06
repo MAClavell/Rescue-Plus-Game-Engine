@@ -212,8 +212,8 @@ void GameObject::RebuildWorld()
 	//Transpose for DirectX
 	XMMATRIX newWorldRaw = scaling * rotating * translation;
 	XMMATRIX newWorld = XMMatrixTranspose(newWorldRaw);
-	XMStoreFloat4x4(&world, newWorld);
 	XMStoreFloat4x4(&worldRaw, newWorldRaw);
+	XMStoreFloat4x4(&world, newWorld);
 
 	//Calculate inverse transpose
 	XMStoreFloat4x4(&worldInvTrans, XMMatrixInverse(&XMVectorSet(-1, -1, -1, -1), XMMatrixTranspose(newWorld)));

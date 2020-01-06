@@ -17,6 +17,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Camera.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Collider.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)CollisionResolver.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)DebugShapes.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)JobSystem.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)MeshRenderer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)EntityManager.cpp" />
@@ -42,6 +43,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)CollisionLayers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)CollisionResolver.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Component.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)DebugShapes.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Messenger.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Job.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)JobSystem.h" />

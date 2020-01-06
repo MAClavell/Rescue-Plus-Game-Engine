@@ -53,17 +53,17 @@
     <ClCompile Include="Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TestBullet.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ShipyardCrane.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="DebugMovement.cpp">
       <Filter>Source Files\UserComponents\Movement</Filter>
     </ClCompile>
     <ClCompile Include="FirstPersonMovement.cpp">
       <Filter>Source Files\UserComponents\Movement</Filter>
+    </ClCompile>
+    <ClCompile Include="TestBullet.cpp">
+      <Filter>Source Files\UserComponents</Filter>
+    </ClCompile>
+    <ClCompile Include="ShipyardCrane.cpp">
+      <Filter>Source Files\UserComponents</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -82,17 +82,17 @@
     <ClInclude Include="TestCallbacks.h">
       <Filter>Header Files\UserComponents</Filter>
     </ClInclude>
-    <ClInclude Include="TestBullet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ShipyardCrane.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DebugMovement.h">
       <Filter>Header Files\UserComponents\Movement</Filter>
     </ClInclude>
     <ClInclude Include="FirstPersonMovement.h">
       <Filter>Header Files\UserComponents\Movement</Filter>
+    </ClInclude>
+    <ClInclude Include="TestBullet.h">
+      <Filter>Header Files\UserComponents</Filter>
+    </ClInclude>
+    <ClInclude Include="ShipyardCrane.h">
+      <Filter>Header Files\UserComponents</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
