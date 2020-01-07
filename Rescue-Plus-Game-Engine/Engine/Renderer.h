@@ -6,10 +6,8 @@
 #include "Camera.h"
 #include <CommonStates.h>
 #include <Effects.h>
-#include <PrimitiveBatch.h>
-#include "VertexTypes.h"
 #include <wrl/client.h>
-
+#include "DebugShapes.h"
 
 // Basis from: https://stackoverflow.com/questions/1008019/c-singleton-design-pattern
 
@@ -20,9 +18,6 @@
 // --------------------------------------------------------
 class Renderer
 {
-public:
-	enum class DebugDrawType { None, SingleFrame, ForDuration };
-
 private:
 	//Render list management
 	//renderMap uses Mat/Mesh identifiers to point to the correct list
@@ -33,15 +28,11 @@ private:
 	Mesh* cubeMesh;
 
 	//Debugging
-	struct DebugDrawData
-	{
-		DirectX::XMFLOAT4X4 world;
-		DebugDrawType type;
-		float duration;
-		DebugDrawData(DirectX::XMFLOAT4X4 world, DebugDrawType type, float duration)
-			: world(world), type(type), duration(duration) {}
-	};
-	std::vector<DebugDrawData> debugObjs[4]; //0 = cubes, 1 = spheres, 2 = cylinders, 3 = rays 
+	std::vector<ShapeXMFloat3Data> debugCubes;
+	std::vector<ShapeFloat1Data> debugSpheres;
+	std::vector<ShapeXMFloat2Data> debugCapsules;
+	std::vector<ShapeFloat1Data> debugRays;
+
 	std::unique_ptr<DirectX::CommonStates> db_states;
 	std::unique_ptr<DirectX::BasicEffect> db_effect;
 	std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>> db_batch;
@@ -166,34 +157,9 @@ public:
 	// duration- If the type is 'Duration', amount of seconds it
 	//	should last
 	// --------------------------------------------------------
-	void AddDebugCube(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 scale,
-		DebugDrawType drawType, float duration = 1);
-	// --------------------------------------------------------
-	// Tell the renderer to render a cube this frame
-	//
-	// drawType - How long this debug draw should last
-	// duration- If the type is 'Duration', amount of seconds it
-	//	should last
-	// --------------------------------------------------------
 	void AddDebugCube(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, DirectX::XMFLOAT3 scale,
-		DebugDrawType drawType, float duration = 1);
-	// --------------------------------------------------------
-	// Tell the renderer to render a cube this frame
-	//
-	// drawType - How long this debug draw should last
-	// duration- If the type is 'Duration', amount of seconds it
-	//	should last
-	// --------------------------------------------------------
-	void AddDebugCube(DirectX::XMFLOAT4X4 world, DebugDrawType drawType, float duration = 1);
+		ShapeDrawType drawType, float duration = 1);
 
-	// --------------------------------------------------------
-	// Tell the renderer to render a sphere this frame
-	//
-	// drawType - How long this debug draw should last
-	// duration- If the type is 'Duration', amount of seconds it
-	//	should last
-	// --------------------------------------------------------
-	void AddDebugSphere(DirectX::XMFLOAT3 position, float radius, DebugDrawType drawType, float duration = 1);
 	// --------------------------------------------------------
 	// Tell the renderer to render a cube this frame
 	//
@@ -202,15 +168,7 @@ public:
 	//	should last
 	// --------------------------------------------------------
 	void AddDebugSphere(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, float radius,
-		DebugDrawType drawType, float duration = 1);
-	// --------------------------------------------------------
-	// Tell the renderer to render a collider this frame
-	//
-	// drawType - How long this debug draw should last
-	// duration- If the type is 'Duration', amount of seconds it
-	//	should last
-	// --------------------------------------------------------
-	void AddDebugSphere(DirectX::XMFLOAT4X4 world, DebugDrawType drawType, float duration = 1);
+		ShapeDrawType drawType, float duration = 1);
 
 	// --------------------------------------------------------
 	// Tell the renderer to render a cylinder this frame
@@ -219,26 +177,18 @@ public:
 	// duration- If the type is 'Duration', amount of seconds it
 	//	should last
 	// --------------------------------------------------------
-	void AddDebugCylinder(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 scale,
-		DebugDrawType drawType, float duration = 1);
+	void AddDebugCapsule(float radius, float height, DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, 
+		ShapeDrawType drawType, float duration = 1);
+
 	// --------------------------------------------------------
-	// Tell the renderer to render a cylinder this frame
+	// Tell the renderer to render a ray this frame
 	//
 	// drawType - How long this debug draw should last
 	// duration- If the type is 'Duration', amount of seconds it
 	//	should last
 	// --------------------------------------------------------
-	void AddDebugCylinder(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, DirectX::XMFLOAT3 scale,
-		DebugDrawType drawType, float duration = 1);
-	// --------------------------------------------------------
-	// Tell the renderer to render a cylinder this frame
-	//
-	// drawType - How long this debug draw should last
-	// duration- If the type is 'Duration', amount of seconds it
-	//	should last
-	// --------------------------------------------------------
-	void AddDebugCylinder(DirectX::XMFLOAT4X4 world, 
-		DebugDrawType drawType, float duration = 1);
+	void AddDebugRay(float length, DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 direction,
+		ShapeDrawType drawType, float duration = 1);
 
 	// --------------------------------------------------------
 	// Set clear color.

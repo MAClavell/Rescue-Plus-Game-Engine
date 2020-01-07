@@ -231,6 +231,20 @@ void Game::Update(float deltaTime, float totalTime)
 		crate10C->SetLocalRotation(0, amt, 45);
 	}
 
+	static bool r = false;
+	if (inputManager->GetKey('R') && !r)
+	{
+		r = true;
+		RaycastHit hit;
+		if (Raycast(camera->gameObject()->GetPosition(), camera->gameObject()->GetForwardAxis(), &hit, 10,
+			ShapeDrawType::ForDuration, 30))
+		{
+			printf("Raycast hit on: %s\n", hit.gameObject->GetName().c_str());
+		}
+	}
+	else if(!inputManager->GetKey('R'))
+		r = false;
+
 
 	//All game code goes above
 	// --------------------------------------------------------

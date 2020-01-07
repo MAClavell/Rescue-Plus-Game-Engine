@@ -2,6 +2,7 @@
 #include "PhysicsHelper.h"
 #include "JobSystem.h"
 #include "Raycast.h"
+#include "Renderer.h"
 
 using namespace physx;
 using namespace DirectX;
@@ -247,42 +248,60 @@ void PhysicsManager::RemoveActor(PxActor* actor)
 }
 
 bool Raycast(XMFLOAT3 origin, XMFLOAT3 direction,
-	float maxDistance)
+	float maxDistance, ShapeDrawType drawType, float drawDuration)
 {
 	PxRaycastBuffer hit;
-	return PhysicsManager::GetInstance()->GetScene()->raycast(
+	bool didHit = PhysicsManager::GetInstance()->GetScene()->raycast(
 		Float3ToVec3(origin), Float3ToVec3(direction),
 		maxDistance, hit);
+	
+	//Debug drawing
+	if (drawType != ShapeDrawType::None)
+	{
+		if (didHit)
+			Renderer::GetInstance()->AddDebugRay(hit.block.distance, origin, direction, drawType, drawDuration);
+		else Renderer::GetInstance()->AddDebugRay(maxDistance, origin, direction, drawType, drawDuration);
+	}
+	
+	return didHit;
 }
 
-bool Raycast(DirectX::XMFLOAT3 origin, DirectX::XMFLOAT3 direction, RaycastHit* hitInfo, float maxDistance)
+bool Raycast(DirectX::XMFLOAT3 origin, DirectX::XMFLOAT3 direction, RaycastHit* hitInfo, 
+	float maxDistance, ShapeDrawType drawType, float drawDuration)
 {
 	PxRaycastBuffer pxHit;
 	if (PhysicsManager::GetInstance()->GetScene()->raycast(
 		Float3ToVec3(origin), Float3ToVec3(direction),
 		maxDistance, pxHit))
 	{
-		RaycastHit hit;
 		auto flags = pxHit.block.flags;
 
 		//Point
 		if (flags.isSet(PxHitFlag::ePOSITION))
-			hit.point = Vec3ToFloat3(pxHit.block.position);
+			hitInfo->point = Vec3ToFloat3(pxHit.block.position);
 		//Normal
 		if (flags.isSet(PxHitFlag::eNORMAL))
-			hit.normal = Vec3ToFloat3(pxHit.block.normal);
+			hitInfo->normal = Vec3ToFloat3(pxHit.block.normal);
 		//Distance
-		hit.distance = pxHit.block.distance;
+		hitInfo->distance = pxHit.block.distance;
 		
 		//GameObject info
-		hit.collider = (Collider*)pxHit.block.shape->userData;
-		hit.rigidBody = hit.collider->GetAttachedRigidBody();
-		if (hit.rigidBody != nullptr)
-			hit.gameObject = hit.rigidBody->gameObject();
-		else hit.gameObject = hit.collider->gameObject();
+		hitInfo->collider = (Collider*)pxHit.block.shape->userData;
+		hitInfo->rigidBody = hitInfo->collider->GetAttachedRigidBody();
+		if (hitInfo->rigidBody != nullptr)
+			hitInfo->gameObject = hitInfo->rigidBody->gameObject();
+		else hitInfo->gameObject = hitInfo->collider->gameObject();
 
-		*hitInfo = hit;
+		//Debug drawing
+		if (drawType != ShapeDrawType::None)
+			Renderer::GetInstance()->AddDebugRay(pxHit.block.distance, origin, direction, drawType, drawDuration);
+
 		return true;
 	}
-	else return false;
+
+	//Debug drawing
+	if (drawType != ShapeDrawType::None)
+		Renderer::GetInstance()->AddDebugRay(maxDistance, origin, direction, drawType, drawDuration);
+
+	return false;
 }

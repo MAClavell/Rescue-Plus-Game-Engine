@@ -461,7 +461,7 @@ void BoxCollider::Update(float deltaTime)
 		Renderer::GetInstance()->AddDebugCube(
 			pos,
 			gameObject()->GetRotation(),
-			size, Renderer::DebugDrawType::SingleFrame);
+			size, ShapeDrawType::SingleFrame);
 	}
 }
 #pragma endregion
@@ -532,7 +532,7 @@ void SphereCollider::Update(float deltaTime)
 		Renderer::GetInstance()->AddDebugSphere(
 			pos,
 			gameObject()->GetRotation(),
-			radius, Renderer::DebugDrawType::SingleFrame);
+			radius, ShapeDrawType::SingleFrame);
 	}
 }
 #pragma endregion
@@ -643,7 +643,7 @@ void CapsuleCollider::Update(float deltaTime)
 	if (debug)
 	{
 		Renderer* renderer = Renderer::GetInstance();
-
+		/*
 		//Cylinder
 		XMFLOAT4 cylRot;
 		XMVECTOR cylRotVec = XMQuaternionMultiply(XMLoadFloat4(&rot), 
@@ -657,14 +657,14 @@ void CapsuleCollider::Update(float deltaTime)
 			cylPos,
 			cylRot,
 			XMFLOAT3(radius * 2, height, radius * 2),
-			Renderer::DebugDrawType::SingleFrame);
+			DebugDrawType::SingleFrame);
 
 		//Top sphere
 		XMFLOAT3 topSpherePos;
 		XMStoreFloat3(&topSpherePos, XMVectorAdd(cylPosVec,
 			XMVector3Rotate(XMVectorSet(height - radius, 0, 0, 0), cylRotVec)));
 		renderer->AddDebugSphere(topSpherePos, cylRot, radius * 2, 
-			Renderer::DebugDrawType::SingleFrame
+			DebugDrawType::SingleFrame
 );
 
 		//Bottom sphere
@@ -672,7 +672,8 @@ void CapsuleCollider::Update(float deltaTime)
 		XMStoreFloat3(&botSpherePos, XMVectorAdd(cylPosVec,
 			XMVector3Rotate(XMVectorSet(-(height - radius), 0, 0, 0), cylRotVec)));
 		renderer->AddDebugSphere(botSpherePos, cylRot, radius * 2, 
-			Renderer::DebugDrawType::SingleFrame);
+			DebugDrawType::SingleFrame);
+			*/
 	}
 }
 #pragma endregion

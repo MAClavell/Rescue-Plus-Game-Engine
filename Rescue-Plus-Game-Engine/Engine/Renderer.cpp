@@ -2,7 +2,6 @@
 #include "LightManager.h"
 #include "ResourceManager.h"
 #include "ExtendedMath.h"
-#include "DebugShapes.h"
 
 using namespace DirectX;
 
@@ -352,64 +351,52 @@ void Renderer::DrawTransparentObjects(ID3D11DeviceContext * context, Camera * ca
 	context->OMSetBlendState(0, 0, 0xFFFFFFFF);
 }
 
-// Draw debug rectangles
+template <typename T, typename F>
+static inline void DrawShapeList(std::vector<T>* list, F drawFunc, 
+	PrimitiveBatch<VertexPositionColor>* batch, float deltaTime)
+{
+	auto iter = list->end();
+	while (iter > list->begin())
+	{
+		iter--;
+		drawFunc(batch, *iter, Colors::LightGreen);
+		
+		if (iter->type == ShapeDrawType::ForDuration)
+			iter->duration -= deltaTime;
+		//Erase objs that need to be
+		if (iter->type == ShapeDrawType::SingleFrame ||
+			(iter->type == ShapeDrawType::ForDuration && iter->duration <= 0))
+			iter = list->erase(iter);
+	}
+}
+// Draw debug shapes
 void Renderer::DrawDebugShapes(ID3D11DeviceContext* context, Camera* camera, float deltaTime)
 {
-	if (debugObjs[0].size() < 1 && debugObjs[1].size() < 1 && debugObjs[2].size() < 1
-		&& debugObjs[3].size() < 1)
+	if (debugCubes.size() < 1 && debugSpheres.size() < 1 && debugCapsules.size() < 1
+		&& debugRays.size() < 1)
 		return;
 	
 	db_effect->SetProjection(XMLoadFloat4x4(&camera->GetRawProjectionMatrix()));
 	db_effect->SetView(XMLoadFloat4x4(&camera->GetRawViewMatrix()));
 
 	context->OMSetBlendState(db_states->Opaque(), nullptr, 0xFFFFFFFF);
-	context->RSSetState(db_states->CullCounterClockwise());
+	context->RSSetState(db_states->CullNone());
 
 	db_effect->Apply(context);
 
 	context->IASetInputLayout(db_inputLayout.Get());
 
+	//Do the actual drawing
 	db_batch->Begin();
 
-	//Loop through all debug objs
-	//0 = cubes, 1 = spheres, 2 = capsules, 3 = rays
-	for (short i = 0; i < 4; i++)
-	{
-		if (debugObjs[i].size() > 0)
-		{
-			auto iter = debugObjs[i].end();
-			while (iter > debugObjs[i].begin())
-			{
-				iter--;
-				switch (i)
-				{
-					case 0:
-						DrawShape(db_batch.get(), iter->world, DirectX::Colors::Blue);
-						break;
-					case 1: 
-						//Draw sphere
-						break;
-					case 2:
-						//Draw capsule
-						break;
-					case 3:
-						//Draw rays
-						break;
-					default: break;
-				}
-				if (iter->type == DebugDrawType::ForDuration)
-					iter->duration -= deltaTime;
-				
-				//Erase objs that need to be
-				if (iter->type == DebugDrawType::SingleFrame ||
-					(iter->type == DebugDrawType::ForDuration && iter->duration <= 0))
-					iter = debugObjs[i].erase(iter);
-			}
-		}
-	}
+	DrawShapeList<ShapeXMFloat3Data>(&debugCubes, &DrawCube, db_batch.get(), deltaTime);
+	DrawShapeList<ShapeFloat1Data>(&debugSpheres, &DrawSphere, db_batch.get(), deltaTime);
+	DrawShapeList<ShapeXMFloat2Data>(&debugCapsules, &DrawCapsule, db_batch.get(), deltaTime);
+	DrawShapeList<ShapeFloat1Data>(&debugRays, &DrawRay, db_batch.get(), deltaTime);
 
 	db_batch->End();
 
+	//Cleanup
 	context->IASetInputLayout(0);
 	context->RSSetState(0);
 	context->OMSetBlendState(0, 0, 0xFFFFFFFF);
@@ -519,71 +506,39 @@ void Renderer::RemoveMeshRenderer(MeshRenderer* mr)
 
 
 #pragma region Debug Shape Drawing
-// Tell the renderer to render a collider this frame
-void Renderer::AddDebugCube(XMFLOAT3 position, XMFLOAT3 scale, DebugDrawType drawType, float duration)
-{
-	if (drawType == DebugDrawType::None) return;
-	debugObjs[0].push_back(DebugDrawData(CreateWorldMatrix(position, scale), drawType, duration));
-}
-// Tell the renderer to render a collider this frame
+// Tell the renderer to render a cube this frame
 void Renderer::AddDebugCube(XMFLOAT3 position, XMFLOAT4 rotation, XMFLOAT3 scale,
-	DebugDrawType drawType, float duration)
+	ShapeDrawType drawType, float duration)
 {
-	if (drawType == DebugDrawType::None) return;
-	debugObjs[0].push_back(DebugDrawData(CreateWorldMatrix(position, rotation, scale), drawType, duration));
-}
-// Tell the renderer to render a collider this frame
-void Renderer::AddDebugCube(XMFLOAT4X4 world, DebugDrawType drawType, float duration)
-{
-	if (drawType == DebugDrawType::None) return;
-	debugObjs[0].push_back(DebugDrawData(world, drawType, duration));
+	if (drawType == ShapeDrawType::None) return;
+	debugCubes.push_back(ShapeXMFloat3Data(scale, position, rotation, drawType, duration));
 }
 
 // Tell the renderer to render a sphere this frame
-void Renderer::AddDebugSphere(DirectX::XMFLOAT3 position, float radius, DebugDrawType drawType, float duration)
+void Renderer::AddDebugSphere(XMFLOAT3 position, XMFLOAT4 rotation, float radius,
+	ShapeDrawType drawType, float duration)
 {
-	if (drawType == DebugDrawType::None) return;
-	debugObjs[1].push_back(DebugDrawData(CreateWorldMatrix(position, XMFLOAT3(radius, radius, radius)),
-		drawType, duration));
-}
-// Tell the renderer to render a cube this frame
-void Renderer::AddDebugSphere(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, float radius,
-	DebugDrawType drawType, float duration)
-{
-	if (drawType == DebugDrawType::None) return;
-	debugObjs[1].push_back(DebugDrawData(CreateWorldMatrix(position, rotation, XMFLOAT3(radius, radius, radius)),
-		drawType, duration));
-}
-// Tell the renderer to render a collider this frame
-void Renderer::AddDebugSphere(DirectX::XMFLOAT4X4 world, DebugDrawType drawType, float duration)
-{
-	if (drawType == DebugDrawType::None) return;
-	debugObjs[1].push_back(DebugDrawData(world, drawType, duration));
+	if (drawType == ShapeDrawType::None) return;
+	debugSpheres.push_back(ShapeFloat1Data(radius, position, rotation, drawType, duration));
 }
 
-// Tell the renderer to render a cylinder this frame
-void Renderer::AddDebugCylinder(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 scale, 
-	DebugDrawType drawType, float duration)
+// Tell the renderer to render a capsule this frame
+void Renderer::AddDebugCapsule(float radius, float height, XMFLOAT3 position, XMFLOAT4 rotation,
+	ShapeDrawType drawType, float duration)
 {
-	if (drawType == DebugDrawType::None) return;
-	debugObjs[2].push_back(DebugDrawData(CreateWorldMatrix(position, scale), drawType, duration));
+	if (drawType == ShapeDrawType::None) return;
+	debugCapsules.push_back(ShapeXMFloat2Data(XMFLOAT2(radius, height), position, rotation, drawType, duration));
 }
-// Tell the renderer to render a cylinder this frame
-void Renderer::AddDebugCylinder(DirectX::XMFLOAT3 position, DirectX::XMFLOAT4 rotation, DirectX::XMFLOAT3 scale,
-	DebugDrawType drawType, float duration)
+
+// Tell the renderer to render a ray this frame
+void Renderer::AddDebugRay(float length, XMFLOAT3 position, XMFLOAT3 direction, 
+	ShapeDrawType drawType, float duration)
 {
-	if (drawType == DebugDrawType::None) return;
-	debugObjs[2].push_back(DebugDrawData(CreateWorldMatrix(position, rotation, scale), drawType, duration));
-}
-// Tell the renderer to render a cylinder this frame
-void Renderer::AddDebugCylinder(DirectX::XMFLOAT4X4 world,
-	DebugDrawType drawType, float duration)
-{
-	if (drawType == DebugDrawType::None) return;
-	debugObjs[2].push_back(DebugDrawData(world, drawType, duration));
+	if (drawType == ShapeDrawType::None) return;
+	debugRays.push_back(ShapeFloat1Data(length, position, XMFLOAT4(direction.x, direction.y, direction.z, 0),
+		drawType, duration));
 }
 #pragma endregion
-
 
 // Set the clear color.
 void Renderer::SetClearColor(const float color[4])
