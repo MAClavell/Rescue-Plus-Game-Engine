@@ -98,12 +98,13 @@ void XM_CALLCONV DrawSphere(PrimitiveBatch<VertexPositionColor>* batch,
 	FXMVECTOR color)
 {
 	XMVECTOR origin = XMLoadFloat3(&drawData.position);
+	XMVECTOR rotation = XMLoadFloat4(&drawData.rotation);
 
 	const float radius = drawData.data;
 
-	XMVECTOR xaxis = g_XMIdentityR0 * radius;
-	XMVECTOR yaxis = g_XMIdentityR1 * radius;
-	XMVECTOR zaxis = g_XMIdentityR2 * radius;
+	XMVECTOR xaxis = XMVector3Rotate(g_XMIdentityR0 * radius, rotation);
+	XMVECTOR yaxis = XMVector3Rotate(g_XMIdentityR1 * radius, rotation);
+	XMVECTOR zaxis = XMVector3Rotate(g_XMIdentityR2 * radius, rotation);
 
 	DrawRing(batch, origin, xaxis, zaxis, color);
 	DrawRing(batch, origin, xaxis, yaxis, color);
@@ -114,6 +115,35 @@ void XM_CALLCONV DrawCapsule(PrimitiveBatch<VertexPositionColor>* batch,
 	const ShapeXMFloat2Data& drawData,
 	FXMVECTOR color)
 {
+	XMMATRIX matWorld = XMMatrixRotationQuaternion(XMLoadFloat4(&drawData.rotation));
+	matWorld = XMMatrixMultiply(XMMatrixScaling(drawData.data.y / 2, drawData.data.x, drawData.data.x),
+		matWorld);
+	matWorld.r[3] = XMVectorSelect(matWorld.r[3], XMLoadFloat3(&drawData.position), g_XMSelect1110);
+
+	static const XMVECTORF32 s_verts[8] =
+	{
+		{  1.f,  0.f,  1.f, 0.f },
+		{ -1.f,  0.f,  1.f, 0.f },
+
+		{  1.f,  0.f, -1.f, 0.f },
+		{ -1.f,  0.f, -1.f, 0.f },
+
+		{  1.f,  1.f,  0.f, 0.f },
+		{ -1.f,  1.f,  0.f, 0.f },
+
+		{  1.f, -1.f,  0.f, 0.f },
+		{ -1.f, -1.f,  0.f, 0.f }
+	};
+
+	VertexPositionColor verts[8];
+	for (size_t i = 0; i < 8; ++i)
+	{
+		XMVECTOR v = XMVector3Transform(s_verts[i], matWorld);
+		XMStoreFloat3(&verts[i].position, v);
+		XMStoreFloat4(&verts[i].color, color);
+	}
+
+	batch->Draw(D3D_PRIMITIVE_TOPOLOGY_LINELIST, verts, 8);
 }
 
 void XM_CALLCONV DrawRay(PrimitiveBatch<VertexPositionColor>* batch,

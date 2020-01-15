@@ -527,6 +527,22 @@ void Renderer::AddDebugCapsule(float radius, float height, XMFLOAT3 position, XM
 	ShapeDrawType drawType, float duration)
 {
 	if (drawType == ShapeDrawType::None) return;
+
+	XMVECTOR posVec = XMLoadFloat3(&position);
+	XMVECTOR rotVec = XMLoadFloat4(&rotation);
+
+	//Top sphere
+	XMFLOAT3 topSpherePos;
+	XMStoreFloat3(&topSpherePos, XMVectorAdd(posVec,
+		XMVector3Rotate(XMVectorSet(height - radius, 0, 0, 0), rotVec)));
+	debugSpheres.push_back(ShapeFloat1Data(radius, topSpherePos, rotation, drawType, duration));
+
+	//Bottom sphere
+	XMFLOAT3 botSpherePos;
+	XMStoreFloat3(&botSpherePos, XMVectorAdd(posVec,
+		XMVector3Rotate(XMVectorSet(-(height - radius), 0, 0, 0), rotVec)));
+	debugSpheres.push_back(ShapeFloat1Data(radius, botSpherePos, rotation, drawType, duration));
+
 	debugCapsules.push_back(ShapeXMFloat2Data(XMFLOAT2(radius, height), position, rotation, drawType, duration));
 }
 

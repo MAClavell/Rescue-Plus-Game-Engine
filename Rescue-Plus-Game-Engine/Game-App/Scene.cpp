@@ -375,4 +375,10 @@ void Game::SetupScene()
 	trigger->SetPosition(0, 3, 0);
 	trigger->AddComponent<BoxCollider>(XMFLOAT3(3, 3, 3), true)->SetDebug(true);
 	trigger->AddComponent<TestCallbacks>();
+
+	//Create a capsule
+	GameObject* capsule = new GameObject("Capsule");
+	capsule->SetPosition(0, 0, 3);
+	capsule->AddComponent<RigidBody>(5);
+	capsule->AddComponent<CapsuleCollider>(1, 2, CapsuleDirection::Y)->SetDebug(true);
 }
