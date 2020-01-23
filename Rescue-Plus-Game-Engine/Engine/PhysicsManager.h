@@ -13,6 +13,8 @@ private:
 	physx::PxDefaultCpuDispatcher*	dispatcher;
 	physx::PxScene* scene;
 	
+	physx::PxControllerManager* controllerManager;
+
 #ifdef DEBUG_PHYSICS
 	physx::PxPvd* pvd;
 #endif
@@ -71,6 +73,11 @@ public:
 	// Get the physx Scene of this world
 	// --------------------------------------------------------
 	physx::PxScene* GetScene();
+
+	// --------------------------------------------------------
+	// Get the physx Controller Manager of this world
+	// --------------------------------------------------------
+	physx::PxControllerManager* GetControllerManager();
 
 	// --------------------------------------------------------
 	// Set the gravity of the physics engine

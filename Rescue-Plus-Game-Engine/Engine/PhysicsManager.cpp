@@ -1,7 +1,6 @@
 #include "PhysicsManager.h"
 #include "PhysicsHelper.h"
 #include "JobSystem.h"
-#include "Raycast.h"
 #include "Renderer.h"
 
 using namespace physx;
@@ -11,10 +10,10 @@ using namespace DirectX;
 
 void PhysicsManager::Release()
 { 
+	PX_RELEASE(controllerManager);
 	PX_RELEASE(scene);
 	PX_RELEASE(dispatcher);
 	PX_RELEASE(physics);
-	
 #ifdef DEBUG_PHYSICS
 	if (pvd)
 	{
@@ -90,6 +89,9 @@ void PhysicsManager::Init()
 	sceneDesc.simulationEventCallback = this;
 	scene = physics->createScene(sceneDesc);
 	
+	//Create character controller manager
+	controllerManager = PxCreateControllerManager(*scene);
+
 #ifdef DEBUG_PHYSICS
 	//Start debugger
 	PxPvdSceneClient* pvdClient = scene->getScenePvdClient();
@@ -216,9 +218,16 @@ PxPhysics* PhysicsManager::GetPhysics()
 	return physics;
 }
 
+// Get the physx Scene of this world
 PxScene* PhysicsManager::GetScene()
 {
 	return scene;
+}
+
+// Get the physx Controller Manager of this world
+PxControllerManager* PhysicsManager::GetControllerManager()
+{
+	return controllerManager;
 }
 
 // Set the gravity of the physics engine

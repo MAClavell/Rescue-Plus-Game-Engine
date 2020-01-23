@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Camera.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)CharacterController.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Collider.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)CollisionResolver.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)DebugShapes.cpp" />
@@ -39,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Camera.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)CharacterController.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Collider.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)CollisionLayers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)CollisionResolver.h" />
