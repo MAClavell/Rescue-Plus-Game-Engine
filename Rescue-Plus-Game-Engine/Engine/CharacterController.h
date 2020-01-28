@@ -1,6 +1,7 @@
 #pragma once
 #include "PhysX/include/PxPhysicsAPI.h"
 #include "GameObject.h"
+#include "CollisionLayers.h"
 
 class CharacterController : public Component
 {
@@ -9,23 +10,38 @@ private:
 
 public:
 	CharacterController(GameObject* gameObject);
-
 	~CharacterController();
 
-	void Move(DirectX::XMFLOAT3 displacement);
+	// --------------------------------------------------------
+	// 
+	// --------------------------------------------------------
+	CharacterControllerCollisionFlags Move(
+		DirectX::XMFLOAT3 displacement, float deltaTime, 
+		bool applyGravity = true);
 
-	void SetPosition(DirectX::XMFLOAT3 position);
-
-	DirectX::XMFLOAT3 GetPosition();
-
-	void SetFootPosition(DirectX::XMFLOAT3 footPosition);
-
+	// --------------------------------------------------------
+	// Get the foot position of the character controller
+	// (position bottom-most position of the controller)
+	// --------------------------------------------------------
 	DirectX::XMFLOAT3 GetFootPosition();
 
+	// --------------------------------------------------------
+	// Set the max height the controller can step up objects
+	// --------------------------------------------------------
 	void SetStepOffset(float offset);
 
+	// --------------------------------------------------------
+	// Get the max height the controller can step up objects
+	// --------------------------------------------------------
 	float GetStepOffset();
 
+	// --------------------------------------------------------
+	// Resize the character controller.
+	// This function maintains ground the controller's position
+	//  on the ground. Modifies height and center position.
+	// --------------------------------------------------------
 	void Resize(float height);
+
+	
 };
 

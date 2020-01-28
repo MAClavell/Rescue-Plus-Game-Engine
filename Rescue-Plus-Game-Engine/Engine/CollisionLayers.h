@@ -1,6 +1,15 @@
 #pragma once
 #include "PhysX\include\foundation\PxSimpleTypes.h"
 
+template <class T>
+struct PhysXFlags {
+public:
+	physx::PxU32 flags = 0;
+	bool IsSet(T layer) const { return 0 != (layers & (1 << (physx::PxU32)layer)); }
+	void Set(T layer) { layers |= (1 << (physx::PxU32)layer); }
+	void Unset(T layer) { layers &= ~(1 << (physx::PxU32)layer); }
+};
+
 enum class CollisionLayer : physx::PxU32
 {
 	WorldStatic = 1,
@@ -29,11 +38,11 @@ enum class CollisionLayer : physx::PxU32
 	WorldDynamic
 };
 
-struct CollisionLayers
-{
-public:
-	physx::PxU32 layers = 0;
-	bool IsSet(CollisionLayer layer) const { return 0 != (layers & (1 << (physx::PxU32)layer)); }
-	void Set(CollisionLayer layer) { layers |= (1 << (physx::PxU32)layer); }
-	void Unset(CollisionLayer layer) { layers &= ~(1 << (physx::PxU32)layer); }
-};
+
+struct CollisionLayers : PhysXFlags<CollisionLayer>
+{ };
+
+enum class CharacterControllerCollisionFlag { None=1, Sides, Above, Below };
+
+struct CharacterControllerCollisionFlags : PhysXFlags<CharacterControllerCollisionFlag>
+{ };

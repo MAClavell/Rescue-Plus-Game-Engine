@@ -19,6 +19,22 @@ static DirectX::XMFLOAT3 Vec3ToFloat3(physx::PxVec3 vec3)
 }
 
 // --------------------------------------------------------
+// Convert a DirectX XMFLOAT3 to a PhysX ExtendedVec3
+// --------------------------------------------------------
+static physx::PxExtendedVec3 Float3ToExtVec3(DirectX::XMFLOAT3 float3)
+{
+	return physx::PxExtendedVec3(float3.x, float3.y, float3.z);
+}
+
+// --------------------------------------------------------
+// Convert a PhysX ExtendedVec3 to a DirectX XMFLOAT3
+// --------------------------------------------------------
+static DirectX::XMFLOAT3 ExtVec3ToFloat3(physx::PxExtendedVec3 vec3)
+{
+	return DirectX::XMFLOAT3(vec3.x, vec3.y, vec3.z);
+}
+
+// --------------------------------------------------------
 // Convert a DirectX XMFLOAT4 to a PhysX Vec4
 // --------------------------------------------------------
 static physx::PxVec4 Float4ToVec4(DirectX::XMFLOAT4 float4)
