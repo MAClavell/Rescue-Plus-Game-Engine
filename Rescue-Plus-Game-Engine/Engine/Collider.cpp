@@ -14,25 +14,120 @@ using namespace physx;
 //									BASE COLLIDER
 // ----------------------------------------------------------------------------
 
+ColliderBase::ColliderBase(GameObject* gameObject) : Component(gameObject)
+{
+	shape = nullptr;
+	debug = false;
+	collisionResolver = new CollisionResolver();
+
+	gameObject->AddListenerOnPositionChanged(std::bind(&ColliderBase::OnPositionChanged, this,
+		std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	gameObject->AddListenerOnRotationChanged(std::bind(&ColliderBase::OnRotationChanged, this,
+		std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+}
+
+ColliderBase::~ColliderBase()
+{ 
+	if (collisionResolver != nullptr)
+		delete collisionResolver;
+}
+
+// Get this collider's collision layer type 
+// (what type of layer this collider belongs to)
+CollisionLayer ColliderBase::GetCollisionLayerType()
+{
+	//Will always have a value, it is just empty for initial purposes
+	return layerType.value();
+}
+// Set this collider's collision layer type
+// (what type of layer this collider belongs to)
+void ColliderBase::SetCollisionLayerType(CollisionLayer layerType)
+{
+	this->layerType = layerType;
+	SetFilterData(shape);
+}
+
+// Get this collider's collision layers 
+// (what layers this collider will collide with)
+CollisionLayers ColliderBase::GetCollisionLayers()
+{
+	return layers;
+}
+// Get if this collider has the collision layer set 
+// (what layers this collider will collide with)
+bool ColliderBase::GetIfCollisionLayerSet(CollisionLayer layer)
+{
+	return layers.IsSet(layer);
+}
+
+// Set a SINGLE collision layer for this collider 
+// (what layers this collider will collide with)
+void ColliderBase::SetCollisionLayers(CollisionLayer layer)
+{
+	layers.Set(layer);
+	SetFilterData(shape);
+}
+// Set this collider's collision layers
+// (what layers this collider will collide with)
+void ColliderBase::SetCollisionLayers(CollisionLayers layers)
+{
+	this->layers = layers;
+	SetFilterData(shape);
+}
+// Set ALL COLLISION LAYERS for this collider
+// Based on the parameter, this will set all layers to collide
+// or ignore collisions
+void ColliderBase::SetCollisionLayers(bool ignoreCollisions)
+{
+	CollisionLayers layers;
+	for (uint32_t lay = (uint32_t)CollisionLayer::WorldStatic; lay <= (uint32_t)CollisionLayer::WorldDynamic; lay++)
+	{
+		if (ignoreCollisions)
+			layers.Unset((CollisionLayer)lay);
+		else layers.Set((CollisionLayer)lay);
+	}
+	this->layers = layers;
+	SetFilterData(shape);
+}
+
+// WARNING: THIS IS FOR INTERNAL ENGINE USE ONLY. DO NOT USE
+// Get the collision resolver for this collider.
+CollisionResolver* ColliderBase::GetCollisionResolver()
+{
+	return collisionResolver;
+}
+
+// Get the debug status of this collider
+bool ColliderBase::GetDebug()
+{
+	return debug;
+}
+// Set the debug status of this collider
+void ColliderBase::SetDebug(bool debug)
+{
+	this->debug = debug;
+}
+
+#pragma endregion
+
+#pragma region Physics Collider
+// ----------------------------------------------------------------------------
+//									PHYSICS COLLIDER
+// ----------------------------------------------------------------------------
+
 // Create a collider and try to find a rigidbody
 Collider::Collider(GameObject* gameObject, ColliderType type, bool isTrigger,
 	PhysicsMaterial* physicsMaterial, XMFLOAT3 center)
-	: Component(gameObject)
+	: ColliderBase(gameObject)
 {
 	this->type = type;
 	this->physicsMaterial = physicsMaterial;
 	this->center = center;
 	this->isTrigger = isTrigger;
 
-	debug = false;
-	collisionResolver = new CollisionResolver();
 	staticActor = nullptr;
 	attachedRigidBody = nullptr;
-
-	gameObject->AddListenerOnPositionChanged(std::bind(&Collider::OnPositionChanged, this,
-			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-	gameObject->AddListenerOnRotationChanged(std::bind(&Collider::OnRotationChanged, this,
-			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	isInChildObj = false;
 }
 
 Collider::~Collider()
@@ -43,11 +138,17 @@ Collider::~Collider()
 	else
 		DeAttachFromStatic();
 
-	if (collisionResolver != nullptr)
-		delete collisionResolver;
-
 	//gameObject()->RemoveListenerOnPositionChanged(std::bind(&Collider::OnPositionChanged, this,
 	//	std::placeholders::_1, std::placeholders::_2));
+}
+
+// Set the collider shape's filters
+void Collider::SetFilterData(physx::PxShape* shape)
+{
+	PxFilterData filterData;
+	filterData.word0 = 1 << (PxU32)layerType.value();
+	filterData.word1 = layers.flags;
+	shape->setSimulationFilterData(filterData);
 }
 
 // Get the rigidbody this collider is attached to (null if none)
@@ -100,14 +201,6 @@ void Collider::OnRotationChanged(DirectX::XMFLOAT4 rotation, bool fromParent, bo
 void Collider::OnScaleChanged(DirectX::XMFLOAT3 scale)
 {
 	ReAttach();
-}
-
-void Collider::SetFilterData(physx::PxShape* shape)
-{
-	PxFilterData filterData;
-	filterData.word0 = 1 << (PxU32)layerType.value();
-	filterData.word1 = layers.layers;
-	shape->setSimulationFilterData(filterData);
 }
 
 // DeAttach this collider from it's rigidbody and make it a static collider
@@ -307,82 +400,6 @@ void Collider::SetTrigger(bool isTrigger)
 			shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
 		}
 	}
-}
-
-// Get this collider's collision layer type 
-// (what type of layer this collider belongs to)
-CollisionLayer Collider::GetCollisionLayerType()
-{
-	//Will always have a value, it is just empty for initial purposes
-	return layerType.value();
-}
-// Set this collider's collision layer type
-// (what type of layer this collider belongs to)
-void Collider::SetCollisionLayerType(CollisionLayer layerType)
-{
-	this->layerType = layerType;
-	SetFilterData(shape);
-}
-
-// Get this collider's collision layers 
-// (what layers this collider will collide with)
-CollisionLayers Collider::GetCollisionLayers()
-{
-	return layers;
-}
-// Get if this collider has the collision layer set 
-// (what layers this collider will collide with)
-bool Collider::GetIfCollisionLayerSet(CollisionLayer layer)
-{
-	return layers.IsSet(layer);
-}
-
-// Set a SINGLE collision layer for this collider 
-// (what layers this collider will collide with)
-void Collider::SetCollisionLayers(CollisionLayer layer)
-{
-	layers.Set(layer);
-	SetFilterData(shape);
-}
-// Set this collider's collision layers
-// (what layers this collider will collide with)
-void Collider::SetCollisionLayers(CollisionLayers layers)
-{
-	this->layers = layers;
-	SetFilterData(shape);
-}
-// Set ALL COLLISION LAYERS for this collider
-// Based on the parameter, this will set all layers to collide
-// or ignore collisions
-void Collider::SetCollisionLayers(bool ignoreCollisions)
-{
-	CollisionLayers layers;
-	for (uint32_t lay = (uint32_t)CollisionLayer::WorldStatic; lay <= (uint32_t)CollisionLayer::WorldDynamic; lay++)
-	{
-		if (ignoreCollisions)
-			layers.Unset((CollisionLayer)lay);
-		else layers.Set((CollisionLayer)lay);
-	}
-	this->layers = layers;
-	SetFilterData(shape);
-}
-
-// WARNING: THIS IS FOR INTERNAL ENGINE USE ONLY. DO NOT USE
-// Get the collision resolver for this collider.
-CollisionResolver* Collider::GetCollisionResolver()
-{
-	return collisionResolver;
-}
-
-// Get the debug status of this collider
-bool Collider::GetDebug()
-{
-	return debug;
-}
-// Set the debug status of this collider
-void Collider::SetDebug(bool debug)
-{
-	this->debug = debug;
 }
 
 #pragma endregion

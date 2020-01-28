@@ -1,15 +1,22 @@
 #pragma once
-#include "PhysX/include/PxPhysicsAPI.h"
-#include "GameObject.h"
+#include "ColliderBase.h"
 #include "CollisionLayers.h"
 
-class CharacterController : public Component
+class CharacterController : public ColliderBase
 {
 private:
+	physx::PxFilterData filterData;
 	physx::PxController* pxController;
+	float radius;
+	float height;
+
+	// --------------------------------------------------------
+	// Set the filter data of the controller
+	// --------------------------------------------------------
+	virtual void SetFilterData(physx::PxShape* shape) = 0;
 
 public:
-	CharacterController(GameObject* gameObject);
+	CharacterController(GameObject* gameObject, float radius, float height);
 	~CharacterController();
 
 	// --------------------------------------------------------
@@ -18,6 +25,16 @@ public:
 	CharacterControllerCollisionFlags Move(
 		DirectX::XMFLOAT3 displacement, float deltaTime, 
 		bool applyGravity = true);
+
+	// --------------------------------------------------------
+	// Update debug view
+	// --------------------------------------------------------
+	void Update(float deltaTime) override;
+
+	// --------------------------------------------------------
+	// Update collisions
+	// --------------------------------------------------------
+	void FixedUpdate(float deltaTime) override;
 
 	// --------------------------------------------------------
 	// Get the foot position of the character controller

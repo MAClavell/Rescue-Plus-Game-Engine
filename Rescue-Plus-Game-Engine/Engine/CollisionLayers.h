@@ -5,9 +5,9 @@ template <class T>
 struct PhysXFlags {
 public:
 	physx::PxU32 flags = 0;
-	bool IsSet(T layer) const { return 0 != (layers & (1 << (physx::PxU32)layer)); }
-	void Set(T layer) { layers |= (1 << (physx::PxU32)layer); }
-	void Unset(T layer) { layers &= ~(1 << (physx::PxU32)layer); }
+	bool IsSet(T flag) const { return 0 != (flags & (1 << (physx::PxU32)flag)); }
+	void Set(T flag) { flags |= (1 << (physx::PxU32)flag); }
+	void Unset(T flag) { flags &= ~(1 << (physx::PxU32)flag); }
 };
 
 enum class CollisionLayer : physx::PxU32

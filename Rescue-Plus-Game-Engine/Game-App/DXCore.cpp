@@ -347,6 +347,9 @@ void DXCore::OnResize()
 // --------------------------------------------------------
 HRESULT DXCore::Run()
 {
+	// Give subclass a chance to initialize
+	Init();
+
 	// Grab the start time now that
 	// the game loop is running
 	__int64 now;
@@ -354,9 +357,6 @@ HRESULT DXCore::Run()
 	startTime = now;
 	currentTime = now;
 	previousTime = now;
-
-	// Give subclass a chance to initialize
-	Init();
 
 	// Our overall game and message loop
 	MSG msg = {};

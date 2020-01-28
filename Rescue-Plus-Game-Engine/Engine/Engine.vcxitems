@@ -42,6 +42,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Camera.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)CharacterController.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Collider.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)ColliderBase.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)CollisionLayers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)CollisionResolver.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Component.h" />

@@ -1,19 +1,27 @@
 #include "CharacterController.h"
 #include "PhysicsManager.h"
 #include "PhysicsHelper.h"
+#include "Renderer.h"
 
+using namespace DirectX;
 using namespace physx;
 
 static PhysicsManager* physicsManager;
 //TODO: hook up gameobject position with char controller position
 
-CharacterController::CharacterController(GameObject* gameObject) : Component(gameObject)
+CharacterController::CharacterController(GameObject* gameObject, float radius, float height) 
+	: ColliderBase(gameObject)
 {
 	physicsManager = PhysicsManager::GetInstance();
 
+	//Set members
+	this->radius = radius;
+	this->height = height;
+
 	//Create description for controller
 	PxCapsuleControllerDesc desc;
-	
+	desc.radius = radius;
+	desc.height = height;
 
 	//Create controller
 	pxController = physicsManager->GetControllerManager()->createController(desc);
@@ -56,12 +64,43 @@ CharacterControllerCollisionFlags CharacterController::Move(DirectX::XMFLOAT3 di
 	return flags;
 }
 
+// Update debug view
+void CharacterController::Update(float deltaTime)
+{
+	if (debug)
+	{
+		Renderer::GetInstance()->AddDebugCapsule(radius, height, gameObject()->GetPosition(),
+			gameObject()->GetRotation(), ShapeDrawType::SingleFrame);
+	}
+}
+
+// Update collisions
+void CharacterController::FixedUpdate(float deltaTime)
+{
+	collisionResolver->ResolveCollisions(gameObject());
+}
+
+// Set the filter data of the controller
+void CharacterController::SetFilterData(physx::PxShape* shape)
+{
+	filterData.word0 = 1 << (PxU32)layerType.value();
+	filterData.word1 = layers.flags;
+	shape->setSimulationFilterData(filterData);
+}
+
 // Get the foot position of the character controller
 DirectX::XMFLOAT3 CharacterController::GetFootPosition()
 {
 	return ExtVec3ToFloat3(pxController->getFootPosition());
 }
 
+// Set the max height the controller can step up objects
+void CharacterController::SetStepOffset(float offset)
+{
+	pxController->setStepOffset(offset);
+}
+
+// Get the max height the controller can step up objects
 float CharacterController::GetStepOffset()
 {
 	return pxController->getStepOffset();
