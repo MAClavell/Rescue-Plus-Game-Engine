@@ -5,6 +5,8 @@
 #include "CollisionResolver.h"
 #include <optional>
 
+enum class ColliderType { Box = 0, Sphere = 1, Capsule = 2, Controller = 3 };
+
 // --------------------------------------------------------
 // A base class for collider and controller control
 //
@@ -13,6 +15,8 @@
 class ColliderBase : public Component
 {
 private:
+	ColliderType type;
+
 	// --------------------------------------------------------
 	// The attached GameObject's position changed
 	// --------------------------------------------------------
@@ -39,7 +43,7 @@ protected:
 	CollisionLayers layers;
 	std::optional<CollisionLayer> layerType;
 
-	ColliderBase(GameObject* gameObject);
+	ColliderBase(GameObject* gameObject, ColliderType type);
 
 	// --------------------------------------------------------
 	// Update debug view
@@ -58,6 +62,11 @@ public:
 	// Update collisions
 	// --------------------------------------------------------
 	virtual void FixedUpdate(float deltaTime) override = 0;
+
+	// --------------------------------------------------------
+	// Get the type of collider this is
+	// --------------------------------------------------------
+	ColliderType GetType();
 
 	// --------------------------------------------------------
 	// Get this collider's collision layer type 

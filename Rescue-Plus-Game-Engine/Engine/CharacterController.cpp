@@ -10,7 +10,7 @@ static PhysicsManager* physicsManager;
 //TODO: hook up gameobject position with char controller position
 
 CharacterController::CharacterController(GameObject* gameObject, float radius, float height) 
-	: ColliderBase(gameObject)
+	: ColliderBase(gameObject, ColliderType::Controller)
 {
 	physicsManager = PhysicsManager::GetInstance();
 
@@ -24,9 +24,19 @@ CharacterController::CharacterController(GameObject* gameObject, float radius, f
 	desc.height = height;
 	desc.material = physicsManager->GetPhysics()->createMaterial(0.6f, 0.6f, 0);
 	desc.position = PxExtendedVec3(0, 3, 0);
+	desc.userData = this;
 
 	//Create controller
 	pxController = physicsManager->GetControllerManager()->createController(desc);
+
+	//Get the actual shape and assign userdata
+	PxShape** shapes = new PxShape * [pxController->getActor()->getNbShapes()];
+	PxU32 nbShapes = pxController->getActor()->getShapes(shapes, pxController->getActor()->getNbShapes());
+	for (PxU32 i = 0; i < nbShapes; i++)
+	{
+		shapes[i]->userData = this;
+	}
+	delete[] shapes;
 }
 
 CharacterController::~CharacterController()

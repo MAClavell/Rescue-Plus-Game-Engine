@@ -5,7 +5,7 @@
 
 struct RaycastHit
 {
-	Collider* collider;
+	ColliderBase* collider;
 	float distance;
 	DirectX::XMFLOAT3 normal;
 	DirectX::XMFLOAT3 point;

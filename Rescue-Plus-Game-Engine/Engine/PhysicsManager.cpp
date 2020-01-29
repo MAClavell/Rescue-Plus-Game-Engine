@@ -295,10 +295,14 @@ bool Raycast(DirectX::XMFLOAT3 origin, DirectX::XMFLOAT3 direction, RaycastHit* 
 		hitInfo->distance = pxHit.block.distance;
 		
 		//GameObject info
-		hitInfo->collider = (Collider*)pxHit.block.shape->userData;
-		hitInfo->rigidBody = hitInfo->collider->GetAttachedRigidBody();
-		if (hitInfo->rigidBody != nullptr)
-			hitInfo->gameObject = hitInfo->rigidBody->gameObject();
+		hitInfo->collider = (ColliderBase*)pxHit.block.shape->userData;
+		if (hitInfo->collider->GetType() != ColliderType::Controller)
+		{
+			hitInfo->rigidBody = ((Collider*)hitInfo->collider)->GetAttachedRigidBody();
+			if (hitInfo->rigidBody != nullptr)
+				hitInfo->gameObject = hitInfo->rigidBody->gameObject();
+			else hitInfo->gameObject = hitInfo->collider->gameObject();
+		}
 		else hitInfo->gameObject = hitInfo->collider->gameObject();
 
 		//Debug drawing

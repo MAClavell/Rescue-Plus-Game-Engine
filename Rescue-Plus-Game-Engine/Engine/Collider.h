@@ -3,7 +3,6 @@
 #include "ColliderBase.h"
 #include "RigidBody.h"
 
-enum class ColliderType { Box = 0, Sphere = 1, Capsule = 2 };
 
 // --------------------------------------------------------
 // The physics collider class
@@ -13,7 +12,6 @@ enum class ColliderType { Box = 0, Sphere = 1, Capsule = 2 };
 class Collider : public ColliderBase
 {
 private:
-	ColliderType type;
 	
 	// --------------------------------------------------------
 	// Set the collider shape's filters

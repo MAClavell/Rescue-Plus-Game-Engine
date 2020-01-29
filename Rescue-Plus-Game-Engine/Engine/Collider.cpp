@@ -14,11 +14,12 @@ using namespace physx;
 //									BASE COLLIDER
 // ----------------------------------------------------------------------------
 
-ColliderBase::ColliderBase(GameObject* gameObject) : Component(gameObject)
+ColliderBase::ColliderBase(GameObject* gameObject, ColliderType type) : Component(gameObject)
 {
 	shape = nullptr;
 	debug = false;
 	collisionResolver = new CollisionResolver();
+	this->type = type;
 
 	gameObject->AddListenerOnPositionChanged(std::bind(&ColliderBase::OnPositionChanged, this,
 		std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -30,6 +31,12 @@ ColliderBase::~ColliderBase()
 { 
 	if (collisionResolver != nullptr)
 		delete collisionResolver;
+}
+
+// Get the type of collider this is
+ColliderType ColliderBase::GetType()
+{
+	return type;
 }
 
 // Get this collider's collision layer type 
@@ -118,9 +125,8 @@ void ColliderBase::SetDebug(bool debug)
 // Create a collider and try to find a rigidbody
 Collider::Collider(GameObject* gameObject, ColliderType type, bool isTrigger,
 	PhysicsMaterial* physicsMaterial, XMFLOAT3 center)
-	: ColliderBase(gameObject)
+	: ColliderBase(gameObject, type)
 {
-	this->type = type;
 	this->physicsMaterial = physicsMaterial;
 	this->center = center;
 	this->isTrigger = isTrigger;
