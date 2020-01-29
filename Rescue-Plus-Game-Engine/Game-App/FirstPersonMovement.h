@@ -2,14 +2,17 @@
 #include "Camera.h"
 #include "InputManager.h"
 #include "Collider.h"
+#include "CharacterController.h"
 
 class FirstPersonMovement :
 	public UserComponent
 {
 private:
 	InputManager* inputManager;
+	CharacterController* controller;
 
 	//Components
+	/*
 	GameObject* go;
 	Camera* camera;
 	GameObject* cameraGO;
@@ -17,6 +20,7 @@ private:
 	CapsuleCollider* standCol;
 	CapsuleCollider* crouchCol;
 	CapsuleCollider* slideCol;
+	*/
 
 	float yRot = 0;
 
@@ -29,7 +33,7 @@ private:
 	bool falling;
 	bool crouching;
 	bool sliding;
-
+	/*
 	// --------------------------------------------------------
 	// Changes for when we start a sprint
 	// --------------------------------------------------------
@@ -61,7 +65,7 @@ private:
 	// Calculate the camera's rotation when the player moves the mouse
 	// --------------------------------------------------------
 	void CalculateCameraRotFromMouse();
-
+	*/
 public:
 	FirstPersonMovement(GameObject* gameObject);
 	~FirstPersonMovement();
@@ -80,6 +84,6 @@ public:
 	// --------------------------------------------------------
 	// Get the controller's camera
 	// --------------------------------------------------------
-	Camera* GetCamera();
+	//Camera* GetCamera();
 };
 

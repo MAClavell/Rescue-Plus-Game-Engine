@@ -22,6 +22,8 @@ CharacterController::CharacterController(GameObject* gameObject, float radius, f
 	PxCapsuleControllerDesc desc;
 	desc.radius = radius;
 	desc.height = height;
+	desc.material = physicsManager->GetPhysics()->createMaterial(0.6f, 0.6f, 0);
+	desc.position = PxExtendedVec3(0, 3, 0);
 
 	//Create controller
 	pxController = physicsManager->GetControllerManager()->createController(desc);
@@ -41,14 +43,14 @@ CharacterControllerCollisionFlags CharacterController::Move(DirectX::XMFLOAT3 di
 {
 	//Apply gravity if we want to
 	if (applyGravity)
-		displacement.y -= physicsManager->GetGravity() * (deltaTime * 2);
+		displacement.y += physicsManager->GetGravity() * (deltaTime * 2);
 
 	//Move controller
-	PxControllerCollisionFlags colFlags;/* = pxController->move(
+	PxControllerCollisionFlags colFlags = pxController->move(
 		Float3ToVec3(displacement),
 		0,
 		deltaTime,
-		);*/
+		filters);
 
 	//Setup flags
 	CharacterControllerCollisionFlags flags;
@@ -86,6 +88,7 @@ void CharacterController::SetFilterData(physx::PxShape* shape)
 	filterData.word0 = 1 << (PxU32)layerType.value();
 	filterData.word1 = layers.flags;
 	shape->setSimulationFilterData(filterData);
+	filters = PxControllerFilters(&filterData, NULL, NULL);
 }
 
 // Get the foot position of the character controller

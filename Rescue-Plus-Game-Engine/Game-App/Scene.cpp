@@ -301,6 +301,10 @@ void Game::SetupScene()
 	cameraGO->AddComponent<DebugMovement>();
 	cameraGO->AddComponent<TestBullet>();
 
+	GameObject* controller = new GameObject();
+	controller->AddComponent<CharacterController>(1,2);
+	controller->AddComponent<FirstPersonMovement>();
+
 	//Create player
 	//FirstPersonMovement* player = FirstPersonMovement::CreateFirstPersonCharacter("Player", width, height);
 	//camera = player->GetCamera();
@@ -377,8 +381,8 @@ void Game::SetupScene()
 	trigger->AddComponent<TestCallbacks>();
 
 	//Create a capsule
-	GameObject* capsule = new GameObject("Capsule");
-	capsule->SetPosition(0, 0, 3);
-	capsule->AddComponent<RigidBody>(5);
-	capsule->AddComponent<CapsuleCollider>(1, 2, CapsuleDirection::Y)->SetDebug(true);
+	//GameObject* capsule = new GameObject("Capsule");
+	//capsule->SetPosition(0, 0, 3);
+	//capsule->AddComponent<RigidBody>(5);
+	//capsule->AddComponent<CapsuleCollider>(1, 2, CapsuleDirection::Y)->SetDebug(true);
 }

@@ -5,6 +5,7 @@
 class CharacterController : public ColliderBase
 {
 private:
+	physx::PxControllerFilters filters;
 	physx::PxFilterData filterData;
 	physx::PxController* pxController;
 	float radius;
@@ -13,7 +14,24 @@ private:
 	// --------------------------------------------------------
 	// Set the filter data of the controller
 	// --------------------------------------------------------
-	virtual void SetFilterData(physx::PxShape* shape) = 0;
+	void SetFilterData(physx::PxShape* shape);
+
+	// --------------------------------------------------------
+	// The attached GameObject's position changed
+	// --------------------------------------------------------
+	void OnPositionChanged(DirectX::XMFLOAT3 position, bool fromParent,
+		bool fromRigidBody) override {};
+
+	// --------------------------------------------------------
+	// The attached GameObject's rotation changed
+	// --------------------------------------------------------
+	void OnRotationChanged(DirectX::XMFLOAT4 rotation, bool fromParent,
+		bool fromRigidBody) override {};
+
+	// --------------------------------------------------------
+	// The attached GameObject's scale changed
+	// --------------------------------------------------------
+	void OnScaleChanged(DirectX::XMFLOAT3 scale) override {};
 
 public:
 	CharacterController(GameObject* gameObject, float radius, float height);
@@ -58,7 +76,5 @@ public:
 	//  on the ground. Modifies height and center position.
 	// --------------------------------------------------------
 	void Resize(float height);
-
-	
 };
 

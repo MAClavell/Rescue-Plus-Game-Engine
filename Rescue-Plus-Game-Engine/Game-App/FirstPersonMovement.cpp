@@ -5,20 +5,24 @@ using namespace DirectX;
 FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent(gameObject)
 {
 	inputManager = InputManager::GetInstance();
-	auto children = gameObject->GetChildren();
-	go = gameObject;
+
+	controller = gameObject->GetComponent<CharacterController>();
+	controller->SetDebug(true);
+
+	//auto children = gameObject->GetChildren();
+	//go = gameObject;
 
 	//Get Camera
-	camera = children[0]->GetComponent<Camera>();
-	cameraGO = children[0];
+	//camera = children[0]->GetComponent<Camera>();
+	//cameraGO = children[0];
 
 	//Get rigidbody
-	rb = gameObject->GetComponent<RigidBody>();
+	//rb = gameObject->GetComponent<RigidBody>();
 
 	//Get colliders
-	standCol =go->GetComponent<CapsuleCollider>();
-	crouchCol = children[1]->GetComponent<CapsuleCollider>();
-	slideCol = children[2]->GetComponent<CapsuleCollider>();
+	//standCol =go->GetComponent<CapsuleCollider>();
+	//crouchCol = children[1]->GetComponent<CapsuleCollider>();
+	//slideCol = children[2]->GetComponent<CapsuleCollider>();
 
 	sprinting = false;
 	falling = false;
@@ -68,9 +72,17 @@ void FirstPersonMovement::FixedUpdate(float deltaTime)
 
 void FirstPersonMovement::Update(float deltaTime)
 {
+	XMFLOAT3 move = XMFLOAT3(0,0,0);
+	if (inputManager->GetKey('R'))
+	{
+		move.z = deltaTime;
+	}
+	controller->Move(move, deltaTime, true);
+
 	//Detect Input in the update loop
 	
 	//Check if the right mouse button is held down
+	/*
 	if (inputManager->GetMouseButtonDown(MouseButtons::R))
 	{
 		SetCursorPos(inputManager->GetWindowCenterX(), inputManager->GetWindowCenterY());
@@ -172,8 +184,10 @@ void FirstPersonMovement::Update(float deltaTime)
 	{
 
 	}
-}
+	*/
 
+}
+/*
 // Changes for when we start a sprint
 void FirstPersonMovement::StartSprint()
 {
@@ -273,3 +287,4 @@ Camera* FirstPersonMovement::GetCamera()
 {
 	return camera;
 }
+*/
