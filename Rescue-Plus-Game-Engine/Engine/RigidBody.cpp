@@ -81,12 +81,12 @@ void RigidBody::FixedUpdate(float deltaTime)
 	collisionResolver->ResolveCollisions(gameObject());
 }
 
-// Update the gameobject's world position from an inputted transform
+// Update the gameobject's world position from a
 void RigidBody::UpdateWorldPosition()
 {
 	PxTransform tr = body->getGlobalPose();
-	gameObject()->SetRotationFromRigidBody(QuatToFloat4(tr.q));
-	gameObject()->SetPositionFromRigidBody(Vec3ToFloat3(tr.p));
+	gameObject()->SetRotationFromPhysics(QuatToFloat4(tr.q));
+	gameObject()->SetPositionFromPhysics(Vec3ToFloat3(tr.p));
 }
 
 // Update the rigidbody from it's world position

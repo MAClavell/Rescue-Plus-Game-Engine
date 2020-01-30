@@ -9,7 +9,7 @@ using namespace physx;
 static PhysicsManager* physicsManager;
 //TODO: hook up gameobject position with char controller position
 
-CharacterController::CharacterController(GameObject* gameObject, float radius, float height) 
+CharacterController::CharacterController(GameObject* gameObject, float radius, float height)
 	: ColliderBase(gameObject, ColliderType::Controller)
 {
 	physicsManager = PhysicsManager::GetInstance();
@@ -81,8 +81,11 @@ void CharacterController::Update(float deltaTime)
 {
 	if (debug)
 	{
+		XMFLOAT4 rot;
+		XMStoreFloat4(&rot, XMQuaternionMultiply(XMLoadFloat4(&gameObject()->GetRotation()),
+			XMQuaternionRotationAxis(XMVectorSet(0, 0, 1, 0), PxHalfPi)));
 		Renderer::GetInstance()->AddDebugCapsule(radius, height, gameObject()->GetPosition(),
-			gameObject()->GetRotation(), ShapeDrawType::SingleFrame);
+			rot, ShapeDrawType::SingleFrame);
 	}
 }
 
@@ -99,6 +102,25 @@ void CharacterController::SetFilterData(physx::PxShape* shape)
 	filterData.word1 = layers.flags;
 	shape->setSimulationFilterData(filterData);
 	filters = PxControllerFilters(&filterData, NULL, NULL);
+}
+
+void CharacterController::OnPositionChanged(XMFLOAT3 position, bool fromParent, bool fromPhysics)
+{
+	if (fromPhysics)
+		return;
+
+	pxController->setPosition(Float3ToExtVec3(position));
+}
+
+void CharacterController::OnRotationChanged(XMFLOAT4 rotation, bool fromParent, bool fromPhysics)
+{
+	if (fromPhysics)
+		return;
+}
+
+void CharacterController::OnScaleChanged(XMFLOAT3 scale)
+{
+
 }
 
 // Get the foot position of the character controller

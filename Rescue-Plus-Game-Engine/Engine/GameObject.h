@@ -70,7 +70,7 @@ private:
 	// newPosition - The new position to go to
 	// --------------------------------------------------------
 	void SetPosition(DirectX::XMFLOAT3 newPosition, bool setLocal,
-		bool fromParent = false, bool fromRigidBody = false);
+		bool fromParent = false, bool fromPhysics = false);
 
 	// --------------------------------------------------------
 	// Set the rotation for this GameObject (Quaternion)
@@ -78,7 +78,7 @@ private:
 	// newQuatRotation - The new rotation to rotate to
 	// --------------------------------------------------------
 	void SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool setLocal,
-		bool fromParent = false, bool fromRigidBody = false);
+		bool fromParent = false, bool fromPhysics = false);
 
 	// --------------------------------------------------------
 	// Set the local position for this GameObject
@@ -364,7 +364,7 @@ public:
 	//
 	// newPosition - The new position to go to
 	// --------------------------------------------------------
-	void SetPositionFromRigidBody(DirectX::XMFLOAT3 newPosition);
+	void SetPositionFromPhysics(DirectX::XMFLOAT3 newPosition);
 
 	// --------------------------------------------------------
 	// Set the position for this GameObject
@@ -445,7 +445,7 @@ public:
 	//
 	// newQuatRotation - The new rotation to rotate to
 	// --------------------------------------------------------
-	void SetRotationFromRigidBody(DirectX::XMFLOAT4 newQuatRotation);
+	void SetRotationFromPhysics(DirectX::XMFLOAT4 newQuatRotation);
 
 	// --------------------------------------------------------
 	// Set the rotation for this GameObject (Quaternion)

@@ -270,7 +270,7 @@ DirectX::XMFLOAT3 GameObject::GetLocalPosition()
 
 // Set the position for this GameObject
 void GameObject::SetPosition(XMFLOAT3 newPosition, bool setLocal,
-	bool fromParent, bool fromRigidBody)
+	bool fromParent, bool fromPhysics)
 {
 	worldDirty = true;
 	position = newPosition;
@@ -292,7 +292,7 @@ void GameObject::SetPosition(XMFLOAT3 newPosition, bool setLocal,
 	}
 
 	//Run event
-	onPositionChanged.Invoke(position, fromParent, fromRigidBody);
+	onPositionChanged.Invoke(position, fromParent, fromPhysics);
 
 	//Update transforms of all children
 	for (auto c : children)
@@ -302,7 +302,7 @@ void GameObject::SetPosition(XMFLOAT3 newPosition, bool setLocal,
 }
 
 // Set the position for this GameObject from a rigidbody
-void GameObject::SetPositionFromRigidBody(XMFLOAT3 newPosition)
+void GameObject::SetPositionFromPhysics(XMFLOAT3 newPosition)
 {
 	SetPosition(newPosition, true, false, true);
 }
@@ -404,7 +404,7 @@ DirectX::XMFLOAT4 GameObject::GetLocalRotation()
 
 // Set the rotation for this GameObject (Quaternion)
 void GameObject::SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool setLocal, 
-	bool fromParent, bool fromRigidBody)
+	bool fromParent, bool fromPhysics)
 {
 	worldDirty = true;
 	rotation = newQuatRotation;
@@ -423,7 +423,7 @@ void GameObject::SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool setLocal,
 		else localRotation = rotation;
 	}
 
-	onRotationChanged.Invoke(rotation, fromParent, fromRigidBody);
+	onRotationChanged.Invoke(rotation, fromParent, fromPhysics);
 
 	//Update transforms of all children
 	for (auto c : children)
@@ -434,7 +434,7 @@ void GameObject::SetRotation(DirectX::XMFLOAT4 newQuatRotation, bool setLocal,
 }
 
 // Set the rotation for this GameObject (Quaternion) from a rigidbody
-void GameObject::SetRotationFromRigidBody(DirectX::XMFLOAT4 newQuatRotation)
+void GameObject::SetRotationFromPhysics(DirectX::XMFLOAT4 newQuatRotation)
 {
 	SetRotation(newQuatRotation, true, false, true);
 }

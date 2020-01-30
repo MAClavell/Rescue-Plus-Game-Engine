@@ -36,13 +36,13 @@ protected:
 	// The attached GameObject's position changed
 	// --------------------------------------------------------
 	void OnPositionChanged(DirectX::XMFLOAT3 position, bool fromParent,
-		bool fromRigidBody) override;
+		bool fromPhysics) override;
 
 	// --------------------------------------------------------
 	// The attached GameObject's rotation changed
 	// --------------------------------------------------------
 	void OnRotationChanged(DirectX::XMFLOAT4 rotation, bool fromParent,
-		bool fromRigidBody) override;
+		bool fromPhysics) override;
 
 	// --------------------------------------------------------
 	// The attached GameObject's scale changed

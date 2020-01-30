@@ -190,16 +190,16 @@ void Collider::FixedUpdate(float deltaTime)
 		collisionResolver->ResolveCollisions(gameObject());
 }
 
-void Collider::OnPositionChanged(DirectX::XMFLOAT3 position, bool fromParent, bool fromRigidBody)
+void Collider::OnPositionChanged(DirectX::XMFLOAT3 position, bool fromParent, bool fromPhysics)
 {
-	if (!fromRigidBody && ((attachedRigidBody != nullptr && !fromParent && isInChildObj)
+	if (!fromPhysics && ((attachedRigidBody != nullptr && !fromParent && isInChildObj)
 		|| (staticActor != nullptr)))
 		ReAttach();
 }
 
-void Collider::OnRotationChanged(DirectX::XMFLOAT4 rotation, bool fromParent, bool fromRigidBody)
+void Collider::OnRotationChanged(DirectX::XMFLOAT4 rotation, bool fromParent, bool fromPhysics)
 {
-	if (!fromRigidBody && ((attachedRigidBody != nullptr && !fromParent)
+	if (!fromPhysics && ((attachedRigidBody != nullptr && !fromParent)
 		|| (staticActor != nullptr)))
 		ReAttach();
 }
