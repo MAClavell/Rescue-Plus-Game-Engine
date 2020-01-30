@@ -1,4 +1,5 @@
 #include "RigidBody.h"
+#include "Collider.h"
 #include "PhysicsManager.h"
 #include "PhysicsHelper.h"
 

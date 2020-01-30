@@ -2,21 +2,21 @@
 #include <vector>
 
 class GameObject;
-class Collider;
+class ColliderBase;
 // --------------------------------------------------------
 // A struct for holding collision information
 // --------------------------------------------------------
 struct Collision
 {
 	GameObject* gameObject;
-	Collider* collider;
+	ColliderBase* collider;
 
-	Collision(GameObject* gameObject, Collider* collider)
+	Collision(GameObject* gameObject, ColliderBase* collider)
 		: gameObject(gameObject), collider(collider) {}
 
 	bool operator==(const Collision& other)
 	{
-		return collider == other.collider;
+		return (gameObject == other.gameObject) && (collider == other.collider);
 	}
 };
 
@@ -33,12 +33,22 @@ private:
 		Collision col;
 		bool isTrigger;
 		CollisionResolveInfo(Collision col, bool isTrigger) : col(col), isTrigger(isTrigger) { }
+	
+		bool operator==(const CollisionResolveInfo& other)
+		{
+			return (col == other.col) && (isTrigger == other.isTrigger);
+		}
 	};
 
 	//Lists of collisions
 	std::vector<CollisionResolveInfo> enterCollisions;
 	std::vector<CollisionResolveInfo> stayCollisions;
 	std::vector<CollisionResolveInfo> exitCollisions;
+
+	// --------------------------------------------------------
+	// Internal function for sending collisions
+	// --------------------------------------------------------
+	void SendCollision(CollisionResolveInfo resolveInfo);
 
 public:
 	CollisionResolver() { };
@@ -51,6 +61,15 @@ public:
 	// we have to manually check if a collision is entering or exiting
 	// --------------------------------------------------------
 	void SendTriggerCollision(Collision collision);
+
+	// --------------------------------------------------------
+	// Send a collision to the resolver and have it decide what events to run.
+	// Since PhysX doesn't have flags for enter and exit when using PxController,
+	// we have to manually check if a collision is entering or exiting.
+	//
+	// Use AddEnter and AddExit if you can
+	// --------------------------------------------------------
+	void SendCollision(Collision collision);
 
 	// --------------------------------------------------------
 	// Add a collision to the resolver

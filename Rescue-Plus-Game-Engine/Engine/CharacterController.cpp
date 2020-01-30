@@ -23,9 +23,10 @@ CharacterController::CharacterController(GameObject* gameObject, float radius, f
 	desc.radius = radius;
 	desc.height = height;
 	desc.material = physicsManager->GetPhysics()->createMaterial(0.6f, 0.6f, 0);
-	desc.position = PxExtendedVec3(0, 3, 0);
+	desc.position = Float3ToExtVec3(gameObject->GetPosition());
 	desc.userData = this;
-
+	desc.reportCallback = physicsManager;
+	
 	//Create controller
 	pxController = physicsManager->GetControllerManager()->createController(desc);
 
@@ -49,11 +50,13 @@ CharacterController::~CharacterController()
 	}
 }
 
-CharacterControllerCollisionFlags CharacterController::Move(DirectX::XMFLOAT3 displacement, float deltaTime, bool applyGravity)
+// Move the character by a displacement (in world coordinates)
+CharacterControllerCollisionFlags CharacterController::Move(DirectX::XMFLOAT3 displacement,
+	float deltaTime, bool applyGravity, float gravityScale)
 {
 	//Apply gravity if we want to
 	if (applyGravity)
-		displacement.y += physicsManager->GetGravity() * (deltaTime * 2);
+		displacement.y += (physicsManager->GetGravity() * gravityScale) * (deltaTime * 2);
 
 	//Move controller
 	PxControllerCollisionFlags colFlags = pxController->move(
@@ -61,6 +64,9 @@ CharacterControllerCollisionFlags CharacterController::Move(DirectX::XMFLOAT3 di
 		0,
 		deltaTime,
 		filters);
+
+	//Update the gameobject
+	gameObject()->SetPositionFromPhysics(ExtVec3ToFloat3(pxController->getPosition()));
 
 	//Setup flags
 	CharacterControllerCollisionFlags flags;
@@ -104,23 +110,13 @@ void CharacterController::SetFilterData(physx::PxShape* shape)
 	filters = PxControllerFilters(&filterData, NULL, NULL);
 }
 
+// The attached GameObject's position changed
 void CharacterController::OnPositionChanged(XMFLOAT3 position, bool fromParent, bool fromPhysics)
 {
 	if (fromPhysics)
 		return;
 
 	pxController->setPosition(Float3ToExtVec3(position));
-}
-
-void CharacterController::OnRotationChanged(XMFLOAT4 rotation, bool fromParent, bool fromPhysics)
-{
-	if (fromPhysics)
-		return;
-}
-
-void CharacterController::OnScaleChanged(XMFLOAT3 scale)
-{
-
 }
 
 // Get the foot position of the character controller

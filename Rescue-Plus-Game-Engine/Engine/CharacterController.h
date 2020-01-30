@@ -26,23 +26,23 @@ private:
 	// The attached GameObject's rotation changed
 	// --------------------------------------------------------
 	void OnRotationChanged(DirectX::XMFLOAT4 rotation, bool fromParent,
-		bool fromRigidBody) override;
+		bool fromRigidBody) override {};
 
 	// --------------------------------------------------------
 	// The attached GameObject's scale changed
 	// --------------------------------------------------------
-	void OnScaleChanged(DirectX::XMFLOAT3 scale) override;
+	void OnScaleChanged(DirectX::XMFLOAT3 scale) override {};
 
 public:
 	CharacterController(GameObject* gameObject, float radius, float height);
 	~CharacterController();
 
 	// --------------------------------------------------------
-	// 
+	// Move the character by a displacement (in world coordinates)
 	// --------------------------------------------------------
 	CharacterControllerCollisionFlags Move(
 		DirectX::XMFLOAT3 displacement, float deltaTime, 
-		bool applyGravity = true);
+		bool applyGravity = true, float gravityScale = 1);
 
 	// --------------------------------------------------------
 	// Update debug view

@@ -1,10 +1,12 @@
 #pragma once
 #include <DirectXMath.h>
 #include <limits>
-#include "Raycast.h"
 #include "PxSimulationEventCallback.h"
+#include <PxPhysicsAPI.h>
 
-class PhysicsManager : public physx::PxSimulationEventCallback
+class PhysicsManager : public physx::PxSimulationEventCallback, 
+	public physx::PxUserControllerHitReport,
+	public physx::PxQueryFilterCallback
 {
 private:
 	physx::PxFoundation* foundation;
@@ -37,6 +39,17 @@ private:
 	virtual void onWake(physx::PxActor**, physx::PxU32) {}
 	virtual void onSleep(physx::PxActor**, physx::PxU32) {}
 	virtual void onAdvance(const physx::PxRigidBody*const*, const physx::PxTransform*, const physx::PxU32) {}
+
+	//Implements PxUserControllerHitReport
+	virtual void onControllerHit(const physx::PxControllersHit& hit);
+	virtual void onObstacleHit(const physx::PxControllerObstacleHit& hit) {};
+	virtual void onShapeHit(const physx::PxControllerShapeHit& hit);
+
+	//Implements PxQueryFilterCallback
+	virtual physx::PxQueryHitType::Enum preFilter(const physx::PxFilterData& filterData,
+		const physx::PxShape* shape, const physx::PxRigidActor* actor, physx::PxHitFlags& queryFlags);
+	virtual physx::PxQueryHitType::Enum postFilter(const physx::PxFilterData& filterData,
+		const physx::PxQueryHit& hit) { };
 
 public:
 

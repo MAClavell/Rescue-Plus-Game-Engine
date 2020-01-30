@@ -2,6 +2,8 @@
 #include "PhysicsHelper.h"
 #include "JobSystem.h"
 #include "Renderer.h"
+#include "Raycast.h"
+#include "CharacterController.h"
 
 using namespace physx;
 using namespace DirectX;
@@ -49,6 +51,12 @@ PxFilterFlags CollisionFilterShader(
 		pairFlags = PxPairFlag::eCONTACT_DEFAULT | PxPairFlag::eNOTIFY_TOUCH_FOUND | PxPairFlag::eNOTIFY_TOUCH_LOST;
 
 	return PxFilterFlag::eDEFAULT;
+}
+
+PxQueryHitType::Enum PhysicsManager::preFilter(const PxFilterData& filterData,
+	const PxShape* shape, const PxRigidActor* actor, PxHitFlags& queryFlags)
+{
+
 }
 
 // Initialize values and start the physics world
@@ -168,6 +176,40 @@ void PhysicsManager::onTrigger(PxTriggerPair* pairs, PxU32 nbPairs)
 		// we have to manually check if a collision is entering or exiting in the resolver
 		trigger->GetCollisionResolver()->SendTriggerCollision(col);
 	}
+}
+
+void PhysicsManager::onControllerHit(const physx::PxControllersHit& hit)
+{
+	//Get controllers
+	CharacterController* ctlr1 = (CharacterController*)(hit.controller->getUserData());
+	CharacterController* ctlr2 = (CharacterController*)(hit.other->getUserData());
+
+	//Add first collision
+	Collision col1 = Collision(ctlr2->gameObject(), ctlr2);
+	ctlr1->GetCollisionResolver()->SendCollision(col1);
+
+	//Add second collision
+	Collision col2 = Collision(ctlr1->gameObject(), ctlr1);
+	ctlr2->GetCollisionResolver()->SendCollision(col2);
+}
+
+void PhysicsManager::onShapeHit(const physx::PxControllerShapeHit& hit)
+{
+	//Get data
+	CharacterController* ctlr = (CharacterController*)(hit.controller->getUserData());
+	Collider* shape = (Collider*)(hit.shape->userData);
+	RigidBody* shapeRb = shape->GetAttachedRigidBody();
+
+	//Create collisions
+	Collision col1 = shapeRb == nullptr ? Collision(shape->gameObject(), shape)
+		: Collision(shapeRb->gameObject(), shape);
+	Collision col2 = Collision(ctlr->gameObject(), ctlr);
+
+	//Send collisions
+	ctlr->GetCollisionResolver()->SendCollision(col1);
+	if (shapeRb != nullptr)
+		shapeRb->GetCollisionResolver()->SendCollision(col1);
+	else shape->GetCollisionResolver()->SendCollision(col1);
 }
 
 static void UpdateRigidBody(Job* job, const void* userData)

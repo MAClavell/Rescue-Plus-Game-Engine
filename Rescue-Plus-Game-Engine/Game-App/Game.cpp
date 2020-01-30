@@ -4,6 +4,7 @@
 #include "StringHelper.h"
 #include "MAT_PBRTexture.h"
 #include "JobSystem.h"
+#include "Raycast.h"
 
 // For the DirectX Math library
 using namespace DirectX;
@@ -171,6 +172,9 @@ void Game::OnResize()
 // --------------------------------------------------------
 void Game::FixedUpdate(float constantStepSize, float totalTime)
 {
+	if (!inputManager->IsWindowFocused())
+		return;
+
 	//Update physics
 	physicsManager->Simulate(constantStepSize);
 

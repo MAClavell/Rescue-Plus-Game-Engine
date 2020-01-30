@@ -3,17 +3,15 @@
 
 using namespace std;
 
-// Send a trigger to the resolver and have it decide what events to run.
-// Since PhysX doesn't have PxTriggerPairFlags for enter and exit,
-// we have to manually check if a collision is entering or exiting
-void CollisionResolver::SendTriggerCollision(Collision collision)
+// Internal function for sending collisions
+void CollisionResolver::SendCollision(CollisionResolveInfo resolveInfo)
 {
 	bool found = false;
 
 	//Try to find in enter list
 	for (auto iter = enterCollisions.begin(); iter != enterCollisions.end(); iter++)
 	{
-		if ((*iter).col == collision && (*iter).isTrigger == true)
+		if ((*iter) == resolveInfo)
 		{
 			iter_swap(iter, enterCollisions.end() - 1);
 			enterCollisions.pop_back();
@@ -27,7 +25,7 @@ void CollisionResolver::SendTriggerCollision(Collision collision)
 	{
 		for (auto iter = stayCollisions.begin(); iter != stayCollisions.end(); iter++)
 		{
-			if ((*iter).col == collision && (*iter).isTrigger == true)
+			if ((*iter) == resolveInfo)
 			{
 				iter_swap(iter, stayCollisions.end() - 1);
 				stayCollisions.pop_back();
@@ -39,8 +37,26 @@ void CollisionResolver::SendTriggerCollision(Collision collision)
 
 	//Push to correct list
 	if(found)
-		exitCollisions.push_back(CollisionResolveInfo(collision, true));
-	else enterCollisions.push_back(CollisionResolveInfo(collision, true));
+		exitCollisions.push_back(resolveInfo);
+	else enterCollisions.push_back(resolveInfo);
+}
+
+// Send a trigger to the resolver and have it decide what events to run.
+// Since PhysX doesn't have PxTriggerPairFlags for enter and exit,
+// we have to manually check if a collision is entering or exiting
+void CollisionResolver::SendTriggerCollision(Collision collision)
+{
+	SendCollision(CollisionResolveInfo(collision, true));
+}
+
+// Send a collision to the resolver and have it decide what events to run.
+// Since PhysX doesn't have flags for enter and exit when using PxController,
+// we have to manually check if a collision is entering or exiting.
+//
+// Use AddEnter and AddExit if you can
+void CollisionResolver::SendCollision(Collision collision)
+{
+	SendCollision(CollisionResolveInfo(collision, false));
 }
 
 // Add a collision to the resolver
