@@ -7,6 +7,8 @@ public:
 	TestCallbacks(GameObject* gameObject);
 	~TestCallbacks();
 
+	void OnControllerCollision(Collision collision) override;
+
 	void OnCollisionEnter(Collision collision) override;
 	void OnCollisionStay(Collision collision) override;
 	void OnCollisionExit(Collision collision) override;

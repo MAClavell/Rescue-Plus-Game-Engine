@@ -47,6 +47,7 @@ private:
 	// a certain overrideable function
 	std::vector<Component*> updateComponents;
 	std::vector<Component*> fixedUpdateComponents;
+	std::vector<UserComponent*> onControllerCollisionComponents;
 	std::vector<UserComponent*> onCollisionEnterComponents;
 	std::vector<UserComponent*> onCollisionStayComponents;
 	std::vector<UserComponent*> onCollisionExitComponents;
@@ -181,6 +182,10 @@ public:
 		//User componenets
 		if constexpr(std::is_base_of<UserComponent, T>())
 		{
+			//Controller collisions
+			if (&UserComponent::OnControllerCollision != &T::OnControllerCollision)
+				onControllerCollisionComponents.push_back(component);
+
 			//Collisions
 			if (&UserComponent::OnCollisionEnter != &T::OnCollisionEnter)
 				onCollisionEnterComponents.push_back(component);
@@ -281,6 +286,7 @@ public:
 	// trigger callbacks
 	// --------------------------------------------------------
 	void GetCollisionAndTriggerCallbackComponents(
+		std::vector<UserComponent*>* cntrlr,
 		std::vector<UserComponent*>* colEnt,
 		std::vector<UserComponent*>* colSty,
 		std::vector<UserComponent*>* colExt,

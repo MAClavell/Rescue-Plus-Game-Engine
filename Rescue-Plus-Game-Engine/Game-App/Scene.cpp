@@ -301,7 +301,7 @@ void Game::SetupScene()
 	cameraGO->AddComponent<DebugMovement>();
 	cameraGO->AddComponent<TestBullet>();
 
-	GameObject* controller = new GameObject("Controller");
+	GameObject* controller = new GameObject("CharController");
 	controller->SetPosition(0, 3, 0);
 	controller->AddComponent<CharacterController>(1,2);
 	controller->AddComponent<FirstPersonMovement>();

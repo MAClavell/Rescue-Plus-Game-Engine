@@ -56,7 +56,22 @@ PxFilterFlags CollisionFilterShader(
 PxQueryHitType::Enum PhysicsManager::preFilter(const PxFilterData& filterData,
 	const PxShape* shape, const PxRigidActor* actor, PxHitFlags& queryFlags)
 {
+	auto shapeFilterData = shape->getQueryFilterData();
+	if (shape->getFlags() & PxShapeFlag::eTRIGGER_SHAPE)
+		return PxQueryHitType::eNONE;
 
+	//Only let like filters through
+	if ((filterData.word0 & shapeFilterData.word1) && (shapeFilterData.word0 & filterData.word1))
+		return PxQueryHitType::Enum::eBLOCK;
+
+	return PxQueryHitType::eNONE;
+}
+
+//POST FILTER IS TURNED OFF
+PxQueryHitType::Enum PhysicsManager::postFilter(const physx::PxFilterData& filterData, const physx::PxQueryHit& hit)
+{
+	//POST FILTER IS TURNED OFF
+	return PxQueryHitType::eNONE;
 }
 
 // Initialize values and start the physics world
@@ -117,14 +132,18 @@ void PhysicsManager::onContact(const physx::PxContactPairHeader & pairHeader, co
 	for (PxU32 i = 0; i < nbPairs; i++)
 	{
 		//Get shapes
-		Collider* shape1 = (Collider*)(pairs[i].shapes[0]->userData);
-		Collider* shape2 = (Collider*)(pairs[i].shapes[1]->userData);
+		ColliderBase* shape1 = (Collider*)(pairs[i].shapes[0]->userData);
+		ColliderBase* shape2 = (Collider*)(pairs[i].shapes[1]->userData);
 		if (shape1 == shape2)
 			return;
 
 		//Use the rigidbody if the shape is attached to a rigidbody
-		RigidBody* shape1Rb = shape1->GetAttachedRigidBody();
-		RigidBody* shape2Rb = shape2->GetAttachedRigidBody();
+		RigidBody* shape1Rb = nullptr;
+		RigidBody* shape2Rb = nullptr;
+		if(shape1->GetType() != ColliderType::Controller)
+			shape1Rb = ((Collider*)shape1)->GetAttachedRigidBody();
+		if (shape2->GetType() != ColliderType::Controller)
+			shape2Rb= ((Collider*)shape2)->GetAttachedRigidBody();
 		if (shape1Rb != nullptr && shape1Rb == shape2Rb)
 			return;
 
@@ -137,26 +156,38 @@ void PhysicsManager::onContact(const physx::PxContactPairHeader & pairHeader, co
 		//OnEnter
 		if (pairs[i].flags.isSet(PxContactPairFlag::eACTOR_PAIR_HAS_FIRST_TOUCH))
 		{
-			if (shape1Rb != nullptr)
-				shape1Rb->GetCollisionResolver()->AddEnterCollision(col1);
-			else shape1->GetCollisionResolver()->AddEnterCollision(col1);
+			if (shape1->GetType() != ColliderType::Controller)
+			{
+				if (shape1Rb != nullptr)
+					shape1Rb->GetCollisionResolver()->AddEnterCollision(col1);
+				else shape1->GetCollisionResolver()->AddEnterCollision(col1);
+			}
 
-			if (shape2Rb != nullptr)
-				shape2Rb->GetCollisionResolver()->AddEnterCollision(col2);
-			else shape2->GetCollisionResolver()->AddEnterCollision(col2);
+			if (shape2->GetType() != ColliderType::Controller)
+			{
+				if (shape2Rb != nullptr)
+					shape2Rb->GetCollisionResolver()->AddEnterCollision(col2);
+				else shape2->GetCollisionResolver()->AddEnterCollision(col2);
+			}
 		}
 		//OnExit
 		else if (pairs[i].flags.isSet(PxContactPairFlag::eACTOR_PAIR_LOST_TOUCH)
 			|| pairs[i].flags.isSet(PxContactPairFlag::eREMOVED_SHAPE_0)
 			|| pairs[i].flags.isSet(PxContactPairFlag::eREMOVED_SHAPE_1))
 		{
-			if (shape1Rb != nullptr)
-				shape1Rb->GetCollisionResolver()->AddExitCollision(col1);
-			else shape1->GetCollisionResolver()->AddExitCollision(col1);
+			if (shape1->GetType() != ColliderType::Controller)
+			{
+				if (shape1Rb != nullptr)
+					shape1Rb->GetCollisionResolver()->AddExitCollision(col1);
+				else shape1->GetCollisionResolver()->AddExitCollision(col1);
+			}
 
-			if (shape2Rb != nullptr)
-				shape2Rb->GetCollisionResolver()->AddExitCollision(col2);
-			else shape2->GetCollisionResolver()->AddExitCollision(col2);
+			if (shape2->GetType() != ColliderType::Controller)
+			{
+				if (shape2Rb != nullptr)
+					shape2Rb->GetCollisionResolver()->AddExitCollision(col2);
+				else shape2->GetCollisionResolver()->AddExitCollision(col2);
+			}
 		}
 	}
 }
@@ -166,8 +197,12 @@ void PhysicsManager::onTrigger(PxTriggerPair* pairs, PxU32 nbPairs)
 	for (PxU32 i = 0; i < nbPairs; i++)
 	{
 		Collider* trigger = (Collider*)(pairs[i].triggerShape->userData);
-		Collider* shape = (Collider*)(pairs[i].otherShape->userData);
-		RigidBody* shapeRb = shape->GetAttachedRigidBody();
+		ColliderBase* shape = (Collider*)(pairs[i].otherShape->userData);
+		RigidBody* shapeRb = nullptr;
+		if (shape->GetType() != ColliderType::Controller)
+		{
+			shapeRb = ((Collider*)shape)->GetAttachedRigidBody();
+		}
 
 		Collision col = shapeRb == nullptr ? Collision(shape->gameObject(), shape)
 			: Collision(shapeRb->gameObject(), shape);
@@ -186,11 +221,11 @@ void PhysicsManager::onControllerHit(const physx::PxControllersHit& hit)
 
 	//Add first collision
 	Collision col1 = Collision(ctlr2->gameObject(), ctlr2);
-	ctlr1->GetCollisionResolver()->SendCollision(col1);
+	ctlr1->GetCollisionResolver()->SendControllerCollision(col1);
 
 	//Add second collision
 	Collision col2 = Collision(ctlr1->gameObject(), ctlr1);
-	ctlr2->GetCollisionResolver()->SendCollision(col2);
+	ctlr2->GetCollisionResolver()->SendControllerCollision(col2);
 }
 
 void PhysicsManager::onShapeHit(const physx::PxControllerShapeHit& hit)
@@ -201,15 +236,11 @@ void PhysicsManager::onShapeHit(const physx::PxControllerShapeHit& hit)
 	RigidBody* shapeRb = shape->GetAttachedRigidBody();
 
 	//Create collisions
-	Collision col1 = shapeRb == nullptr ? Collision(shape->gameObject(), shape)
+	Collision col = shapeRb == nullptr ? Collision(shape->gameObject(), shape)
 		: Collision(shapeRb->gameObject(), shape);
-	Collision col2 = Collision(ctlr->gameObject(), ctlr);
 
-	//Send collisions
-	ctlr->GetCollisionResolver()->SendCollision(col1);
-	if (shapeRb != nullptr)
-		shapeRb->GetCollisionResolver()->SendCollision(col1);
-	else shape->GetCollisionResolver()->SendCollision(col1);
+	//Send collision to controller
+	ctlr->GetCollisionResolver()->SendControllerCollision(col);
 }
 
 static void UpdateRigidBody(Job* job, const void* userData)

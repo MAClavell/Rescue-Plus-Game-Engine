@@ -32,7 +32,9 @@ private:
 	{
 		Collision col;
 		bool isTrigger;
-		CollisionResolveInfo(Collision col, bool isTrigger) : col(col), isTrigger(isTrigger) { }
+		bool isController;
+		CollisionResolveInfo(Collision col, bool isTrigger, bool isController) 
+			: col(col), isTrigger(isTrigger), isController(isController) { }
 	
 		bool operator==(const CollisionResolveInfo& other)
 		{
@@ -44,11 +46,6 @@ private:
 	std::vector<CollisionResolveInfo> enterCollisions;
 	std::vector<CollisionResolveInfo> stayCollisions;
 	std::vector<CollisionResolveInfo> exitCollisions;
-
-	// --------------------------------------------------------
-	// Internal function for sending collisions
-	// --------------------------------------------------------
-	void SendCollision(CollisionResolveInfo resolveInfo);
 
 public:
 	CollisionResolver() { };
@@ -69,7 +66,7 @@ public:
 	//
 	// Use AddEnter and AddExit if you can
 	// --------------------------------------------------------
-	void SendCollision(Collision collision);
+	void SendControllerCollision(Collision collision);
 
 	// --------------------------------------------------------
 	// Add a collision to the resolver

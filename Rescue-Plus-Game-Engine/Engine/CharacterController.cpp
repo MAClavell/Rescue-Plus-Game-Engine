@@ -17,6 +17,7 @@ CharacterController::CharacterController(GameObject* gameObject, float radius, f
 	//Set members
 	this->radius = radius;
 	this->height = height;
+	isGrounded = false;
 
 	//Create description for controller
 	PxCapsuleControllerDesc desc;
@@ -29,15 +30,22 @@ CharacterController::CharacterController(GameObject* gameObject, float radius, f
 	
 	//Create controller
 	pxController = physicsManager->GetControllerManager()->createController(desc);
-
+	
 	//Get the actual shape and assign userdata
 	PxShape** shapes = new PxShape * [pxController->getActor()->getNbShapes()];
 	PxU32 nbShapes = pxController->getActor()->getShapes(shapes, pxController->getActor()->getNbShapes());
 	for (PxU32 i = 0; i < nbShapes; i++)
 	{
 		shapes[i]->userData = this;
+		shapes[i]->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+		shape = shapes[i];
 	}
 	delete[] shapes;
+
+	//Set filter data
+	if (!layerType.has_value())
+		layerType = CollisionLayer::WorldDynamic;
+	SetCollisionLayers(false);
 }
 
 CharacterController::~CharacterController()
@@ -69,16 +77,20 @@ CharacterControllerCollisionFlags CharacterController::Move(DirectX::XMFLOAT3 di
 	gameObject()->SetPositionFromPhysics(ExtVec3ToFloat3(pxController->getPosition()));
 
 	//Setup flags
+	isGrounded = false;
 	CharacterControllerCollisionFlags flags;
 	if (colFlags.isSet(PxControllerCollisionFlag::eCOLLISION_UP))
 		flags.Set(CharacterControllerCollisionFlag::Above);
 	if (colFlags.isSet(PxControllerCollisionFlag::eCOLLISION_SIDES))
 		flags.Set(CharacterControllerCollisionFlag::Sides);
 	if (colFlags.isSet(PxControllerCollisionFlag::eCOLLISION_DOWN))
+	{
 		flags.Set(CharacterControllerCollisionFlag::Below);
+		isGrounded = true;
+	}
 	if (flags.flags == 0)
 		flags.Set(CharacterControllerCollisionFlag::None);
-
+	
 	return flags;
 }
 
@@ -107,7 +119,8 @@ void CharacterController::SetFilterData(physx::PxShape* shape)
 	filterData.word0 = 1 << (PxU32)layerType.value();
 	filterData.word1 = layers.flags;
 	shape->setSimulationFilterData(filterData);
-	filters = PxControllerFilters(&filterData, NULL, NULL);
+	shape->setQueryFilterData(filterData);
+	filters = PxControllerFilters(&filterData, physicsManager, NULL);
 }
 
 // The attached GameObject's position changed
@@ -135,6 +148,11 @@ void CharacterController::SetStepOffset(float offset)
 float CharacterController::GetStepOffset()
 {
 	return pxController->getStepOffset();
+}
+
+bool CharacterController::IsGrounded()
+{
+	return isGrounded;
 }
 
 // Resize the character controller.

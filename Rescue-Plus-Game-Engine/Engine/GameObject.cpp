@@ -14,6 +14,7 @@ Component::Component(GameObject* gameObject)
 }
 
 //Have to put these here for the Collision definition
+void UserComponent::OnControllerCollision(Collision collision) {}
 void UserComponent::OnCollisionEnter(Collision collision) {}
 void UserComponent::OnCollisionStay(Collision collision) {}
 void UserComponent::OnCollisionExit(Collision collision) {}
@@ -137,11 +138,12 @@ void GameObject::AddChild(GameObject* child)
 }
 
 // Get lists of all user components that have collision or trigger callbacks
-void GameObject::GetCollisionAndTriggerCallbackComponents(vector<UserComponent*>* colEnt, 
-	vector<UserComponent*>* colSty, vector<UserComponent*>* colExt, 
-	vector<UserComponent*>* trigEnt, vector<UserComponent*>* trigSty, 
-	vector<UserComponent*>* trigExt)
+void GameObject::GetCollisionAndTriggerCallbackComponents(vector<UserComponent*>* cntrlr,
+	vector<UserComponent*>* colEnt, vector<UserComponent*>* colSty, 
+	vector<UserComponent*>* colExt, vector<UserComponent*>* trigEnt, 
+	vector<UserComponent*>* trigSty, vector<UserComponent*>* trigExt)
 {
+	*cntrlr = onControllerCollisionComponents;
 	*colEnt = onCollisionEnterComponents;
 	*colSty = onCollisionStayComponents;
 	*colExt = onCollisionExitComponents;

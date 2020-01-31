@@ -155,6 +155,7 @@ void Collider::SetFilterData(physx::PxShape* shape)
 	filterData.word0 = 1 << (PxU32)layerType.value();
 	filterData.word1 = layers.flags;
 	shape->setSimulationFilterData(filterData);
+	shape->setQueryFilterData(filterData);
 }
 
 // Get the rigidbody this collider is attached to (null if none)

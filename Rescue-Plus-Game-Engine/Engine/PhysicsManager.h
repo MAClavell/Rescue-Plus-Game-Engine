@@ -49,7 +49,7 @@ private:
 	virtual physx::PxQueryHitType::Enum preFilter(const physx::PxFilterData& filterData,
 		const physx::PxShape* shape, const physx::PxRigidActor* actor, physx::PxHitFlags& queryFlags);
 	virtual physx::PxQueryHitType::Enum postFilter(const physx::PxFilterData& filterData,
-		const physx::PxQueryHit& hit) { };
+		const physx::PxQueryHit& hit);
 
 public:
 

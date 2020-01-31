@@ -4,9 +4,10 @@
 using namespace std;
 
 // Internal function for sending collisions
-void CollisionResolver::SendCollision(CollisionResolveInfo resolveInfo)
+void CollisionResolver::SendTriggerCollision(Collision collision)
 {
 	bool found = false;
+	CollisionResolveInfo resolveInfo = CollisionResolveInfo(collision, true, false);
 
 	//Try to find in enter list
 	for (auto iter = enterCollisions.begin(); iter != enterCollisions.end(); iter++)
@@ -41,28 +42,18 @@ void CollisionResolver::SendCollision(CollisionResolveInfo resolveInfo)
 	else enterCollisions.push_back(resolveInfo);
 }
 
-// Send a trigger to the resolver and have it decide what events to run.
-// Since PhysX doesn't have PxTriggerPairFlags for enter and exit,
-// we have to manually check if a collision is entering or exiting
-void CollisionResolver::SendTriggerCollision(Collision collision)
-{
-	SendCollision(CollisionResolveInfo(collision, true));
-}
-
 // Send a collision to the resolver and have it decide what events to run.
 // Since PhysX doesn't have flags for enter and exit when using PxController,
 // we have to manually check if a collision is entering or exiting.
-//
-// Use AddEnter and AddExit if you can
-void CollisionResolver::SendCollision(Collision collision)
+void CollisionResolver::SendControllerCollision(Collision collision)
 {
-	SendCollision(CollisionResolveInfo(collision, false));
+	exitCollisions.push_back(CollisionResolveInfo(collision, false, true));
 }
 
 // Add a collision to the resolver
 void CollisionResolver::AddEnterCollision(Collision collision)
 {
-	enterCollisions.push_back(CollisionResolveInfo(collision, false));
+	enterCollisions.push_back(CollisionResolveInfo(collision, false, false));
 }
 
 // Exit a collision to the resolver. 
@@ -98,7 +89,7 @@ void CollisionResolver::AddExitCollision(Collision collision)
 		}
 	}
 
-	exitCollisions.push_back(CollisionResolveInfo(collision, false));
+	exitCollisions.push_back(CollisionResolveInfo(collision, false, false));
 }
 
 // Resolve all collision events for this resolver
@@ -106,8 +97,8 @@ void CollisionResolver::AddExitCollision(Collision collision)
 // (OnTriggerEnter, OnTriggerStay, OnTriggerExit)
 void CollisionResolver::ResolveCollisions(GameObject* obj)
 {
-	vector<UserComponent*> colEnt, colSty, colExt, trigEnt, trigSty, trigExt;
-	obj->GetCollisionAndTriggerCallbackComponents(&colEnt, &colSty, &colExt,
+	vector<UserComponent*> cntrlr, colEnt, colSty, colExt, trigEnt, trigSty, trigExt;
+	obj->GetCollisionAndTriggerCallbackComponents(&cntrlr, &colEnt, &colSty, &colExt,
 		&trigEnt, &trigSty, &trigExt);
 
 	if (colEnt.size() > 0 || trigEnt.size() > 0)
@@ -148,6 +139,9 @@ void CollisionResolver::ResolveCollisions(GameObject* obj)
 				if ((*iter).isTrigger)
 					for each(UserComponent* uc in trigExt)
 						uc->OnTriggerExit((*iter).col);
+				else if((*iter).isController)
+					for each (UserComponent * uc in cntrlr)
+						uc->OnControllerCollision((*iter).col);
 				else
 					for each (UserComponent* uc in colExt)
 						uc->OnCollisionExit((*iter).col);

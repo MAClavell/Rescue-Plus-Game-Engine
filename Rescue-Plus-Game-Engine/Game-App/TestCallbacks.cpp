@@ -10,6 +10,11 @@ TestCallbacks::~TestCallbacks()
 {
 }
 
+void TestCallbacks::OnControllerCollision(Collision collision)
+{
+	printf("%s controller collision with %s\n", collision.gameObject->GetName().c_str(), gameObject()->GetName().c_str());
+}
+
 void TestCallbacks::OnCollisionEnter(Collision collision)
 {
 	printf("%s entered %s\n", collision.gameObject->GetName().c_str(), gameObject()->GetName().c_str());

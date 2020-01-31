@@ -48,6 +48,12 @@ public:
 	virtual ~UserComponent() { };
 
 	// --------------------------------------------------------
+	// Override for a callback when a physics character controller
+	// collides with this
+	// --------------------------------------------------------
+	virtual void OnControllerCollision(Collision collision);
+
+	// --------------------------------------------------------
 	// Override for a callback when a physics object collides with this
 	// --------------------------------------------------------
 	virtual void OnCollisionEnter(Collision collision);

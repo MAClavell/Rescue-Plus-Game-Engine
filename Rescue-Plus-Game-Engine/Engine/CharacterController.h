@@ -10,6 +10,7 @@ private:
 	physx::PxController* pxController;
 	float radius;
 	float height;
+	bool isGrounded;
 
 	// --------------------------------------------------------
 	// Set the filter data of the controller
@@ -69,6 +70,8 @@ public:
 	// Get the max height the controller can step up objects
 	// --------------------------------------------------------
 	float GetStepOffset();
+
+	bool IsGrounded();
 
 	// --------------------------------------------------------
 	// Resize the character controller.

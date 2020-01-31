@@ -2,6 +2,8 @@
 
 using namespace DirectX;
 
+#define MOVE_SPEED 3
+
 FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent(gameObject)
 {
 	inputManager = InputManager::GetInstance();
@@ -73,10 +75,23 @@ void FirstPersonMovement::FixedUpdate(float deltaTime)
 void FirstPersonMovement::Update(float deltaTime)
 {
 	XMFLOAT3 move = XMFLOAT3(0,0,0);
-	if (inputManager->GetKey('R'))
+	if (inputManager->GetKey('I'))
 	{
-		move.z = deltaTime;
+		move.z += deltaTime * MOVE_SPEED;
 	}
+	else if (inputManager->GetKey('K'))
+	{
+		move.z -= deltaTime * MOVE_SPEED;
+	}
+	if (inputManager->GetKey('J'))
+	{
+		move.x -= deltaTime * MOVE_SPEED;
+	}
+	else if (inputManager->GetKey('L'))
+	{
+		move.x += deltaTime * MOVE_SPEED;
+	}
+
 	controller->Move(move, deltaTime, true);
 
 	//Detect Input in the update loop
