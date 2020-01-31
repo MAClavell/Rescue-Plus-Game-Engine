@@ -8,6 +8,8 @@ public:
 	bool IsSet(T flag) const { return 0 != (flags & (1 << (physx::PxU32)flag)); }
 	void Set(T flag) { flags |= (1 << (physx::PxU32)flag); }
 	void Unset(T flag) { flags &= ~(1 << (physx::PxU32)flag); }
+
+	PhysXFlags() {};
 };
 
 enum class CollisionLayer : physx::PxU32
@@ -40,7 +42,20 @@ enum class CollisionLayer : physx::PxU32
 
 
 struct CollisionLayers : PhysXFlags<CollisionLayer>
-{ };
+{ 
+	CollisionLayers() {};
+	CollisionLayers(bool setAll)
+	{
+		CollisionLayers layers;
+		for (uint32_t lay = (uint32_t)CollisionLayer::WorldStatic; lay <= (uint32_t)CollisionLayer::WorldDynamic; lay++)
+		{
+			if (!setAll)
+				layers.Unset((CollisionLayer)lay);
+			else layers.Set((CollisionLayer)lay);
+		}
+		this->flags = layers.flags;
+	}
+};
 
 enum class CharacterControllerCollisionFlag { None=1, Sides, Above, Below };
 

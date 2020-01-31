@@ -329,6 +329,18 @@ void PhysicsManager::RemoveActor(PxActor* actor)
 		scene->removeActor(*actor);
 }
 
+// Set the filter data of the controller
+PxQueryFilterData GetQueryFilterData(CollisionLayers layers)
+{
+	PxQueryFilterData data;
+	data.flags = PxQueryFlags(PxQueryFlag::eSTATIC | PxQueryFlag::eDYNAMIC | PxQueryFlag::ePREFILTER | PxQueryFlag::eANY_HIT);
+	data.data = PxFilterData();
+	data.data.word0 = (PxU32)(CollisionLayers(true).flags);
+	data.data.word1 = (PxU32)layers.flags;
+	return data;
+}
+
+// Cast a ray into the physics scene
 bool Raycast(XMFLOAT3 origin, XMFLOAT3 direction,
 	float maxDistance, ShapeDrawType drawType, float drawDuration)
 {
@@ -348,7 +360,9 @@ bool Raycast(XMFLOAT3 origin, XMFLOAT3 direction,
 	return didHit;
 }
 
-bool Raycast(DirectX::XMFLOAT3 origin, DirectX::XMFLOAT3 direction, RaycastHit* hitInfo, 
+// Cast a ray into the physics scene
+// hitInfo - out variable to get hit information out of the raycast
+bool Raycast(DirectX::XMFLOAT3 origin, DirectX::XMFLOAT3 direction, RaycastHit* hitInfo,
 	float maxDistance, ShapeDrawType drawType, float drawDuration)
 {
 	PxRaycastBuffer pxHit;
@@ -388,6 +402,108 @@ bool Raycast(DirectX::XMFLOAT3 origin, DirectX::XMFLOAT3 direction, RaycastHit* 
 	//Debug drawing
 	if (drawType != ShapeDrawType::None)
 		Renderer::GetInstance()->AddDebugRay(maxDistance, origin, direction, drawType, drawDuration);
+
+	return false;
+}
+
+// Cast a geometry shape into the physics scene
+bool Sweep(ColliderBase* collider, XMFLOAT3 direction, SweepHit* hitInfo, float maxDistance,
+	CollisionLayers layerMask, ShapeDrawType drawType, float drawDuration)
+{
+	PxShape* shape = collider->GetPxShape();
+	PxVec3 uhhhhhh = shape->getLocalPose().p;
+	PxVec3 uhh = shape->getActor()->getGlobalPose().p;
+
+	//Get correct position to start at
+	PxVec3 pos = shape->getActor()->getGlobalPose().p + shape->getLocalPose().p;
+	PxQuat rot = shape->getActor()->getGlobalPose().q * shape->getLocalPose().q;
+
+	//Create transform
+	PxTransform swpTrns = PxTransform(pos, rot);
+
+	//Perform the sweep
+	PxSweepBuffer pxHit;
+	if (PhysicsManager::GetInstance()->GetScene()->sweep(
+		shape->getGeometry().any(), swpTrns, Float3ToVec3(direction),
+		maxDistance, pxHit, PxHitFlag::eDEFAULT, GetQueryFilterData(layerMask), PhysicsManager::GetInstance()))
+	{
+		auto flags = pxHit.block.flags;
+
+		//Point
+		if (flags.isSet(PxHitFlag::ePOSITION))
+			hitInfo->point = Vec3ToFloat3(pxHit.block.position);
+		//Normal
+		if (flags.isSet(PxHitFlag::eNORMAL))
+			hitInfo->normal = Vec3ToFloat3(pxHit.block.normal);
+		//Distance
+		hitInfo->distance = pxHit.block.distance;
+
+		//GameObject info
+		hitInfo->collider = (ColliderBase*)pxHit.block.shape->userData;
+		if (hitInfo->collider->GetType() != ColliderType::Controller)
+		{
+			hitInfo->rigidBody = ((Collider*)hitInfo->collider)->GetAttachedRigidBody();
+			if (hitInfo->rigidBody != nullptr)
+				hitInfo->gameObject = hitInfo->rigidBody->gameObject();
+			else hitInfo->gameObject = hitInfo->collider->gameObject();
+		}
+		else hitInfo->gameObject = hitInfo->collider->gameObject();
+
+		//Debug drawing
+		if (drawType != ShapeDrawType::None)
+		{
+			Renderer::GetInstance()->AddDebugRay(pxHit.block.distance, Vec3ToFloat3(pos),
+				direction, drawType, drawDuration);
+
+			switch (collider->GetType())
+			{
+				case ColliderType::Box:
+				{
+					BoxCollider* box = (BoxCollider*)collider;
+					Renderer::GetInstance()->AddDebugCube(Vec3ToFloat3(pos), QuatToFloat4(rot),
+						box->GetSize(), drawType, drawDuration);
+				}
+					break;
+
+				case ColliderType::Sphere:
+				{
+					SphereCollider* sphere = (SphereCollider*)collider;
+					Renderer::GetInstance()->AddDebugSphere(Vec3ToFloat3(pos), QuatToFloat4(rot),
+						sphere->GetRadius(), drawType, drawDuration);
+				}
+					break;
+
+				case ColliderType::Capsule:
+				{
+					CapsuleCollider* capsule = (CapsuleCollider*)collider;
+					Renderer::GetInstance()->AddDebugCapsule(capsule->GetRadius(), capsule->GetHeight(),
+						Vec3ToFloat3(pos), QuatToFloat4(rot),
+						drawType, drawDuration);
+				}
+					break;
+
+				case ColliderType::Controller:
+				{
+					CharacterController* controller = (CharacterController*)collider;
+					Renderer::GetInstance()->AddDebugCapsule(controller->GetRadius(), controller->GetHeight(),
+						Vec3ToFloat3(pos), QuatToFloat4(rot),
+						drawType, drawDuration);
+				}
+					break;
+
+				default:
+					break;
+			}
+		}
+
+
+		return true;
+	}
+
+	//Debug drawing
+	if (drawType != ShapeDrawType::None)
+		Renderer::GetInstance()->AddDebugRay(maxDistance, Vec3ToFloat3(pos),
+			direction, drawType, drawDuration);
 
 	return false;
 }

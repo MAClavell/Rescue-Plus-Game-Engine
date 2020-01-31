@@ -39,6 +39,11 @@ ColliderType ColliderBase::GetType()
 	return type;
 }
 
+PxShape* ColliderBase::GetPxShape()
+{
+	return shape;
+}
+
 // Get this collider's collision layer type 
 // (what type of layer this collider belongs to)
 CollisionLayer ColliderBase::GetCollisionLayerType()

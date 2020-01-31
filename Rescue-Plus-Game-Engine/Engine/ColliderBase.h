@@ -69,6 +69,13 @@ public:
 	ColliderType GetType();
 
 	// --------------------------------------------------------
+	// FOR INTERNAL ENGINE USE ONLY
+	//
+	// Get the PhysX shape object this collider represents
+	// --------------------------------------------------------
+	physx::PxShape* GetPxShape();
+
+	// --------------------------------------------------------
 	// Get this collider's collision layer type 
 	// (what type of layer this collider belongs to)
 	// --------------------------------------------------------

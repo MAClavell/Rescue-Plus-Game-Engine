@@ -53,6 +53,7 @@ private:
 	ID3D11SamplerState* shadowSampler;
 
 	GameObject* crate10C;
+	GameObject* trigger;
 
 	// Initialization helper methods - feel free to customize, combine, etc.
 	void LoadAssets();

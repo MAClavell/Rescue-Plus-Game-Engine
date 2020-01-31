@@ -246,8 +246,23 @@ void Game::Update(float deltaTime, float totalTime)
 			printf("Raycast hit on: %s\n", hit.gameObject->GetName().c_str());
 		}
 	}
-	else if(!inputManager->GetKey('R'))
+	else if (!inputManager->GetKey('R'))
 		r = false;
+
+	static bool s = false;
+	if (inputManager->GetKey('Y') && !s)
+	{
+		s = true;
+		SweepHit hit;
+		if (Sweep(crate10C->GetComponent<Collider>(), camera->gameObject()->GetForwardAxis(), &hit, 10,
+			CollisionLayers(true),
+			ShapeDrawType::ForDuration, 30))
+		{
+			printf("Sweep hit on: %s\n", hit.gameObject->GetName().c_str());
+		}
+	}
+	else if (!inputManager->GetKey('Y'))
+		s = false;
 
 
 	//All game code goes above

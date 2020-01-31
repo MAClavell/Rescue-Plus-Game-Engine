@@ -155,6 +155,16 @@ bool CharacterController::IsGrounded()
 	return isGrounded;
 }
 
+float CharacterController::GetRadius()
+{
+	return radius;
+}
+
+float CharacterController::GetHeight()
+{
+	return height;
+}
+
 // Resize the character controller.
 void CharacterController::Resize(float height)
 {

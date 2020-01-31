@@ -303,9 +303,9 @@ void Game::SetupScene()
 
 	GameObject* controller = new GameObject("CharController");
 	controller->SetPosition(0, 3, 0);
-	controller->AddComponent<CharacterController>(1,2);
-	controller->AddComponent<FirstPersonMovement>();
-	controller->AddComponent<TestCallbacks>();
+	//controller->AddComponent<CharacterController>(1,2);
+	//controller->AddComponent<FirstPersonMovement>();
+	//controller->AddComponent<TestCallbacks>();
 
 	//Create player
 	//FirstPersonMovement* player = FirstPersonMovement::CreateFirstPersonCharacter("Player", width, height);
@@ -377,10 +377,10 @@ void Game::SetupScene()
 	CreateCrane(resourceManager);
 
 	//Create trigger
-	GameObject* trigger = new GameObject("TriggerBox");
+	trigger = new GameObject("TriggerBox");
 	trigger->SetPosition(0, 3, 0);
 	trigger->AddComponent<BoxCollider>(XMFLOAT3(3, 3, 3), true)->SetDebug(true);
-	trigger->AddComponent<TestCallbacks>();
+	//trigger->AddComponent<TestCallbacks>();
 
 	//Create a capsule
 	//GameObject* capsule = new GameObject("Capsule");
