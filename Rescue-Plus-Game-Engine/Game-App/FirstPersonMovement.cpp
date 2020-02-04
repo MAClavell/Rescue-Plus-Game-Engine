@@ -1,30 +1,21 @@
 #include "FirstPersonMovement.h"
+#include "ExtendedMath.h"
 
 using namespace DirectX;
 
-#define MOVE_SPEED 3
+#define MOVE_SPEED 6
 
 FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent(gameObject)
 {
 	inputManager = InputManager::GetInstance();
 
 	controller = gameObject->GetComponent<CharacterController>();
-	controller->SetDebug(true);
 
-	//auto children = gameObject->GetChildren();
-	//go = gameObject;
+	auto children = gameObject->GetChildren();
 
 	//Get Camera
-	//camera = children[0]->GetComponent<Camera>();
-	//cameraGO = children[0];
-
-	//Get rigidbody
-	//rb = gameObject->GetComponent<RigidBody>();
-
-	//Get colliders
-	//standCol =go->GetComponent<CapsuleCollider>();
-	//crouchCol = children[1]->GetComponent<CapsuleCollider>();
-	//slideCol = children[2]->GetComponent<CapsuleCollider>();
+	camera = children[0]->GetComponent<Camera>();
+	cameraGO = children[0];
 
 	sprinting = false;
 	falling = false;
@@ -36,78 +27,30 @@ FirstPersonMovement::~FirstPersonMovement()
 
 // Factory function to safely create a First Person Movement object
 FirstPersonMovement* FirstPersonMovement::CreateFirstPersonCharacter(const char* name,
-	int screenWidth, int screenHeight)
+	float radius, float height, int screenWidth, int screenHeight)
 {
 	//Root object
 	GameObject* root = new GameObject(name);
-	root->AddComponent<RigidBody>(10.0f)->SetContraints(false, false, false, true, true, true);
-	root->AddComponent<CapsuleCollider>(1.0f, 2.0f, CapsuleDirection::Y);
+	root->AddComponent<CharacterController>(radius, height);
 
 	//Camera object
 	GameObject* camera = new GameObject("FPCamera");
-	camera->SetParent(root);
 	camera->AddComponent<Camera>()
 		->CreateProjectionMatrix(0.25f * XM_PI, (float)screenWidth / screenHeight, 0.1f, 10000.0f);
+	camera->SetParent(root);
 	camera->SetLocalPosition(0, 2, 0);
-
-	//Crouching collider
-	GameObject* crouchCol = new GameObject("CrouchingCollider");
-	crouchCol->SetParent(root);
-	crouchCol->SetLocalPosition(0, -1, 0);
-	crouchCol->AddComponent<CapsuleCollider>(1.0f, 1.0f, CapsuleDirection::Y)->SetCollisionLayers(true);
-
-	//Sliding collider
-	GameObject* slideCol = new GameObject("SlidingCollider");
-	slideCol->SetParent(root);
-	slideCol->SetLocalPosition(0, -1, 1);
-	slideCol->AddComponent<CapsuleCollider>(1.0f, 2.0f, CapsuleDirection::Z)->SetCollisionLayers(true);
 
 	//Add FirstPersonMovement component
 	FirstPersonMovement* fps = root->AddComponent<FirstPersonMovement>();
-
 	return fps;
-}
-
-void FirstPersonMovement::FixedUpdate(float deltaTime)
-{
 }
 
 void FirstPersonMovement::Update(float deltaTime)
 {
-	XMFLOAT3 move = XMFLOAT3(0,0,0);
-	if (inputManager->GetKey('I'))
-	{
-		move.z += deltaTime * MOVE_SPEED;
-	}
-	else if (inputManager->GetKey('K'))
-	{
-		move.z -= deltaTime * MOVE_SPEED;
-	}
-	if (inputManager->GetKey('J'))
-	{
-		move.x -= deltaTime * MOVE_SPEED;
-	}
-	else if (inputManager->GetKey('L'))
-	{
-		move.x += deltaTime * MOVE_SPEED;
-	}
+	//Rotate the camera to where the user is looking
+	CalculateCameraRotFromMouse();
 
-	controller->Move(move, deltaTime, true);
-
-	//Detect Input in the update loop
-	
-	//Check if the right mouse button is held down
-	/*
-	if (inputManager->GetMouseButtonDown(MouseButtons::R))
-	{
-		SetCursorPos(inputManager->GetWindowCenterX(), inputManager->GetWindowCenterY());
-	}
-	else if (inputManager->GetMouseButton(MouseButtons::R))
-	{
-		CalculateCameraRotFromMouse();
-	}
-
-	//Detect movement input
+	//Detect Input first
 	short movementZ = 0; //0=none, 1=W, 2=S
 	short movementX = 0; //0=none, 1=D, 2=A
 	if (inputManager->GetKey('W'))
@@ -167,42 +110,53 @@ void FirstPersonMovement::Update(float deltaTime)
 		speedMult = 0.5f;
 	//else if (sliding)
 
+	XMVECTOR moveVec = XMVectorSet(0, 0, 0, 0);
+
 	//Normal movement
 	if (!sliding)
 	{
-		XMFLOAT3 velocity = XMFLOAT3(0, rb->GetLinearVelocity().y ,0);
 		//Relative Z movement
+		//W
 		if (movementZ == 1)
 		{
-			velocity.z = baseSpeed * speedMult;
+			XMFLOAT3 forward = gameObject()->GetForwardAxis();
+			moveVec = XMVectorAdd(moveVec,
+				XMVectorScale(XMLoadFloat3(&forward), MOVE_SPEED * speedMult * deltaTime));
 		}
+		//S
 		else if (movementZ == 2)
 		{
-			velocity.z = -baseSpeed * speedMult;
+			XMFLOAT3 forward = gameObject()->GetForwardAxis();
+			moveVec = XMVectorSubtract(moveVec,
+				XMVectorScale(XMLoadFloat3(&forward), MOVE_SPEED * speedMult * deltaTime));
 		}
 		//Relative X movement
+		//D
 		if (movementX == 3)
 		{
-			velocity.x += baseSpeed * speedMult;
+			XMFLOAT3 right = gameObject()->GetRightAxis();
+			moveVec = XMVectorAdd(moveVec,
+				XMVectorScale(XMLoadFloat3(&right), MOVE_SPEED * speedMult * deltaTime));
 		}
+		//A
 		else if (movementX == 4)
 		{
-			velocity.x = -baseSpeed * speedMult;
+			XMFLOAT3 right = gameObject()->GetRightAxis();
+			moveVec = XMVectorSubtract(moveVec,
+				XMVectorScale(XMLoadFloat3(&right), MOVE_SPEED * speedMult * deltaTime));
 		}
-		//Rotate and send to rb
-		XMStoreFloat3(&velocity, XMVector3Rotate(XMLoadFloat3(&velocity),
-			XMLoadFloat4(&go->GetRotation())));
-		rb->SetLinearVelocity(velocity);
 	}
 	//Sliding movement
 	else
 	{
 
 	}
-	*/
 
+	XMFLOAT3 move;
+	XMStoreFloat3(&move, moveVec);
+	controller->Move(move, deltaTime, true);
 }
-/*
+
 // Changes for when we start a sprint
 void FirstPersonMovement::StartSprint()
 {
@@ -218,11 +172,13 @@ void FirstPersonMovement::EndSprint()
 void FirstPersonMovement::StartCrouch()
 {
 	crouching = true;
+	controller->Resize(0.5f);
 }
 // Changes for when we end a crouch
 void FirstPersonMovement::EndCrouch()
 {
 	crouching = false;
+	controller->Resize(2.0f);
 }
 
 // Changes for when we start a slide
@@ -289,7 +245,7 @@ void FirstPersonMovement::CalculateCameraRotFromMouse()
 	//Change the Yaw and the Pitch of the camera
 	if (!sliding)
 	{
-		go->SetRotation(0, yRot, 0);
+		gameObject()->SetRotation(0, yRot, 0);
 		cameraGO->SetRotation(xRot, yRot, 0);
 	}
 
@@ -302,4 +258,3 @@ Camera* FirstPersonMovement::GetCamera()
 {
 	return camera;
 }
-*/

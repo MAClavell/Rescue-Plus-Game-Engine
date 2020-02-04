@@ -47,6 +47,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)CollisionResolver.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Component.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)DebugShapes.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)InputCodes.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Messenger.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Job.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)JobSystem.h" />

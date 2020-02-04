@@ -2,9 +2,7 @@
 #include "Windows.h"
 #include <DirectXMath.h>
 #include <map>
-
-//Enum for mouse buttons
-enum class MouseButtons {L, R, M};
+#include "InputCodes.h"
 
 // Singleton basis from: https://stackoverflow.com/questions/1008019/c-singleton-design-pattern
 

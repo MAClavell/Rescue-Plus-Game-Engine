@@ -3,6 +3,30 @@
 #include <algorithm>
 
 // --------------------------------------------------------
+//Quickly add two XMFLOAT3s together
+// --------------------------------------------------------
+static DirectX::XMFLOAT3 XMFloat3QuickAdd(DirectX::XMFLOAT3 a, DirectX::XMFLOAT3 b)
+{
+	DirectX::XMFLOAT3 res;
+	DirectX::XMStoreFloat3(&res, DirectX::XMVectorAdd(
+		DirectX::XMLoadFloat3(&a), DirectX::XMLoadFloat3(&b)
+	));
+	return res;
+}
+
+// --------------------------------------------------------
+//Quickly subtract two XMFLOAT3s from eachother
+// --------------------------------------------------------
+static DirectX::XMFLOAT3 XMFloat3QuickSubtract(DirectX::XMFLOAT3 a, DirectX::XMFLOAT3 b)
+{
+	DirectX::XMFLOAT3 res;
+	DirectX::XMStoreFloat3(&res, DirectX::XMVectorSubtract(
+		DirectX::XMLoadFloat3(&a), DirectX::XMLoadFloat3(&b)
+	));
+	return res;
+}
+
+// --------------------------------------------------------
 //Clamp a value between a range
 // --------------------------------------------------------
 static float Clamp(float value, float min, float max)

@@ -46,6 +46,12 @@
     <Filter Include="Source Files\Management">
       <UniqueIdentifier>{4b066e20-1f58-4222-a57c-1dfd7bb50373}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Input">
+      <UniqueIdentifier>{0d6b72ad-be8d-4ff5-92c1-ef905d9c6db7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Input">
+      <UniqueIdentifier>{6bb13951-74dc-4032-ae1e-60d2fd8a261d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)GameObject.cpp">
@@ -53,9 +59,6 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Lights.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)InputManager.cpp">
-      <Filter>Source Files\Management</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)LightManager.cpp">
       <Filter>Source Files\Management</Filter>
@@ -117,6 +120,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)DebugShapes.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)InputManager.cpp">
+      <Filter>Source Files\Input</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)GameObject.h">
@@ -124,9 +130,6 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Lights.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)InputManager.h">
-      <Filter>Header Files\Management</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)LightManager.h">
       <Filter>Header Files\Management</Filter>
@@ -220,6 +223,12 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)ColliderBase.h">
       <Filter>Header Files\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)InputManager.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)InputCodes.h">
+      <Filter>Header Files\Input</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

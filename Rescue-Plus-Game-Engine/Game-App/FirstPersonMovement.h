@@ -12,15 +12,8 @@ private:
 	CharacterController* controller;
 
 	//Components
-	/*
-	GameObject* go;
 	Camera* camera;
 	GameObject* cameraGO;
-	RigidBody* rb;
-	CapsuleCollider* standCol;
-	CapsuleCollider* crouchCol;
-	CapsuleCollider* slideCol;
-	*/
 
 	float yRot = 0;
 
@@ -33,7 +26,7 @@ private:
 	bool falling;
 	bool crouching;
 	bool sliding;
-	/*
+	
 	// --------------------------------------------------------
 	// Changes for when we start a sprint
 	// --------------------------------------------------------
@@ -65,12 +58,11 @@ private:
 	// Calculate the camera's rotation when the player moves the mouse
 	// --------------------------------------------------------
 	void CalculateCameraRotFromMouse();
-	*/
+	
 public:
 	FirstPersonMovement(GameObject* gameObject);
 	~FirstPersonMovement();
 
-	void FixedUpdate(float deltaTime) override;
 	void Update(float deltaTime) override;
 
 	// --------------------------------------------------------
@@ -79,11 +71,11 @@ public:
 	// name - the name of the root game object
 	// --------------------------------------------------------
 	static FirstPersonMovement* CreateFirstPersonCharacter(const char* name,
-		int screenWidth, int screenHeight);
+		float radius, float height, int screenWidth, int screenHeight);
 
 	// --------------------------------------------------------
 	// Get the controller's camera
 	// --------------------------------------------------------
-	//Camera* GetCamera();
+	Camera* GetCamera();
 };
 

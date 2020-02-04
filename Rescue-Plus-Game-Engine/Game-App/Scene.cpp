@@ -295,22 +295,17 @@ static GameObject* CreateCrate(ResourceManager* rm, const char* name, float size
 void Game::SetupScene()
 {
 	//Create the camera and initialize matrices
+	/*
 	GameObject* cameraGO = new GameObject("DebugCamera");
 	camera = cameraGO->AddComponent<Camera>();
 	camera->CreateProjectionMatrix(0.25f * XM_PI, (float)width / height, 0.1f, 10000.0f);
 	cameraGO->AddComponent<DebugMovement>();
 	cameraGO->AddComponent<TestBullet>();
-
-	GameObject* controller = new GameObject("CharController");
-	controller->SetPosition(0, 3, 0);
-	//controller->AddComponent<CharacterController>(1,2);
-	//controller->AddComponent<FirstPersonMovement>();
-	//controller->AddComponent<TestCallbacks>();
+	*/
 
 	//Create player
-	//FirstPersonMovement* player = FirstPersonMovement::CreateFirstPersonCharacter("Player", width, height);
-	//camera = player->GetCamera();
-	//player->gameObject()->AddComponent<TestBullet>();
+	player = FirstPersonMovement::CreateFirstPersonCharacter("Player", 1, 2, width, height);
+	camera = player->GetCamera();
 
 	//Create the floor
 	floor = new GameObject("Floor");

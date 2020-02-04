@@ -8,6 +8,7 @@
 #include "ResourceManager.h"
 #include "PhysicsManager.h"
 #include "LightManager.h"
+#include "FirstPersonMovement.h"
 
 class Game 
 	: public DXCore
@@ -54,6 +55,7 @@ private:
 
 	GameObject* crate10C;
 	GameObject* trigger;
+	FirstPersonMovement* player;
 
 	// Initialization helper methods - feel free to customize, combine, etc.
 	void LoadAssets();
