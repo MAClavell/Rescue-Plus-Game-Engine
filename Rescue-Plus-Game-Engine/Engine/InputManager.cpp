@@ -42,6 +42,11 @@ void InputManager::UpdateStates()
 	prev_MB_R_Down = mb_R_Down;
 	prev_MB_M_Down = mb_M_Down;
 	wheelDelta = 0;
+
+	prevKeyboardState = keyboardState;
+	for (int i = 0; i < 256; i++) {
+		keyboardState[i] = GetAsyncKeyState(i);
+	}
 }
 
 //Update the mouse position (only call ONCE PER FRAME!)
@@ -67,6 +72,19 @@ bool InputManager::IsWindowFocused()
 	return true;
 }
 
+// Caputure the mouse so we keep getting mouse move events even if the
+// mouse leaves the window
+void InputManager::CaptureWindow()
+{
+	SetCapture(hWnd);
+}
+
+// Release the control of the mouse
+void InputManager::ReleaseWindow()
+{
+	ReleaseCapture();
+}
+
 // --------------------------------------------------------
 // Helper method for mouse clicking.  We get this information
 // from the OS-level messages anyway, so these helpers have
@@ -82,11 +100,6 @@ void InputManager::OnMouseDown(WPARAM buttonState, int x, int y)
 	if (buttonState & 0x0001) { mb_L_Down = true; }
 	else if (buttonState & 0x0002) { mb_R_Down = true; }
 	else if (buttonState & 0x0010) { mb_M_Down = true; }
-
-	// Caputure the mouse so we keep getting mouse move
-	// events even if the mouse leaves the window.  we'll be
-	// releasing the capture once a mouse button is released
-	SetCapture(hWnd);
 }
 
 // --------------------------------------------------------
@@ -98,10 +111,6 @@ void InputManager::OnMouseUp(WPARAM buttonState, int x, int y, int button)
 	if (button & 0x0001) { mb_L_Down = false; }
 	else if (button & 0x0002) { mb_R_Down = false; }
 	else if (button & 0x0010) { mb_M_Down = false; }
-
-	// We don't care about the tracking the cursor outside
-	// the window anymore (we're not dragging if the mouse is up)
-	ReleaseCapture();
 }
 
 // --------------------------------------------------------
@@ -128,30 +137,36 @@ void InputManager::OnMouseWheel(float wheelDelta, int x, int y)
 }
 
 //Returns true while the inputted key is held down
-bool InputManager::GetKey(char key)
+bool InputManager::GetKey(Key key)
 {
 	//Early return if we need focus and we don't have it
 	if (winRequireFocus && !windowFocused)
 		return false;
 
-	return GetAsyncKeyState(key) & 0x8000;
+	return (keyboardState[(int)key] & 0x8000) != 0;
 }
 
-//TODO: Implement keyboard states
-
-/*
 //Returns true during the frame the user pressed down the inputted key
-bool InputManager::GetKeyDown(char key)
+bool InputManager::GetKeyDown(Key key)
 {
-	return false;
+	//Early return if we need focus and we don't have it
+	if (winRequireFocus && !windowFocused)
+		return false;
+
+	return ((keyboardState[(int)key] & 0x8000) != 0)
+		&& ((prevKeyboardState[(int)key] & 0x8000) == 0);
 }
 
 //Returns true the first frame the user releases the inputted key
-bool InputManager::GetKeyUp(char key)
+bool InputManager::GetKeyUp(Key key)
 {
-	return false;
+	//Early return if we need focus and we don't have it
+	if (winRequireFocus && !windowFocused)
+		return false;
+
+	return ((keyboardState[(int)key] & 0x8000) == 0)
+		&& ((prevKeyboardState[(int)key] & 0x8000) != 0);
 }
-*/
 
 // Returns true while the inputted mouse button is held down
 bool InputManager::GetMouseButton(MouseButtons button)

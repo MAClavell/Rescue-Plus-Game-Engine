@@ -1,9 +1,11 @@
 #include "FirstPersonMovement.h"
 #include "ExtendedMath.h"
+#include "PhysicsManager.h"
 
 using namespace DirectX;
 
 #define MOVE_SPEED 6
+#define JUMP_SPEED 1000
 
 FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent(gameObject)
 {
@@ -18,9 +20,12 @@ FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent
 	cameraGO = children[0];
 
 	sprinting = false;
-	falling = false;
+	grounded = false;
 	crouching = false;
 	sliding = false;
+	applyGravity = true;
+
+	velocity = XMFLOAT3(0, 0, 0);
 }
 FirstPersonMovement::~FirstPersonMovement()
 { }
@@ -42,47 +47,55 @@ FirstPersonMovement* FirstPersonMovement::CreateFirstPersonCharacter(const char*
 
 	//Add FirstPersonMovement component
 	FirstPersonMovement* fps = root->AddComponent<FirstPersonMovement>();
+	root->SetPosition(0, 3, 0);
 	return fps;
 }
 
 void FirstPersonMovement::Update(float deltaTime)
 {
 	//Rotate the camera to where the user is looking
+	inputManager->CaptureWindow();
 	CalculateCameraRotFromMouse();
 
 	//Detect Input first
+	grounded = controller->IsGrounded();
 	short movementZ = 0; //0=none, 1=W, 2=S
 	short movementX = 0; //0=none, 1=D, 2=A
-	if (inputManager->GetKey('W'))
+	if (inputManager->GetKey(Key::W))
 	{
 		movementZ = 1;
 	}
-	else if (inputManager->GetKey('S'))
+	else if (inputManager->GetKey(Key::S))
 	{
 		movementZ = 2;
 	}
-	if (inputManager->GetKey('D'))
+	if (inputManager->GetKey(Key::D))
 	{
 		movementX = 3;
 	}
-	else if (inputManager->GetKey('A'))
+	else if (inputManager->GetKey(Key::A))
 	{
 		movementX = 4;
 	}
 
-	//Don't have to hold these buttons down
-	if (inputManager->GetKey('Q') && !sprinting)
+	//Sprint check
+	//Don't have to hold the sprint buttons down
+	//Toggle
+	if (grounded && inputManager->GetKeyDown(Key::LeftShift) && !sprinting)
 	{
 		if (crouching)
 			EndCrouch();
-		if (sliding)
+		else if (sliding)
 			EndSlide();
-
-		StartSprint();
+		else
+			StartSprint();
 	}
 	else if (sprinting && movementZ == 0 && movementX == 0)
 		EndSprint();
-	if (inputManager->GetKey('C'))
+	
+	//Crouch check
+	//Toggle
+	if (grounded && inputManager->GetKeyDown(Key::LeftControl))
 	{
 		//If we are sprinting, start a slide
 		if (crouching)
@@ -110,9 +123,10 @@ void FirstPersonMovement::Update(float deltaTime)
 		speedMult = 0.5f;
 	//else if (sliding)
 
+	//Apply movement
 	XMVECTOR moveVec = XMVectorSet(0, 0, 0, 0);
-
-	//Normal movement
+	XMVECTOR accVec = XMVectorSet(0, 0, 0, 0);
+	XMVECTOR velVec = XMLoadFloat3(&velocity);
 	if (!sliding)
 	{
 		//Relative Z movement
@@ -152,9 +166,28 @@ void FirstPersonMovement::Update(float deltaTime)
 
 	}
 
+	//Jumping
+	if (grounded && inputManager->GetKeyDown(Key::Space))
+	{
+		velVec = XMVectorSetY(velVec, 0);
+		accVec = XMVectorSetY(accVec, JUMP_SPEED);
+	}
+	
+	//Apply custom physics
+	velVec = XMVectorAdd(velVec, XMVectorScale(accVec, deltaTime));
+
+	//Apply gravity
+	if (applyGravity && !grounded)
+	{
+		velVec = XMVectorSetY(velVec, XMVectorGetY(velVec) + (PhysicsManager::GetInstance()->GetGravity() * deltaTime));
+	}
+	XMStoreFloat3(&velocity, velVec);
+	moveVec = XMVectorAdd(moveVec, XMVectorScale(velVec, deltaTime));
+
+	//Move the character
 	XMFLOAT3 move;
 	XMStoreFloat3(&move, moveVec);
-	controller->Move(move, deltaTime, true);
+	controller->Move(move, deltaTime, false);
 }
 
 // Changes for when we start a sprint

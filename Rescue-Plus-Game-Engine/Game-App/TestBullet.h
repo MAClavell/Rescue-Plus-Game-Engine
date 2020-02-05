@@ -11,7 +11,6 @@ private:
 	Mesh* sphereMesh;
 	Material* whiteMat;
 	InputManager* inputManager;
-	bool fPressed = false;
 
 public:
 	TestBullet(GameObject* gameObject);

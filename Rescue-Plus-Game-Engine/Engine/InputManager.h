@@ -2,6 +2,7 @@
 #include "Windows.h"
 #include <DirectXMath.h>
 #include <map>
+#include <array>
 #include "InputCodes.h"
 
 // Singleton basis from: https://stackoverflow.com/questions/1008019/c-singleton-design-pattern
@@ -15,8 +16,8 @@ class InputManager
 {
 private:
 	//Keyboard Control
-	std::map<char, bool> pressedKeys;
-	std::map<char, bool> prevPressedKeys;
+	std::array<SHORT, 256> keyboardState;
+	std::array<SHORT, 256> prevKeyboardState;
 
 	//Mouse control
 	POINT mousePos;
@@ -86,6 +87,18 @@ public:
 	// --------------------------------------------------------
 	bool IsWindowFocused();
 
+
+	// --------------------------------------------------------
+	// Caputure the mouse so we keep getting mouse move events even if the
+	// mouse leaves the window
+	// --------------------------------------------------------
+	void CaptureWindow();
+
+	// --------------------------------------------------------
+	// Release the control of the mouse
+	// --------------------------------------------------------
+	void ReleaseWindow();
+
 	// --------------------------------------------------------
 	// NOT FOR USE OUTSIDE OF GAME.CPP
 	// Helper method for mouse clicking.
@@ -132,21 +145,17 @@ public:
 	// --------------------------------------------------------
 	// Returns true while the inputted key is held down
 	// --------------------------------------------------------
-	bool GetKey(char key);
+	bool GetKey(Key key);
 
-	//TODO: Implement key states
-
-	/*
 	// --------------------------------------------------------
 	// Returns true during the frame the user pressed down the inputted key
 	// --------------------------------------------------------
-	bool GetKeyDown(char key);
+	bool GetKeyDown(Key key);
 
 	// --------------------------------------------------------
 	// Returns true the first frame the user releases the inputted key
 	// --------------------------------------------------------
-	bool GetKeyUp(char key);
-	*/
+	bool GetKeyUp(Key key);
 
 	// --------------------------------------------------------
 	// Returns true while the inputted mouse button is held down

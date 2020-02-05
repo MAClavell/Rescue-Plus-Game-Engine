@@ -25,31 +25,31 @@ void DebugMovement::Movement(float deltaTime)
 	XMFLOAT3 movement = XMFLOAT3();
 
 	//Relative Z movement
-	if (inputManager->GetKey('W'))
+	if (inputManager->GetKey(Key::W))
 	{
 		movement.z += moveSpeed * deltaTime;
 	}
-	else if (inputManager->GetKey('S'))
+	else if (inputManager->GetKey(Key::S))
 	{
 		movement.z -= moveSpeed * deltaTime;
 	}
 
 	//Relative X movement
-	if (inputManager->GetKey('D'))
+	if (inputManager->GetKey(Key::D))
 	{
 		movement.x += moveSpeed * deltaTime;
 	}
-	else if (inputManager->GetKey('A'))
+	else if (inputManager->GetKey(Key::A))
 	{
 		movement.x -= moveSpeed * deltaTime;
 	}
 
 	//Absolute Y movement
-	if (inputManager->GetKey('Q'))
+	if (inputManager->GetKey(Key::Q))
 	{
 		gameObject()->MoveAbsolute(XMFLOAT3(0, +moveSpeed * deltaTime, 0));
 	}
-	else if (inputManager->GetKey('E'))
+	else if (inputManager->GetKey(Key::E))
 	{
 		gameObject()->MoveAbsolute(XMFLOAT3(0, -moveSpeed * deltaTime, 0));
 	}

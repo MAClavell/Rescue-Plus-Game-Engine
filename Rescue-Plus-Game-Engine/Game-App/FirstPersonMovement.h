@@ -1,7 +1,6 @@
 #pragma once
 #include "Camera.h"
 #include "InputManager.h"
-#include "Collider.h"
 #include "CharacterController.h"
 
 class FirstPersonMovement :
@@ -15,18 +14,21 @@ private:
 	Camera* camera;
 	GameObject* cameraGO;
 
-	float yRot = 0;
-
 	//Speeds
 	float baseSpeed = 10;
 	float slideSpeed = 20;
 
 	//Control
 	bool sprinting;
-	bool falling;
 	bool crouching;
 	bool sliding;
-	
+	bool grounded;
+	bool applyGravity;
+	float yRot = 0;
+
+	//Physics
+	DirectX::XMFLOAT3 velocity;
+
 	// --------------------------------------------------------
 	// Changes for when we start a sprint
 	// --------------------------------------------------------

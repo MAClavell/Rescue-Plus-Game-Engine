@@ -6,6 +6,7 @@
 #include "TestBullet.h"
 #include "ShipyardCrane.h"
 #include "FirstPersonMovement.h"
+#include "Collider.h"
 
 using namespace DirectX;
 

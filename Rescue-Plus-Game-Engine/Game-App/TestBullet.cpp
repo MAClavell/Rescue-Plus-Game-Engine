@@ -15,31 +15,25 @@ TestBullet::TestBullet(GameObject* gameObject) : UserComponent(gameObject)
 void TestBullet::Update(float deltaTime)
 {
 	//Temp workaround until I get input manager working fully
-	if (inputManager->GetKey('F'))
+	if (inputManager->GetKeyDown(Key::F))
 	{
-		if (!fPressed)
-		{
-			fPressed = true;
+		//Spawn bullet
+		GameObject* bullet = new GameObject("Bullet");
+		bullet->AddComponent<MeshRenderer>(
+			sphereMesh,
+			whiteMat);
 
-			//Spawn bullet
-			GameObject* bullet = new GameObject("Bullet");
-			bullet->AddComponent<MeshRenderer>(
-				sphereMesh,
-				whiteMat);
+		//Set initial transforms
+		XMFLOAT3 pos = gameObject()->GetPosition();
+		bullet->SetPosition(pos.x, pos.y - 0.5f, pos.z);
+		bullet->SetScale(0.5f, 0.5f, 0.5f);
 
-			//Set initial transforms
-			XMFLOAT3 pos = gameObject()->GetPosition();
-			bullet->SetPosition(pos.x, pos.y - 0.5f, pos.z);
-			bullet->SetScale(0.5f, 0.5f, 0.5f);
-
-			//Physics, add a force
-			bullet->AddComponent<SphereCollider>(0.25f);
-			XMFLOAT3 force;
-			XMStoreFloat3(&force, XMVectorScale(XMLoadFloat3(&gameObject()->GetForwardAxis()), 3000.0f));
-			bullet->AddComponent<RigidBody>(1.0f)->AddForce(force);
-		}
+		//Physics, add a force
+		bullet->AddComponent<SphereCollider>(0.25f);
+		XMFLOAT3 force;
+		XMStoreFloat3(&force, XMVectorScale(XMLoadFloat3(&gameObject()->GetForwardAxis()), 3000.0f));
+		bullet->AddComponent<RigidBody>(1.0f)->AddForce(force);
 	}
-	else fPressed = false;
 }
 
 TestBullet::~TestBullet()

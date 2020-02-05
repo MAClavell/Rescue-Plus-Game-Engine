@@ -202,13 +202,13 @@ void Game::Update(float deltaTime, float totalTime)
 
 
 	// Quit if the escape key is pressed
-	if (inputManager->GetKey(VK_ESCAPE))
+	if (inputManager->GetKey(Key::Escape))
 		Quit();
 
 	//Update all entities
 	entityManager->Update(deltaTime);
 
-	if (inputManager->GetKey('G'))
+	if (inputManager->GetKey(Key::G))
 	{
 		GameObject* box4 = new GameObject("Box4");
 		box4->AddComponent<MeshRenderer>(
@@ -221,24 +221,22 @@ void Game::Update(float deltaTime, float totalTime)
 		box4->AddComponent<BoxCollider>(box4->GetScale());
 	}
 
-	if (inputManager->GetKey('T'))
+	if (inputManager->GetKey(Key::T))
 	{
 		static float amt = 4;
 		amt += 2 * deltaTime;
 		crate10C->SetLocalPosition(0, amt, 0);
 	}
 
-	if (inputManager->GetKey('R'))
+	if (inputManager->GetKey(Key::R))
 	{
 		static float amt = 0;
 		amt += 10 * deltaTime;
 		crate10C->SetLocalRotation(0, amt, 45);
 	}
 
-	static bool r = false;
-	if (inputManager->GetKey('R') && !r)
+	if (inputManager->GetKeyDown(Key::H))
 	{
-		r = true;
 		RaycastHit hit;
 		if (Raycast(camera->gameObject()->GetPosition(), camera->gameObject()->GetForwardAxis(), &hit, 10,
 			ShapeDrawType::ForDuration, 30))
@@ -246,13 +244,9 @@ void Game::Update(float deltaTime, float totalTime)
 			printf("Raycast hit on: %s\n", hit.gameObject->GetName().c_str());
 		}
 	}
-	else if (!inputManager->GetKey('R'))
-		r = false;
 
-	static bool s = false;
-	if (inputManager->GetKey('Y') && !s)
+	if (inputManager->GetKeyDown(Key::Y))
 	{
-		s = true;
 		SweepHit hit;
 		if (Sweep(crate10C->GetComponent<Collider>(), camera->gameObject()->GetForwardAxis(), &hit, 10,
 			CollisionLayers(true),
@@ -261,8 +255,6 @@ void Game::Update(float deltaTime, float totalTime)
 			printf("Sweep hit on: %s\n", hit.gameObject->GetName().c_str());
 		}
 	}
-	else if (!inputManager->GetKey('Y'))
-		s = false;
 
 
 	//All game code goes above
