@@ -305,7 +305,7 @@ void Game::SetupScene()
 	*/
 
 	//Create player
-	player = FirstPersonMovement::CreateFirstPersonCharacter("Player", 1, 2, width, height);
+	player = FirstPersonMovement::CreateFirstPersonCharacter("Player", width, height);
 	camera = player->GetCamera();
 
 	//Create the floor

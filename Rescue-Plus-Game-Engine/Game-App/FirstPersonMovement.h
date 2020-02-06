@@ -14,20 +14,18 @@ private:
 	Camera* camera;
 	GameObject* cameraGO;
 
-	//Speeds
-	float baseSpeed = 10;
-	float slideSpeed = 20;
-
 	//Control
 	bool sprinting;
 	bool crouching;
 	bool sliding;
+	bool firstSlideFrame;
 	bool grounded;
 	bool applyGravity;
 	float yRot = 0;
 
 	//Physics
 	DirectX::XMFLOAT3 velocity;
+	DirectX::XMFLOAT3 slideDir;
 
 	// --------------------------------------------------------
 	// Changes for when we start a sprint
@@ -50,11 +48,11 @@ private:
 	// --------------------------------------------------------
 	// Changes for when we start a slide
 	// --------------------------------------------------------
-	void StartSlide();
+	void StartSlide(DirectX::XMVECTOR* velVec);
 	// --------------------------------------------------------
 	// Changes for when we end a slide
 	// --------------------------------------------------------
-	void EndSlide();
+	void EndSlide(DirectX::XMVECTOR* velVec);
 
 	// --------------------------------------------------------
 	// Calculate the camera's rotation when the player moves the mouse
@@ -73,7 +71,7 @@ public:
 	// name - the name of the root game object
 	// --------------------------------------------------------
 	static FirstPersonMovement* CreateFirstPersonCharacter(const char* name,
-		float radius, float height, int screenWidth, int screenHeight);
+		int screenWidth, int screenHeight);
 
 	// --------------------------------------------------------
 	// Get the controller's camera
