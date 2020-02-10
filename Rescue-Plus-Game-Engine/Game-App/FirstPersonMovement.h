@@ -48,11 +48,11 @@ private:
 	// --------------------------------------------------------
 	// Changes for when we start a slide
 	// --------------------------------------------------------
-	void StartSlide(DirectX::XMVECTOR* velVec);
+	void StartSlide(DirectX::XMVECTOR* accVec);
 	// --------------------------------------------------------
 	// Changes for when we end a slide
 	// --------------------------------------------------------
-	void EndSlide(DirectX::XMVECTOR* velVec);
+	void EndSlide(DirectX::XMVECTOR* velVec, DirectX::XMVECTOR* accVec);
 
 	// --------------------------------------------------------
 	// Calculate the camera's rotation when the player moves the mouse

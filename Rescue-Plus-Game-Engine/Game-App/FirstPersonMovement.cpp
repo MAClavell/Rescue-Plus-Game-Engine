@@ -4,14 +4,16 @@
 
 using namespace DirectX;
 
-#define MOVE_SPEED 6
-#define SPRINT_MULT 2
-#define SLIDE_SPEED (MOVE_SPEED * SPRINT_MULT * 400)
-#define SLIDE_FRICTION 10
-#define SLIDE_CUTOFF 0.1f
-#define JUMP_SPEED 1000
+#define MOVE_SPEED 10
+#define SPRINT_SPEED 14
+#define CROUCH_SPEED 5
+#define SLIDE_SPEED (SPRINT_SPEED * 200)
+#define SLIDE_FRICTION (SLIDE_SPEED * 0.005f)
+#define SLIDE_CUTOFF 1.0f
+#define JUMP_SPEED 1300
 #define STAND_HEIGHT 2.0f
 #define CROUCH_HEIGHT 1.5f
+#define SLIDE_HEIGHT 1.0f
 
 FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent(gameObject)
 {
@@ -55,7 +57,7 @@ FirstPersonMovement* FirstPersonMovement::CreateFirstPersonCharacter(const char*
 
 	//Add FirstPersonMovement component
 	FirstPersonMovement* fps = root->AddComponent<FirstPersonMovement>();
-	root->SetPosition(0, 3, 0);
+	root->SetPosition(0, 2.5f, 0);
 	return fps;
 }
 
@@ -92,17 +94,18 @@ void FirstPersonMovement::Update(float deltaTime)
 
 	//Sprint check
 	//Don't have to hold the sprint buttons down
+	//Must be moving forward
 	//Toggle
-	if (grounded && inputManager->GetKeyDown(Key::LeftShift) && !sprinting)
+	if (grounded && inputManager->GetKeyDown(Key::LeftShift) && !sprinting && movementZ == 1)
 	{
 		if (crouching)
 			EndCrouch();
 		else if (sliding)
-			EndSlide(&velVec);
+			EndSlide(&velVec, &accVec);
 		
 		StartSprint();
 	}
-	else if (sprinting && movementZ == 0 && movementX == 0)
+	else if (sprinting && movementZ == 0)
 		EndSprint();
 
 	//Crouch check
@@ -121,18 +124,30 @@ void FirstPersonMovement::Update(float deltaTime)
 		}
 		else if (sliding)
 		{
-			EndSlide(&velVec);
+			EndSlide(&velVec, &accVec);
 			StartCrouch();
 		}
 		else StartCrouch();
 	}
 
+	//Jumping
+	if (grounded && inputManager->GetKeyDown(Key::Space))
+	{
+		if (crouching)
+			EndCrouch();
+		else if (sliding)
+			EndSlide(&velVec, &accVec);
+
+		velVec = XMVectorSetY(velVec, 0);
+		accVec = XMVectorSetY(accVec, JUMP_SPEED);
+	}
+
 	//Get correct speed mult
-	float speedMult = 1;
+	float currSpeed = MOVE_SPEED;
 	if (sprinting)
-		speedMult = 2;
+		currSpeed = SPRINT_SPEED;
 	else if (crouching)
-		speedMult = 0.5f;
+		currSpeed = CROUCH_SPEED;
 
 	//Apply movement
 	XMVECTOR moveVec = XMVectorSet(0, 0, 0, 0);
@@ -144,14 +159,14 @@ void FirstPersonMovement::Update(float deltaTime)
 		{
 			XMFLOAT3 forward = gameObject()->GetForwardAxis();
 			moveVec = XMVectorAdd(moveVec,
-				XMVectorScale(XMLoadFloat3(&forward), MOVE_SPEED * speedMult * deltaTime));
+				XMVectorScale(XMLoadFloat3(&forward), currSpeed * deltaTime));
 		}
 		//S
 		else if (movementZ == 2)
 		{
 			XMFLOAT3 forward = gameObject()->GetForwardAxis();
 			moveVec = XMVectorSubtract(moveVec,
-				XMVectorScale(XMLoadFloat3(&forward), MOVE_SPEED * speedMult * deltaTime));
+				XMVectorScale(XMLoadFloat3(&forward), currSpeed * deltaTime));
 		}
 		//Relative X movement
 		//D
@@ -159,14 +174,14 @@ void FirstPersonMovement::Update(float deltaTime)
 		{
 			XMFLOAT3 right = gameObject()->GetRightAxis();
 			moveVec = XMVectorAdd(moveVec,
-				XMVectorScale(XMLoadFloat3(&right), MOVE_SPEED * speedMult * deltaTime));
+				XMVectorScale(XMLoadFloat3(&right), currSpeed * deltaTime));
 		}
 		//A
 		else if (movementX == 4)
 		{
 			XMFLOAT3 right = gameObject()->GetRightAxis();
 			moveVec = XMVectorSubtract(moveVec,
-				XMVectorScale(XMLoadFloat3(&right), MOVE_SPEED * speedMult * deltaTime));
+				XMVectorScale(XMLoadFloat3(&right), currSpeed * deltaTime));
 		}
 	}
 	//Sliding movement
@@ -180,22 +195,13 @@ void FirstPersonMovement::Update(float deltaTime)
 			if (velX < SLIDE_CUTOFF && velX > -SLIDE_CUTOFF
 				&& velZ < SLIDE_CUTOFF && velZ > -SLIDE_CUTOFF)
 			{
-				EndSlide(&velVec);
+				EndSlide(&velVec, &accVec);
+				StartCrouch();
 			}
 			//Apply friction
 			else accVec = XMVectorSubtract(accVec, XMVectorScale(XMLoadFloat3(&slideDir), SLIDE_FRICTION));
 		}
 		else firstSlideFrame = false;
-	}
-
-	//Jumping
-	if (grounded && inputManager->GetKeyDown(Key::Space))
-	{
-		if (sliding)
-			EndSlide(&velVec);
-
-		velVec = XMVectorSetY(velVec, 0);
-		accVec = XMVectorSetY(accVec, JUMP_SPEED);
 	}
 	
 	//Apply custom physics
@@ -207,8 +213,8 @@ void FirstPersonMovement::Update(float deltaTime)
 		velVec = XMVectorSetY(velVec, XMVectorGetY(velVec) + (PhysicsManager::GetInstance()->GetGravity() * deltaTime));
 	}
 	XMStoreFloat3(&velocity, velVec);
+	moveVec = XMVector3ClampLength(moveVec, 0, currSpeed * deltaTime);
 	moveVec = XMVectorAdd(moveVec, XMVectorScale(velVec, deltaTime));
-	printf("%.2f, %.2f, %.2f\n", velocity.x, velocity.y, velocity.z);
 
 	//Move the character
 	XMFLOAT3 move;
@@ -250,18 +256,24 @@ void FirstPersonMovement::StartSlide(XMVECTOR* accVec)
 	*accVec = XMVectorAdd(*accVec, 
 		XMVectorScale(XMLoadFloat3(&gameObject()->GetForwardAxis()), SLIDE_SPEED));
 	slideDir = gameObject()->GetForwardAxis();
+	controller->Resize(SLIDE_HEIGHT);
+	cameraGO->SetLocalPosition(0, SLIDE_HEIGHT, 0);
+
 }
 // Changes for when we end a slide
-void FirstPersonMovement::EndSlide(XMVECTOR* velVec)
+void FirstPersonMovement::EndSlide(XMVECTOR* velVec, XMVECTOR* accVec)
 {
 	sliding = false;
 	*velVec = XMVectorSet(0, XMVectorGetY(*velVec), 0, 0);
+	*accVec = XMVectorSet(0, XMVectorGetY(*accVec), 0, 0);
+	controller->Resize(STAND_HEIGHT);
+	cameraGO->SetLocalPosition(0, STAND_HEIGHT, 0);
 }
 
 // Calculate the camera's rotation when the player moves the mouse
 void FirstPersonMovement::CalculateCameraRotFromMouse()
 {
-	static float cameraSensitivity = 0.25f;
+	static float cameraSensitivity = 0.15f;
 
 	//Get the center position of the window
 	long centerX = inputManager->GetWindowCenterX();
