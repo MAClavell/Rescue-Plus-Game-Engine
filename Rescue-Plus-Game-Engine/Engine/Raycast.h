@@ -14,6 +14,7 @@ struct RaycastHit
 	DirectX::XMFLOAT3 point;
 	RigidBody* rigidBody;
 	GameObject* gameObject;
+	RaycastHit() : collider(nullptr), rigidBody(nullptr), gameObject(nullptr) {};
 };
 
 // --------------------------------------------------------
@@ -27,6 +28,7 @@ struct SweepHit
 	DirectX::XMFLOAT3 point;
 	RigidBody* rigidBody;
 	GameObject* gameObject;
+	SweepHit() : collider(nullptr), rigidBody(nullptr), gameObject(nullptr) {};
 };
 
 // --------------------------------------------------------

@@ -1,6 +1,7 @@
 #include "FirstPersonMovement.h"
 #include "ExtendedMath.h"
 #include "PhysicsManager.h"
+#include "Raycast.h"
 
 using namespace DirectX;
 
@@ -14,6 +15,7 @@ using namespace DirectX;
 #define STAND_HEIGHT 2.0f
 #define CROUCH_HEIGHT 1.5f
 #define SLIDE_HEIGHT 1.0f
+#define SLIDE_BODY_LENGTH 2.0f
 
 FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent(gameObject)
 {
@@ -46,7 +48,7 @@ FirstPersonMovement* FirstPersonMovement::CreateFirstPersonCharacter(const char*
 {
 	//Root object
 	GameObject* root = new GameObject(name);
-	root->AddComponent<CharacterController>(1, STAND_HEIGHT);
+	root->AddComponent<CharacterController>(1, STAND_HEIGHT)->SetCollisionLayerType(CollisionLayer::Player);
 
 	//Camera object
 	GameObject* camera = new GameObject("FPCamera");
@@ -202,6 +204,18 @@ void FirstPersonMovement::Update(float deltaTime)
 			else accVec = XMVectorSubtract(accVec, XMVectorScale(XMLoadFloat3(&slideDir), SLIDE_FRICTION));
 		}
 		else firstSlideFrame = false;
+
+		//Sweep to stop the slide if we hit geometry
+		//Stop sliding if we hit some
+		SweepHit hit;
+		CollisionLayers layers = controller->GetCollisionLayers();
+		layers.Unset(CollisionLayer::Player);
+		Sweep(controller, slideDir, &hit, SLIDE_BODY_LENGTH, layers, ShapeDrawType::ForDuration, 30);
+		if (hit.collider != nullptr)
+		{
+			EndSlide(&velVec, &accVec);
+			StartCrouch();
+		}
 	}
 	
 	//Apply custom physics

@@ -411,8 +411,6 @@ bool Sweep(ColliderBase* collider, XMFLOAT3 direction, SweepHit* hitInfo, float 
 	CollisionLayers layerMask, ShapeDrawType drawType, float drawDuration)
 {
 	PxShape* shape = collider->GetPxShape();
-	PxVec3 uhhhhhh = shape->getLocalPose().p;
-	PxVec3 uhh = shape->getActor()->getGlobalPose().p;
 
 	//Get correct position to start at
 	PxVec3 pos = shape->getActor()->getGlobalPose().p + shape->getLocalPose().p;
