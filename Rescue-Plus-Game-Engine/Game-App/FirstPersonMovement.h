@@ -7,6 +7,8 @@ class FirstPersonMovement :
 	public UserComponent
 {
 private:
+	enum class SlideState{None, Starting, Sliding, Ending, EndingFromJump};
+
 	InputManager* inputManager;
 	CharacterController* controller;
 
@@ -14,23 +16,23 @@ private:
 	Camera* camera;
 	GameObject* cameraGO;
 
-	//Control
-	bool sprinting;
-	bool crouching;
-	bool sliding;
-	bool grounded;
-	bool applyGravity;
-	float yRot = 0;
-
-	//Input
-	bool jump;
-	short slide;
-	short movementX;
-	short movementZ;
-
 	//Physics
 	DirectX::XMFLOAT3 velocity;
 	DirectX::XMFLOAT3 slideDir;
+
+	//Input
+	float yRot = 0;
+	SlideState slideState;
+	short movementX;
+	short movementZ;
+	bool jump;
+
+	//Control
+	bool sprinting;
+	bool crouching;
+	bool grounded;
+	bool prevGrounded;
+	bool applyGravity;
 
 	// --------------------------------------------------------
 	// Changes for when we start a sprint
@@ -58,6 +60,10 @@ private:
 	// Changes for when we end a slide
 	// --------------------------------------------------------
 	void EndSlide();
+	// --------------------------------------------------------
+	// If the slide state is in a valid sliding state
+	// --------------------------------------------------------
+	bool IsSliding();
 
 	// --------------------------------------------------------
 	// Calculate the camera's rotation when the player moves the mouse

@@ -12,6 +12,8 @@ using namespace DirectX;
 #define SLIDE_FRICTION (SLIDE_SPEED * 0.01f)
 #define SLIDE_CUTOFF 1.0f
 #define JUMP_SPEED 500
+#define IN_AIR_HORIZONTAL_ACC 300
+#define MAX_IN_AIR_VELOCITY 10
 #define STAND_HEIGHT 2.0f
 #define CROUCH_HEIGHT 1.5f
 #define SLIDE_HEIGHT 1.0f
@@ -31,12 +33,12 @@ FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent
 
 	sprinting = false;
 	grounded = false;
+	prevGrounded = false;
 	crouching = false;
-	sliding = false;
 	applyGravity = true;
 
 	jump = false;
-	slide = 0;
+	slideState = SlideState::None;
 	movementX = 0;
 	movementZ = 0;
 
@@ -73,6 +75,8 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 	//Initialize physics
 	XMVECTOR accVec = XMVectorSet(0, 0, 0, 0);
 	XMVECTOR velVec = XMLoadFloat3(&velocity);
+	prevGrounded = grounded;
+	grounded = controller->IsGrounded();
 
 	//Apply jump physics
 	if (jump)
@@ -82,10 +86,14 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 		jump = false;
 	}
 
-	//Apply end slide physics
-	if (slide == 2)
+	//Landing, so remove our horizontal velocity
+	if (grounded && !prevGrounded)
+		velVec = XMVectorSet(0, XMVectorGetY(velVec), 0, 0);
+
+	//Reset velocity and accelaration after end of slide
+	if (slideState == SlideState::Ending)
 	{
-		slide = 0;
+		slideState = SlideState::None;
 		velVec = XMVectorSet(0, XMVectorGetY(velVec), 0, 0);
 		accVec = XMVectorSet(0, XMVectorGetY(accVec), 0, 0);
 	}
@@ -99,7 +107,83 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 
 	//Apply movement
 	XMVECTOR moveVec = XMVectorSet(0, 0, 0, 0);
-	if (!sliding)
+	//Sliding movement
+	if(IsSliding())
+	{
+		//Apply start slide physics
+		if (slideState == SlideState::Starting)
+		{
+			slideState = SlideState::Sliding;
+			accVec = XMVectorAdd(accVec,
+				XMVectorScale(XMLoadFloat3(&gameObject()->GetForwardAxis()), SLIDE_SPEED));
+			slideDir = gameObject()->GetForwardAxis();
+		}
+		else 
+		{
+			//If we stopped sliding from velocity
+			float velX = XMVectorGetX(velVec);
+			float velZ = XMVectorGetZ(velVec);
+			if (velX < SLIDE_CUTOFF && velX > -SLIDE_CUTOFF
+				&& velZ < SLIDE_CUTOFF && velZ > -SLIDE_CUTOFF)
+			{
+				EndSlide();
+				StartCrouch();
+			}
+			//Apply friction
+			else accVec = XMVectorSubtract(accVec, XMVectorScale(XMLoadFloat3(&slideDir), SLIDE_FRICTION));
+		}
+
+		//Sweep to stop the slide if we hit geometry
+		//Stop sliding if we hit some
+		SweepHit hit;
+		CollisionLayers layers = controller->GetCollisionLayers();
+		layers.Unset(CollisionLayer::Player);
+		Sweep(controller, slideDir, &hit, SLIDE_BODY_LENGTH, layers);
+		if (hit.collider != nullptr)
+		{
+			EndSlide();
+			StartCrouch();
+		}
+	}
+	//In-air movement
+	else if (!grounded)
+	{
+		if (XMVectorGetX(XMVector3LengthSq(velVec)) < MAX_IN_AIR_VELOCITY)
+		{			
+			//Relative Z movement
+			//W
+			if (movementZ == 1)
+			{
+				XMFLOAT3 forward = gameObject()->GetForwardAxis();
+				accVec = XMVectorAdd(accVec,
+					XMVectorScale(XMLoadFloat3(&forward), IN_AIR_HORIZONTAL_ACC * fixedTimestep));
+			}
+			//S
+			else if (movementZ == 2)
+			{
+				XMFLOAT3 forward = gameObject()->GetForwardAxis();
+				accVec = XMVectorSubtract(accVec,
+					XMVectorScale(XMLoadFloat3(&forward), IN_AIR_HORIZONTAL_ACC * fixedTimestep));
+			}
+			//Relative X movement
+			//D
+			if (movementX == 1)
+			{
+				XMFLOAT3 right = gameObject()->GetRightAxis();
+				accVec = XMVectorAdd(accVec,
+					XMVectorScale(XMLoadFloat3(&right), IN_AIR_HORIZONTAL_ACC * fixedTimestep));
+			}
+			//A
+			else if (movementX == 2)
+			{
+				XMFLOAT3 right = gameObject()->GetRightAxis();
+				accVec = XMVectorSubtract(accVec,
+					XMVectorScale(XMLoadFloat3(&right), IN_AIR_HORIZONTAL_ACC * fixedTimestep));
+			}
+		}
+	}
+	//Normal movement
+	else
 	{
 		//Relative Z movement
 		//W
@@ -116,58 +200,31 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 			moveVec = XMVectorSubtract(moveVec,
 				XMVectorScale(XMLoadFloat3(&forward), currSpeed * fixedTimestep));
 		}
+		//No input
+		else
+		{
+
+		}
+
 		//Relative X movement
 		//D
-		if (movementX == 3)
+		if (movementX == 1)
 		{
 			XMFLOAT3 right = gameObject()->GetRightAxis();
 			moveVec = XMVectorAdd(moveVec,
 				XMVectorScale(XMLoadFloat3(&right), currSpeed * fixedTimestep));
 		}
 		//A
-		else if (movementX == 4)
+		else if (movementX == 2)
 		{
 			XMFLOAT3 right = gameObject()->GetRightAxis();
 			moveVec = XMVectorSubtract(moveVec,
 				XMVectorScale(XMLoadFloat3(&right), currSpeed * fixedTimestep));
 		}
-	}
-	//Sliding movement
-	else
-	{
-		if (slide == 0)
+		//No input
+		else
 		{
-			//If we stopped sliding from velocity
-			float velX = XMVectorGetX(velVec);
-			float velZ = XMVectorGetZ(velVec);
-			if (velX < SLIDE_CUTOFF && velX > -SLIDE_CUTOFF
-				&& velZ < SLIDE_CUTOFF && velZ > -SLIDE_CUTOFF)
-			{
-				EndSlide();
-				StartCrouch();
-			}
-			//Apply friction
-			else accVec = XMVectorSubtract(accVec, XMVectorScale(XMLoadFloat3(&slideDir), SLIDE_FRICTION));
-		}
-		//Apply start slide physics
-		if (slide == 1)
-		{
-			slide = 0;
-			accVec = XMVectorAdd(accVec,
-				XMVectorScale(XMLoadFloat3(&gameObject()->GetForwardAxis()), SLIDE_SPEED));
-			slideDir = gameObject()->GetForwardAxis();
-		}
 
-		//Sweep to stop the slide if we hit geometry
-		//Stop sliding if we hit some
-		SweepHit hit;
-		CollisionLayers layers = controller->GetCollisionLayers();
-		layers.Unset(CollisionLayer::Player);
-		Sweep(controller, slideDir, &hit, SLIDE_BODY_LENGTH, layers);
-		if (hit.collider != nullptr)
-		{
-			EndSlide();
-			StartCrouch();
 		}
 	}
 
@@ -199,7 +256,6 @@ void FirstPersonMovement::Update(float deltaTime)
 	CalculateCameraRotFromMouse();
 
 	//Detect Input first
-	grounded = controller->IsGrounded();
 	movementZ = 0; //0=none, 1=W, 2=S
 	movementX = 0; //0=none, 1=D, 2=A
 	if (inputManager->GetKey(Key::W))
@@ -207,9 +263,9 @@ void FirstPersonMovement::Update(float deltaTime)
 	else if (inputManager->GetKey(Key::S))
 		movementZ = 2;
 	if (inputManager->GetKey(Key::D))
-		movementX = 3;
+		movementX = 1;
 	else if (inputManager->GetKey(Key::A))
-		movementX = 4;
+		movementX = 2;
 
 	//Sprint check
 	//Don't have to hold the sprint buttons down
@@ -219,7 +275,7 @@ void FirstPersonMovement::Update(float deltaTime)
 	{
 		if (crouching)
 			EndCrouch();
-		else if (sliding)
+		else if (IsSliding())
 			EndSlide();
 		
 		StartSprint();
@@ -241,7 +297,7 @@ void FirstPersonMovement::Update(float deltaTime)
 			EndSprint();
 			StartSlide();
 		}
-		else if (sliding)
+		else if (IsSliding())
 		{
 			EndSlide();
 			StartCrouch();
@@ -254,7 +310,7 @@ void FirstPersonMovement::Update(float deltaTime)
 	{
 		if (crouching)
 			EndCrouch();
-		else if (sliding)
+		else if (IsSliding())
 			EndSlide();
 		jump = true;
 	}
@@ -289,8 +345,7 @@ void FirstPersonMovement::EndCrouch()
 // Changes for when we start a slide
 void FirstPersonMovement::StartSlide()
 {
-	slide = 1;
-	sliding = true;
+	slideState = SlideState::Starting;
 	controller->Resize(SLIDE_HEIGHT);
 	cameraGO->SetLocalPosition(0, SLIDE_HEIGHT, 0);
 
@@ -298,10 +353,14 @@ void FirstPersonMovement::StartSlide()
 // Changes for when we end a slide
 void FirstPersonMovement::EndSlide()
 {
-	slide = 2;
-	sliding = false;
+	slideState = SlideState::Ending;
 	controller->Resize(STAND_HEIGHT);
 	cameraGO->SetLocalPosition(0, STAND_HEIGHT, 0);
+}
+// If the slide state is in a valid sliding state
+bool FirstPersonMovement::IsSliding()
+{
+	return slideState == SlideState::Starting || slideState == SlideState::Sliding;
 }
 
 // Calculate the camera's rotation when the player moves the mouse
