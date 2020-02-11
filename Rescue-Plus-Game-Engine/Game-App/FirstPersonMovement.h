@@ -18,10 +18,15 @@ private:
 	bool sprinting;
 	bool crouching;
 	bool sliding;
-	bool firstSlideFrame;
 	bool grounded;
 	bool applyGravity;
 	float yRot = 0;
+
+	//Input
+	bool jump;
+	short slide;
+	short movementX;
+	short movementZ;
 
 	//Physics
 	DirectX::XMFLOAT3 velocity;
@@ -48,11 +53,11 @@ private:
 	// --------------------------------------------------------
 	// Changes for when we start a slide
 	// --------------------------------------------------------
-	void StartSlide(DirectX::XMVECTOR* accVec);
+	void StartSlide();
 	// --------------------------------------------------------
 	// Changes for when we end a slide
 	// --------------------------------------------------------
-	void EndSlide(DirectX::XMVECTOR* velVec, DirectX::XMVECTOR* accVec);
+	void EndSlide();
 
 	// --------------------------------------------------------
 	// Calculate the camera's rotation when the player moves the mouse
@@ -63,6 +68,7 @@ public:
 	FirstPersonMovement(GameObject* gameObject);
 	~FirstPersonMovement();
 
+	void FixedUpdate(float fixedTimestep) override;
 	void Update(float deltaTime) override;
 
 	// --------------------------------------------------------
