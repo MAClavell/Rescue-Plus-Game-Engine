@@ -3,6 +3,7 @@
 #include "Component.h"
 #include <vector>
 #include <string>
+#include <type_traits>
 #include "Messenger.hpp"
 #include "MiscHelpers.h"
 
@@ -174,32 +175,33 @@ public:
 		components.push_back(component);
 
 		//Update and fixed update
-		if (&Component::Update != &T::Update)
+		//if (&Component::Update != &T::Update)
+		if(!std::is_same<decltype(&Component::Update), decltype(&T::Update)>::value)
 			updateComponents.push_back(component);
-		if (&Component::FixedUpdate != &T::FixedUpdate)
+		if (!std::is_same<decltype(&Component::FixedUpdate), decltype(&T::FixedUpdate)>::value)
 			fixedUpdateComponents.push_back(component);
 
 		//User componenets
 		if constexpr(std::is_base_of<UserComponent, T>())
 		{
 			//Controller collisions
-			if (&UserComponent::OnControllerCollision != &T::OnControllerCollision)
+			if (!std::is_same<decltype(&UserComponent::OnControllerCollision), decltype(&T::OnControllerCollision)>::value)
 				onControllerCollisionComponents.push_back(component);
 
 			//Collisions
-			if (&UserComponent::OnCollisionEnter != &T::OnCollisionEnter)
+			if (!std::is_same<decltype(&UserComponent::OnCollisionEnter), decltype(&T::OnCollisionEnter)>::value)
 				onCollisionEnterComponents.push_back(component);
-			if (&UserComponent::OnCollisionStay != &T::OnCollisionStay)
+			if (!std::is_same<decltype(&UserComponent::OnCollisionStay), decltype(&T::OnCollisionStay)>::value)
 				onCollisionStayComponents.push_back(component);
-			if (&UserComponent::OnCollisionExit != &T::OnCollisionExit)
+			if (!std::is_same<decltype(&UserComponent::OnCollisionExit), decltype(&T::OnCollisionExit)>::value)
 				onCollisionExitComponents.push_back(component);
 
 			//Triggers
-			if (&UserComponent::OnTriggerEnter != &T::OnTriggerEnter)
+			if (!std::is_same<decltype(&UserComponent::OnTriggerEnter), decltype(&T::OnTriggerEnter)>::value)
 				onTriggerEnterComponents.push_back(component);
-			if (&UserComponent::OnTriggerStay != &T::OnTriggerStay)
+			if (!std::is_same<decltype(&UserComponent::OnTriggerStay), decltype(&T::OnTriggerStay)>::value)
 				onTriggerStayComponents.push_back(component);
-			if (&UserComponent::OnTriggerExit != &T::OnTriggerExit)
+			if (!std::is_same<decltype(&UserComponent::OnTriggerExit), decltype(&T::OnTriggerExit)>::value)
 				onTriggerExitComponents.push_back(component);
 		}
 
@@ -247,29 +249,33 @@ public:
 		if (found)
 		{
 			//Remove update and fixed update
-			if (&Component::Update != &T::Update)
+			if (!std::is_same<decltype(&Component::Update), decltype(&T::Update)>::value)
 				RemoveTypeFromVector(&updateComponents);
-			if (&Component::FixedUpdate != &T::FixedUpdate)
+			if (!std::is_same<decltype(&Component::FixedUpdate), decltype(&T::FixedUpdate)>::value)
 				RemoveTypeFromVector(&fixedUpdateComponents);
 
 			//Remove user components
 			if constexpr (std::is_base_of<UserComponent, T>())
 			{
+				//Controller collisions
+				if (!std::is_same<decltype(&UserComponent::OnControllerCollision), decltype(&T::OnControllerCollision)>::value)
+					RemoveTypeFromVector(&onControllerCollisionComponents);
+
 				//Collisions
-				if (&UserComponent::OnCollisionEnter != &T::OnCollisionEnter)
-					RemoveTypeFromVector(&OnCollisionEnterComponents);
-				if (&UserComponent::OnCollisionStay != &T::OnCollisionStay)
-					RemoveTypeFromVector(&OnCollisionStayComponents);
-				if (&UserComponent::OnCollisionExit != &T::OnCollisionExit)
-					RemoveTypeFromVector(&OnCollisionExitComponents);
+				if (!std::is_same<decltype(&UserComponent::OnCollisionEnter), decltype(&T::OnCollisionEnter)>::value)
+					RemoveTypeFromVector(&onCollisionEnterComponents);
+				if (!std::is_same<decltype(&UserComponent::OnCollisionStay), decltype(&T::OnCollisionStay)>::value)
+					RemoveTypeFromVector(&onCollisionStayComponents);
+				if (!std::is_same<decltype(&UserComponent::OnCollisionExit), decltype(&T::OnCollisionExit)>::value)
+					RemoveTypeFromVector(&onCollisionExitComponents);
 
 				//Triggers
-				if (&UserComponent::OnTriggerEnter != &T::OnTriggerEnter)
-					RemoveTypeFromVector(&OnTriggerEnterComponents);
-				if (&UserComponent::OnTriggerStay != &T::OnTriggerStay)
-					RemoveTypeFromVector(&OnTriggerStayComponents);
-				if (&UserComponent::OnTriggerExit != &T::OnTriggerExit)
-					RemoveTypeFromVector(&OnTriggerExitComponents);
+				if (!std::is_same<decltype(&UserComponent::OnTriggerEnter), decltype(&T::OnTriggerEnter)>::value)
+					RemoveTypeFromVector(&onTriggerEnterComponents);
+				if (!std::is_same<decltype(&UserComponent::OnTriggerStay), decltype(&T::OnTriggerStay)>::value)
+					RemoveTypeFromVector(&onTriggerStayComponents);
+				if (!std::is_same<decltype(&UserComponent::OnTriggerExit), decltype(&T::OnTriggerExit)>::value)
+					RemoveTypeFromVector(&onTriggerExitComponents);
 			}
 
 			//Delete
