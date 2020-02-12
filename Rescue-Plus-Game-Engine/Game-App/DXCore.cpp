@@ -387,7 +387,7 @@ HRESULT DXCore::Run()
 				//Fixed update
 				static float accumulator = 0.0f;
 				accumulator += deltaTime;
-				if (accumulator >= fixedUpdateStepSize)
+				while (accumulator >= fixedUpdateStepSize)
 				{
 					accumulator -= fixedUpdateStepSize;
 					FixedUpdate(fixedUpdateStepSize, totalTime);
