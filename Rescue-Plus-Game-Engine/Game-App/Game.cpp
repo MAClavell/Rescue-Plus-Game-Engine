@@ -138,7 +138,7 @@ void Game::Init()
 	SetupScene();
 
 	//Set new gravity
-	physicsManager->SetGravity(-12.0f);
+	physicsManager->SetGravity(-15.0f);
 
 	//Initialize lights
 	//Set ambient light

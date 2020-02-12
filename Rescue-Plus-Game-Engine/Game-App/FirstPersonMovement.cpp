@@ -8,12 +8,13 @@ using namespace DirectX;
 #define MOVE_SPEED 10
 #define SPRINT_SPEED 14
 #define CROUCH_SPEED 5
+#define JUMP_HORIZONTAL_SPEED 5
+#define ACC_MULT 6
+#define ACC_JUMP_MULT 2
 #define SLIDE_SPEED (SPRINT_SPEED * 100)
 #define SLIDE_FRICTION (SLIDE_SPEED * 0.01f)
 #define SLIDE_CUTOFF 1.0f
 #define JUMP_SPEED 500
-#define IN_AIR_HORIZONTAL_ACC 300
-#define MAX_IN_AIR_VELOCITY 10
 #define STAND_HEIGHT 2.0f
 #define CROUCH_HEIGHT 1.5f
 #define SLIDE_HEIGHT 1.0f
@@ -41,6 +42,10 @@ FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent
 	slideState = SlideState::None;
 	movementX = 0;
 	movementZ = 0;
+	xMult = 0;
+	zMult = 0;
+	xInAirMult = 0;
+	zInAirMult = 0;
 
 	velocity = XMFLOAT3(0, 0, 0);
 	slideDir = XMFLOAT3(0, 0, 0);
@@ -78,26 +83,6 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 	prevGrounded = grounded;
 	grounded = controller->IsGrounded();
 
-	//Apply jump physics
-	if (jump)
-	{
-		velVec = XMVectorSetY(velVec, 0);
-		accVec = XMVectorSetY(accVec, JUMP_SPEED);
-		jump = false;
-	}
-
-	//Landing, so remove our horizontal velocity
-	if (grounded && !prevGrounded)
-		velVec = XMVectorSet(0, XMVectorGetY(velVec), 0, 0);
-
-	//Reset velocity and accelaration after end of slide
-	if (slideState == SlideState::Ending)
-	{
-		slideState = SlideState::None;
-		velVec = XMVectorSet(0, XMVectorGetY(velVec), 0, 0);
-		accVec = XMVectorSet(0, XMVectorGetY(accVec), 0, 0);
-	}
-
 	//Get correct speed mult
 	float currSpeed = MOVE_SPEED;
 	if (sprinting)
@@ -126,7 +111,7 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 			if (velX < SLIDE_CUTOFF && velX > -SLIDE_CUTOFF
 				&& velZ < SLIDE_CUTOFF && velZ > -SLIDE_CUTOFF)
 			{
-				EndSlide();
+				EndSlide(false);
 				StartCrouch();
 			}
 			//Apply friction
@@ -141,46 +126,66 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 		Sweep(controller, slideDir, &hit, SLIDE_BODY_LENGTH, layers);
 		if (hit.collider != nullptr)
 		{
-			EndSlide();
+			EndSlide(false);
 			StartCrouch();
 		}
 	}
 	//In-air movement
 	else if (!grounded)
 	{
-		if (XMVectorGetX(XMVector3LengthSq(velVec)) < MAX_IN_AIR_VELOCITY)
-		{			
-			//Relative Z movement
-			//W
-			if (movementZ == 1)
-			{
-				XMFLOAT3 forward = gameObject()->GetForwardAxis();
-				accVec = XMVectorAdd(accVec,
-					XMVectorScale(XMLoadFloat3(&forward), IN_AIR_HORIZONTAL_ACC * fixedTimestep));
-			}
-			//S
-			else if (movementZ == 2)
-			{
-				XMFLOAT3 forward = gameObject()->GetForwardAxis();
-				accVec = XMVectorSubtract(accVec,
-					XMVectorScale(XMLoadFloat3(&forward), IN_AIR_HORIZONTAL_ACC * fixedTimestep));
-			}
-			//Relative X movement
-			//D
-			if (movementX == 1)
-			{
-				XMFLOAT3 right = gameObject()->GetRightAxis();
-				accVec = XMVectorAdd(accVec,
-					XMVectorScale(XMLoadFloat3(&right), IN_AIR_HORIZONTAL_ACC * fixedTimestep));
-			}
-			//A
-			else if (movementX == 2)
-			{
-				XMFLOAT3 right = gameObject()->GetRightAxis();
-				accVec = XMVectorSubtract(accVec,
-					XMVectorScale(XMLoadFloat3(&right), IN_AIR_HORIZONTAL_ACC * fixedTimestep));
-			}
+		//Relative Z movement
+		//W
+		if (movementZ == 1)
+		{
+			if (zInAirMult < 1)
+				zInAirMult += fixedTimestep * ACC_JUMP_MULT;
 		}
+		//S
+		else if (movementZ == 2)
+		{
+			if (zInAirMult > -1)
+				zInAirMult -= fixedTimestep * ACC_JUMP_MULT;
+		}
+		//No input
+		else
+		{
+			if (zInAirMult < -0.01)
+				zInAirMult += fixedTimestep * ACC_JUMP_MULT;
+			else if (zInAirMult > 0.01)
+				zInAirMult -= fixedTimestep * ACC_JUMP_MULT;
+			else zInAirMult = 0;
+		}
+		moveVec = XMVectorAdd(moveVec,
+			XMVectorScale(
+				XMLoadFloat3(&gameObject()->GetForwardAxis()), 
+				JUMP_HORIZONTAL_SPEED * zInAirMult));
+
+		//Relative X movement
+		//D
+		if (movementX == 1)
+		{
+			if (xInAirMult < 1)
+				xInAirMult += fixedTimestep * ACC_JUMP_MULT;
+		}
+		//A
+		else if (movementX == 2)
+		{
+			if (xInAirMult > -1)
+				xInAirMult -= fixedTimestep * ACC_JUMP_MULT;
+		}
+		//No input
+		else
+		{
+			if (xInAirMult < -0.01)
+				xInAirMult += fixedTimestep * ACC_JUMP_MULT;
+			else if (xInAirMult > 0.01)
+				xInAirMult -= fixedTimestep * ACC_JUMP_MULT;
+			else xInAirMult = 0;
+		}
+		moveVec = XMVectorAdd(moveVec,
+			XMVectorScale(
+				XMLoadFloat3(&gameObject()->GetRightAxis()),
+				JUMP_HORIZONTAL_SPEED * xInAirMult));
 	}
 	//Normal movement
 	else
@@ -189,54 +194,101 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 		//W
 		if (movementZ == 1)
 		{
-			XMFLOAT3 forward = gameObject()->GetForwardAxis();
-			moveVec = XMVectorAdd(moveVec,
-				XMVectorScale(XMLoadFloat3(&forward), currSpeed * fixedTimestep));
+			if (zMult < 1)
+				zMult += fixedTimestep * ACC_MULT;
 		}
 		//S
 		else if (movementZ == 2)
 		{
-			XMFLOAT3 forward = gameObject()->GetForwardAxis();
-			moveVec = XMVectorSubtract(moveVec,
-				XMVectorScale(XMLoadFloat3(&forward), currSpeed * fixedTimestep));
+			if(zMult > -1)
+				zMult -= fixedTimestep * ACC_MULT;
 		}
 		//No input
 		else
 		{
-
+			if (zMult < -0.01)
+				zMult += fixedTimestep * ACC_MULT;
+			else if (zMult > 0.01)
+				zMult -= fixedTimestep * ACC_MULT;
+			else zMult = 0;
 		}
+		moveVec = XMVectorAdd(moveVec,
+			XMVectorScale(
+				XMLoadFloat3(&gameObject()->GetForwardAxis()),
+				currSpeed * zMult));
 
 		//Relative X movement
 		//D
 		if (movementX == 1)
 		{
-			XMFLOAT3 right = gameObject()->GetRightAxis();
-			moveVec = XMVectorAdd(moveVec,
-				XMVectorScale(XMLoadFloat3(&right), currSpeed * fixedTimestep));
+			if (xMult < 1)
+				xMult += fixedTimestep * ACC_MULT;
 		}
 		//A
 		else if (movementX == 2)
 		{
-			XMFLOAT3 right = gameObject()->GetRightAxis();
-			moveVec = XMVectorSubtract(moveVec,
-				XMVectorScale(XMLoadFloat3(&right), currSpeed * fixedTimestep));
+			if (xMult > -1)
+				xMult -= fixedTimestep * ACC_MULT;
 		}
 		//No input
 		else
 		{
-
+			if (xMult < -0.01)
+				xMult += fixedTimestep * ACC_MULT;
+			else if (xMult > 0.01)
+				xMult -= fixedTimestep * ACC_MULT;
+			else xMult = 0;
 		}
+		moveVec = XMVectorAdd(moveVec,
+			XMVectorScale(
+				XMLoadFloat3(&gameObject()->GetRightAxis()),
+				currSpeed * xMult));
 	}
 
-	//Apply custom physics
+	//Clamp displacement
+	moveVec = XMVector3ClampLength(moveVec, 0, currSpeed);
+	//Scale displacement by the timestep
+	moveVec = XMVectorScale(moveVec, fixedTimestep);
+
+	//Landing, so remove our horizontal velocity
+	if (grounded && !prevGrounded)
+		velVec = XMVectorSet(0, XMVectorGetY(velVec), 0, 0);
+
+	//Apply jump physics
+	if (jump)
+	{
+		XMVECTOR startingDir = slideState == SlideState::EndingFromJump ?
+			velVec : moveVec;
+		velVec = XMVectorSet(
+			XMVectorGetX(startingDir),
+			0,
+			XMVectorGetZ(startingDir),
+			0);
+		accVec = XMVectorSetY(accVec, JUMP_SPEED);
+		jump = false;
+	}
+
+	//Reset velocity and accelaration after end of slide
+	if (slideState == SlideState::Ending)
+	{
+		slideState = SlideState::None;
+		velVec = XMVectorSet(0, XMVectorGetY(velVec), 0, 0);
+		accVec = XMVectorSet(0, XMVectorGetY(accVec), 0, 0);
+	}
+	else if (slideState == SlideState::EndingFromJump)
+	{
+		slideState = SlideState::None;
+		accVec = XMVectorSet(0, XMVectorGetY(accVec), 0, 0);
+	}
+
+	//Apply acceleration to velocity
 	velVec = XMVectorAdd(velVec, XMVectorScale(accVec, fixedTimestep));
 
-	//Apply first half of gravity
+	//Apply gravity to velocity
 	if (applyGravity && !grounded)
 		velVec = XMVectorSetY(velVec, XMVectorGetY(velVec) + (PhysicsManager::GetInstance()->GetGravity() * fixedTimestep));
 
-	//Apply velocity to position
-	moveVec = XMVector3ClampLength(moveVec, 0, currSpeed * fixedTimestep);
+	//Apply velocity to displacement
 	moveVec = XMVectorAdd(moveVec, XMVectorScale(velVec, fixedTimestep));
 
 	//Store velocity for next frame
@@ -276,7 +328,7 @@ void FirstPersonMovement::Update(float deltaTime)
 		if (crouching)
 			EndCrouch();
 		else if (IsSliding())
-			EndSlide();
+			EndSlide(false);
 		
 		StartSprint();
 	}
@@ -299,7 +351,7 @@ void FirstPersonMovement::Update(float deltaTime)
 		}
 		else if (IsSliding())
 		{
-			EndSlide();
+			EndSlide(false);
 			StartCrouch();
 		}
 		else StartCrouch();
@@ -311,7 +363,7 @@ void FirstPersonMovement::Update(float deltaTime)
 		if (crouching)
 			EndCrouch();
 		else if (IsSliding())
-			EndSlide();
+			EndSlide(true);
 		jump = true;
 	}
 }
@@ -351,9 +403,11 @@ void FirstPersonMovement::StartSlide()
 
 }
 // Changes for when we end a slide
-void FirstPersonMovement::EndSlide()
+void FirstPersonMovement::EndSlide(bool fromJump)
 {
-	slideState = SlideState::Ending;
+	if (fromJump)
+		slideState = SlideState::EndingFromJump;
+	else slideState = SlideState::Ending;
 	controller->Resize(STAND_HEIGHT);
 	cameraGO->SetLocalPosition(0, STAND_HEIGHT, 0);
 }

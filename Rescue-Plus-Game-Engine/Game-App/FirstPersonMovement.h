@@ -22,6 +22,10 @@ private:
 
 	//Input
 	float yRot = 0;
+	float xMult;
+	float zMult;
+	float xInAirMult;
+	float zInAirMult;
 	SlideState slideState;
 	short movementX;
 	short movementZ;
@@ -59,7 +63,7 @@ private:
 	// --------------------------------------------------------
 	// Changes for when we end a slide
 	// --------------------------------------------------------
-	void EndSlide();
+	void EndSlide(bool fromJump);
 	// --------------------------------------------------------
 	// If the slide state is in a valid sliding state
 	// --------------------------------------------------------
