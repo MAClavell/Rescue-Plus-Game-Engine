@@ -23,8 +23,7 @@ private:
 	//Input
 	float xMult;
 	float zMult;
-	float xInAirMult;
-	float zInAirMult;
+	float inAirMaxSpeed;
 	SlideState slideState;
 	short movementX;
 	short movementZ;
