@@ -36,7 +36,6 @@ public:
 	// Overridden mouse input helper methods
 	void OnMouseDown (WPARAM buttonState, int x, int y);
 	void OnMouseUp	 (WPARAM buttonState, int x, int y, int button);
-	void OnMouseMove (WPARAM buttonState, int x, int y);
 	void OnMouseWheel(float wheelDelta,   int x, int y);
 
 

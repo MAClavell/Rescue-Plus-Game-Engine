@@ -113,14 +113,6 @@ public:
 
 	// --------------------------------------------------------
 	// NOT FOR USE OUTSIDE OF GAME.CPP
-	// Helper method for updating mouse movement.  We only get this message
-	// if the mouse is currently over the window, or if we're 
-	// currently capturing the mouse.
-	// --------------------------------------------------------
-	void OnMouseMove(WPARAM buttonState, int x, int y);
-
-	// --------------------------------------------------------
-	// NOT FOR USE OUTSIDE OF GAME.CPP
 	// Helper method for mouse wheel scrolling.  
 	// WheelDelta may be positive or negative, depending 
 	// on the direction of the scroll
@@ -173,14 +165,27 @@ public:
 	bool GetMouseButtonUp(MouseButtons button);
 
 	// --------------------------------------------------------
+	// If the mouse moved between this frame and the last
+	// --------------------------------------------------------
+	bool DidMouseMove();
+
+	// --------------------------------------------------------
 	// Get the current X mouse position
 	// --------------------------------------------------------
 	long GetMouseX();
-
 	// --------------------------------------------------------
 	// Get the current Y mouse position
 	// --------------------------------------------------------
 	long GetMouseY();
+
+	// --------------------------------------------------------
+	// Get the previous frame's X mouse position
+	// --------------------------------------------------------
+	long GetPreviousMouseX();
+	// --------------------------------------------------------
+	// Get the previous frame's Y mouse position
+	// --------------------------------------------------------
+	long GetPreviousMouseY();
 
 	// --------------------------------------------------------
 	// Get the current scrollwheel delta

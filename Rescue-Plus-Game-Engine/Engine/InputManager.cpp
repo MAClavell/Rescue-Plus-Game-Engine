@@ -92,10 +92,6 @@ void InputManager::ReleaseWindow()
 // --------------------------------------------------------
 void InputManager::OnMouseDown(WPARAM buttonState, int x, int y)
 {
-	// Save the previous mouse position, so we have it for the future
-	//prevMousePos.x = x;
-	//prevMousePos.y = y;
-
 	//Find what button was pressed
 	if (buttonState & 0x0001) { mb_L_Down = true; }
 	else if (buttonState & 0x0002) { mb_R_Down = true; }
@@ -111,18 +107,6 @@ void InputManager::OnMouseUp(WPARAM buttonState, int x, int y, int button)
 	if (button & 0x0001) { mb_L_Down = false; }
 	else if (button & 0x0002) { mb_R_Down = false; }
 	else if (button & 0x0010) { mb_M_Down = false; }
-}
-
-// --------------------------------------------------------
-// Helper method for mouse movement.  We only get this message
-// if the mouse is currently over the window, or if we're 
-// currently capturing the mouse.
-// --------------------------------------------------------
-void InputManager::OnMouseMove(WPARAM buttonState, int x, int y)
-{
-	// Save the previous mouse position, so we have it for the future
-	//prevMousePos.x = x;
-	//prevMousePos.y = y;
 }
 
 // --------------------------------------------------------
@@ -252,16 +236,32 @@ bool InputManager::GetMouseButtonUp(MouseButtons button)
 	}
 }
 
+// If the mouse moved between this frame and the last
+bool InputManager::DidMouseMove()
+{
+	return (mousePos.x != prevMousePos.x) && (mousePos.y != prevMousePos.y);
+}
+
 // Get the current X mouse position
 long InputManager::GetMouseX()
 {
 	return mousePos.x;
 }
-
 // Get the current Y mouse position
 long InputManager::GetMouseY()
 {
 	return mousePos.y;
+}
+
+// Get the previous frame's X mouse position
+long InputManager::GetPreviousMouseX()
+{
+	return prevMousePos.x;
+}
+// Get the previous frame's Y mouse position
+long InputManager::GetPreviousMouseY()
+{
+	return prevMousePos.y;
 }
 
 // Get the current scrollwheel delta

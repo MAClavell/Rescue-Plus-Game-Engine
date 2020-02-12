@@ -431,41 +431,42 @@ void FirstPersonMovement::CalculateCameraRotFromMouse()
 	long mouseY = inputManager->GetMouseY();
 
 	//Calculate the difference in view with the angle
-	float fAngleX = 0.0f;
-	float fAngleY = 0.0f;
-	float fDeltaMouse = 0.0f;
+	double fAngleX = 0.0f;
+	double fAngleY = 0.0f;
+	double fDeltaMouse = 0.0f;
 	if (mouseX > centerX)
 	{
-		fDeltaMouse = static_cast<float>(mouseX - centerX);
+		fDeltaMouse = static_cast<double>(mouseX - centerX);
 		fAngleY += fDeltaMouse * cameraSensitivity;
 	}
 	else if (mouseX < centerX)
 	{
-		fDeltaMouse = static_cast<float>(centerX - mouseX);
+		fDeltaMouse = static_cast<double>(centerX - mouseX);
 		fAngleY -= fDeltaMouse * cameraSensitivity;
 	}
 
 	if (mouseY > centerY)
 	{
-		fDeltaMouse = static_cast<float>(centerY - mouseY);
+		fDeltaMouse = static_cast<double>(centerY - mouseY);
 		fAngleX -= fDeltaMouse * cameraSensitivity;
 	}
 	else if (mouseY < centerY)
 	{
-		fDeltaMouse = static_cast<float>(mouseY - centerY);
+		fDeltaMouse = static_cast<double>(mouseY - centerY);
 		fAngleX += fDeltaMouse * cameraSensitivity;
 	}
 
-	static float xRot = 0;
+	static double xRot = 0;
+	static double yRot = 0;
 
 	xRot += fAngleX;
 	yRot += fAngleY;
 
 	//Keep camera from reversing when looking up/down
-	if (xRot > 89.9f)
-		xRot = 89.9f;
-	if (xRot < -89.9f)
-		xRot = -89.9f;
+	if (xRot > 89.99f)
+		xRot = 89.99f;
+	if (xRot < -89.99f)
+		xRot = -89.99f;
 
 	//Change the Yaw and the Pitch of the camera
 	gameObject()->SetRotation(0, yRot, 0);

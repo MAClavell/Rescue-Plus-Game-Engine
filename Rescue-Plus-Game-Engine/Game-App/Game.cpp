@@ -307,16 +307,6 @@ void Game::OnMouseUp(WPARAM buttonState, int x, int y, int button)
 }
 
 // --------------------------------------------------------
-// Helper method for mouse movement.  We only get this message
-// if the mouse is currently over the window, or if we're
-// currently capturing the mouse.
-// --------------------------------------------------------
-void Game::OnMouseMove(WPARAM buttonState, int x, int y)
-{
-	inputManager->OnMouseMove(buttonState, x, y);
-}
-
-// --------------------------------------------------------
 // Helper method for mouse wheel scrolling.
 // WheelDelta may be positive or negative, depending
 // on the direction of the scroll

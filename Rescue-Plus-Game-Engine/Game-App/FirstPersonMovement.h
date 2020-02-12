@@ -21,7 +21,6 @@ private:
 	DirectX::XMFLOAT3 slideDir;
 
 	//Input
-	float yRot = 0;
 	float xMult;
 	float zMult;
 	float xInAirMult;
