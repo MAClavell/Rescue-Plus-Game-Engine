@@ -8,6 +8,7 @@ class FirstPersonMovement :
 {
 private:
 	enum class SlideState{None, Starting, Sliding, Ending, EndingFromJump};
+	enum class CameraState{None, Walking, Sprinting, Crouching, InAir, Sliding};
 
 	InputManager* inputManager;
 	CharacterController* controller;
@@ -19,6 +20,14 @@ private:
 	//Physics
 	DirectX::XMFLOAT3 velocity;
 	DirectX::XMFLOAT3 slideDir;
+
+	//Camera
+	DirectX::XMFLOAT3 lastFrameCameraPos;
+	DirectX::XMFLOAT3 cameraPos;
+	DirectX::XMFLOAT3 cameraTargetPos;
+	float cameraT;
+	short cameraDir;
+	CameraState cameraState;
 
 	//Input
 	float xMult;
@@ -35,6 +44,11 @@ private:
 	bool grounded;
 	bool prevGrounded;
 	bool applyGravity;
+
+	// --------------------------------------------------------
+	// Apply various effects to the camera depending on the movement state
+	// --------------------------------------------------------
+	void ApplyCameraEffects(float fixedTimestep);
 
 	// --------------------------------------------------------
 	// Changes for when we start a sprint

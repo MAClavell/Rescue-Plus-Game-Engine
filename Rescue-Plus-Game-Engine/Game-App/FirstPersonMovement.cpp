@@ -5,6 +5,7 @@
 
 using namespace DirectX;
 
+//Speeds
 #define MOVE_SPEED 12
 #define SPRINT_SPEED 16
 #define CROUCH_SPEED 5
@@ -14,10 +15,20 @@ using namespace DirectX;
 #define ACC_IN_AIR_MULT 4
 #define SLIDE_FRICTION (SPRINT_SPEED * 0.5f)
 #define SLIDE_CUTOFF 1.0f
+
+//Heights
 #define STAND_HEIGHT 2.0f
 #define CROUCH_HEIGHT 1.5f
 #define SLIDE_HEIGHT 1.0f
 #define SLIDE_BODY_LENGTH 3.0f
+
+//Camera
+#define WALK_BOB_MAX 0.05f
+#define WALK_BOB_SPEED 5.0f
+#define SPRINT_BOB_MAX 0.075f
+#define SPRINT_BOB_SPEED 8.0f
+#define CROUCH_BOB_MAX 0.075f
+#define CROUCH_BOB_SPEED 6.0f
 
 FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent(gameObject)
 {
@@ -39,6 +50,7 @@ FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent
 
 	jump = false;
 	slideState = SlideState::None;
+	cameraState = CameraState::None;
 	movementX = 0;
 	movementZ = 0;
 	xMult = 0;
@@ -47,6 +59,12 @@ FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent
 
 	velocity = XMFLOAT3(0, 0, 0);
 	slideDir = XMFLOAT3(0, 0, 0);
+
+	lastFrameCameraPos = cameraGO->GetPosition();
+	cameraPos = XMFLOAT3(0, STAND_HEIGHT, 0);
+	cameraTargetPos = XMFLOAT3(0, STAND_HEIGHT, 0);
+	cameraT = 0;
+	cameraDir = 1;
 }
 FirstPersonMovement::~FirstPersonMovement()
 { }
@@ -64,7 +82,7 @@ FirstPersonMovement* FirstPersonMovement::CreateFirstPersonCharacter(const char*
 	camera->AddComponent<Camera>()
 		->CreateProjectionMatrix(0.25f * XM_PI, (float)screenWidth / screenHeight, 0.1f, 10000.0f);
 	camera->SetParent(root);
-	camera->SetLocalPosition(0, 2, 0);
+	camera->SetLocalPosition(0, STAND_HEIGHT, 0);
 
 	//Add FirstPersonMovement component
 	FirstPersonMovement* fps = root->AddComponent<FirstPersonMovement>();
@@ -75,6 +93,8 @@ FirstPersonMovement* FirstPersonMovement::CreateFirstPersonCharacter(const char*
 //Apply movement
 void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 {
+	lastFrameCameraPos = cameraGO->GetPosition();
+
 	//Initialize physics
 	XMVECTOR accVec = XMVectorSet(0, 0, 0, 0);
 	XMVECTOR velVec = XMLoadFloat3(&velocity);
@@ -252,6 +272,8 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 	XMFLOAT3 displacement;
 	XMStoreFloat3(&displacement, displacementVec);
 	controller->Move(displacement, fixedTimestep, false);
+
+	ApplyCameraEffects(fixedTimestep);
 }
 
 //Detect input
@@ -320,12 +342,60 @@ void FirstPersonMovement::Update(float deltaTime)
 			EndSlide(true);
 		jump = true;
 	}
+
+	//Camera states for none and walking
+	if (grounded && !jump && !IsSliding() && !sprinting && !crouching)
+	{
+		if (movementX == 0 && movementZ == 0 && cameraState != CameraState::None)
+			cameraState = CameraState::None;
+		else if ((movementX != 0 || movementZ != 0) && cameraState != CameraState::Walking)
+		{
+			cameraTargetPos = XMFLOAT3(0, STAND_HEIGHT + WALK_BOB_MAX, 0);
+			cameraState = CameraState::Walking;
+			cameraT = 0;
+			cameraDir = 1;
+		}
+	}
+}
+
+// Apply various effects to the camera depending on the movement state
+void FirstPersonMovement::ApplyCameraEffects(float fixedTimestep)
+{
+	float speed = 0;
+	//Walking
+	if (cameraState == CameraState::Walking)
+		speed = WALK_BOB_SPEED;
+	//Sprinting
+	else if (cameraState == CameraState::Sprinting)
+		speed = SPRINT_BOB_SPEED;
+	//Crouching
+	else if (cameraState == CameraState::Crouching)
+		speed = CROUCH_BOB_SPEED;
+
+	//Head bobbing
+	if ((movementX != 0 || movementZ != 0) &&
+		(cameraState == CameraState::Walking || cameraState == CameraState::Sprinting || cameraState == CameraState::Crouching))
+	{
+		cameraT += cameraDir * speed * fixedTimestep;
+		if (cameraT > 1)
+			cameraDir = -1;
+		else if (cameraT < 0)
+			cameraDir = 1;
+
+		XMFLOAT3 pos;
+		XMStoreFloat3(&pos, XMVectorLerp(XMLoadFloat3(&cameraPos), XMLoadFloat3(&cameraTargetPos), cameraT));
+		cameraGO->SetLocalPosition(pos);
+	}
 }
 
 // Changes for when we start a sprint
 void FirstPersonMovement::StartSprint()
 {
 	sprinting = true;
+	cameraTargetPos = XMFLOAT3(0, STAND_HEIGHT + SPRINT_BOB_MAX, 0);
+	cameraState = CameraState::Sprinting;
+	cameraT = 0;
+	cameraDir = 1;
 }
 // Changes for when we end a sprint
 void FirstPersonMovement::EndSprint()
@@ -338,19 +408,22 @@ void FirstPersonMovement::StartCrouch()
 {
 	crouching = true;
 	controller->Resize(CROUCH_HEIGHT);
-	cameraGO->SetLocalPosition(0, CROUCH_HEIGHT, 0);
+	cameraTargetPos = XMFLOAT3(0, STAND_HEIGHT + CROUCH_BOB_MAX, 0);
+	cameraState = CameraState::Crouching;
+	cameraT = 0;
+	cameraDir = 1;
 }
 // Changes for when we end a crouch
 void FirstPersonMovement::EndCrouch()
 {
 	crouching = false;
 	controller->Resize(STAND_HEIGHT);
-	cameraGO->SetLocalPosition(0, STAND_HEIGHT, 0);
 }
 
 // Changes for when we start a slide
 void FirstPersonMovement::StartSlide()
 {
+	cameraState = CameraState::Sliding;
 	slideState = SlideState::Starting;
 	controller->Resize(SLIDE_HEIGHT);
 	cameraGO->SetLocalPosition(0, SLIDE_HEIGHT, 0);
@@ -417,10 +490,11 @@ void FirstPersonMovement::CalculateCameraRotFromMouse()
 	yRot += fAngleY;
 
 	//Keep camera from reversing when looking up/down
-	if (xRot > 89.99f)
-		xRot = 89.99f;
-	if (xRot < -89.99f)
-		xRot = -89.99f;
+	//Clamp when sliding
+	if (IsSliding())
+		xRot = Clamp(xRot, -89.99f, 10.0f);
+	else
+		xRot = Clamp(xRot, -89.99f, 89.99f);
 
 	//Change the Yaw and the Pitch of the camera
 	gameObject()->SetRotation(0, yRot, 0);
