@@ -23,11 +23,12 @@ private:
 
 	//Camera
 	DirectX::XMFLOAT3 lastFrameCameraPos;
-	DirectX::XMFLOAT3 cameraPos;
+	DirectX::XMFLOAT3 cameraBasePos;
 	DirectX::XMFLOAT3 cameraTargetPos;
+	CameraState cameraState;
 	float cameraT;
 	short cameraDir;
-	CameraState cameraState;
+	bool cameraLerpToStart;
 
 	//Input
 	float xMult;
@@ -46,9 +47,14 @@ private:
 	bool applyGravity;
 
 	// --------------------------------------------------------
+	// Activate a camera transition
+	// --------------------------------------------------------
+	void CameraTransition(CameraState newState, float baseHeight, float bobMax);
+
+	// --------------------------------------------------------
 	// Apply various effects to the camera depending on the movement state
 	// --------------------------------------------------------
-	void ApplyCameraEffects(float fixedTimestep);
+	void ApplyHeadBob(float fixedTimestep);
 
 	// --------------------------------------------------------
 	// Changes for when we start a sprint

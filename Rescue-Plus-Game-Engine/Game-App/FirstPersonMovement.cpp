@@ -23,6 +23,7 @@ using namespace DirectX;
 #define SLIDE_BODY_LENGTH 3.0f
 
 //Camera
+#define CAMERA_LERP_SPEED 3.0f
 #define WALK_BOB_MAX 0.05f
 #define WALK_BOB_SPEED 5.0f
 #define SPRINT_BOB_MAX 0.075f
@@ -60,11 +61,12 @@ FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent
 	velocity = XMFLOAT3(0, 0, 0);
 	slideDir = XMFLOAT3(0, 0, 0);
 
-	lastFrameCameraPos = cameraGO->GetPosition();
-	cameraPos = XMFLOAT3(0, STAND_HEIGHT, 0);
+	lastFrameCameraPos = cameraGO->GetLocalPosition();
+	cameraBasePos = XMFLOAT3(0, STAND_HEIGHT, 0);
 	cameraTargetPos = XMFLOAT3(0, STAND_HEIGHT, 0);
 	cameraT = 0;
 	cameraDir = 1;
+	cameraLerpToStart = false;
 }
 FirstPersonMovement::~FirstPersonMovement()
 { }
@@ -93,7 +95,7 @@ FirstPersonMovement* FirstPersonMovement::CreateFirstPersonCharacter(const char*
 //Apply movement
 void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 {
-	lastFrameCameraPos = cameraGO->GetPosition();
+	lastFrameCameraPos = cameraGO->GetLocalPosition();
 
 	//Initialize physics
 	XMVECTOR accVec = XMVectorSet(0, 0, 0, 0);
@@ -224,8 +226,15 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 
 	//Landing, so remove our horizontal velocity
 	if (grounded && !prevGrounded)
+	{
 		velVec = XMVectorSet(0, XMVectorGetY(velVec), 0, 0);
-
+		if (sprinting)
+			CameraTransition(CameraState::Sprinting, STAND_HEIGHT, SPRINT_BOB_MAX);
+	}
+	else if (!grounded && prevGrounded)
+	{
+		CameraTransition(CameraState::InAir, STAND_HEIGHT, 0);
+	}
 	//Apply jump physics
 	if (jump)
 	{
@@ -273,7 +282,26 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 	XMStoreFloat3(&displacement, displacementVec);
 	controller->Move(displacement, fixedTimestep, false);
 
-	ApplyCameraEffects(fixedTimestep);
+	//Lerp camera to start position
+	if (cameraLerpToStart)
+	{
+		cameraT += CAMERA_LERP_SPEED * fixedTimestep;
+
+		XMFLOAT3 pos;
+		XMStoreFloat3(&pos, XMVectorLerp(XMLoadFloat3(&lastFrameCameraPos), XMLoadFloat3(&cameraTargetPos), cameraT));
+		cameraGO->SetLocalPosition(pos);
+
+		if (cameraT > 1)
+			cameraLerpToStart = false;
+	}
+	//Apply head bob
+	else if ((movementX != 0 || movementZ != 0) &&
+		(cameraState == CameraState::Walking ||
+			cameraState == CameraState::Sprinting ||
+			cameraState == CameraState::Crouching))
+	{
+		ApplyHeadBob(fixedTimestep);
+	}
 }
 
 //Detect input
@@ -343,59 +371,53 @@ void FirstPersonMovement::Update(float deltaTime)
 		jump = true;
 	}
 
-	//Camera states for none and walking
+	//Transitions for standing still and walking
 	if (grounded && !jump && !IsSliding() && !sprinting && !crouching)
 	{
 		if (movementX == 0 && movementZ == 0 && cameraState != CameraState::None)
-			cameraState = CameraState::None;
+			CameraTransition(CameraState::None, STAND_HEIGHT, 0);
 		else if ((movementX != 0 || movementZ != 0) && cameraState != CameraState::Walking)
-		{
-			cameraTargetPos = XMFLOAT3(0, STAND_HEIGHT + WALK_BOB_MAX, 0);
-			cameraState = CameraState::Walking;
-			cameraT = 0;
-			cameraDir = 1;
-		}
+			CameraTransition(CameraState::Walking, STAND_HEIGHT, WALK_BOB_MAX);
 	}
 }
 
-// Apply various effects to the camera depending on the movement state
-void FirstPersonMovement::ApplyCameraEffects(float fixedTimestep)
+void FirstPersonMovement::CameraTransition(CameraState newState, float baseHeight, float bobMax)
 {
-	float speed = 0;
-	//Walking
-	if (cameraState == CameraState::Walking)
-		speed = WALK_BOB_SPEED;
+	cameraBasePos = XMFLOAT3(0, baseHeight, 0);
+	cameraTargetPos = XMFLOAT3(0, baseHeight + bobMax, 0);
+	cameraState = newState;
+	cameraT = 0;
+	cameraDir = 1;
+	cameraLerpToStart = true;
+}
+
+// Apply various effects to the camera depending on the movement state
+void FirstPersonMovement::ApplyHeadBob(float fixedTimestep)
+{
+	float speed = WALK_BOB_SPEED;
 	//Sprinting
-	else if (cameraState == CameraState::Sprinting)
+	if (cameraState == CameraState::Sprinting)
 		speed = SPRINT_BOB_SPEED;
 	//Crouching
 	else if (cameraState == CameraState::Crouching)
 		speed = CROUCH_BOB_SPEED;
 
-	//Head bobbing
-	if ((movementX != 0 || movementZ != 0) &&
-		(cameraState == CameraState::Walking || cameraState == CameraState::Sprinting || cameraState == CameraState::Crouching))
-	{
-		cameraT += cameraDir * speed * fixedTimestep;
-		if (cameraT > 1)
-			cameraDir = -1;
-		else if (cameraT < 0)
-			cameraDir = 1;
-
-		XMFLOAT3 pos;
-		XMStoreFloat3(&pos, XMVectorLerp(XMLoadFloat3(&cameraPos), XMLoadFloat3(&cameraTargetPos), cameraT));
-		cameraGO->SetLocalPosition(pos);
-	}
+	cameraT += cameraDir * speed * fixedTimestep;
+	if (cameraT > 1)
+		cameraDir = -1;
+	else if (cameraT < 0)
+		cameraDir = 1;
+	
+	XMFLOAT3 pos;
+	XMStoreFloat3(&pos, XMVectorLerp(XMLoadFloat3(&cameraBasePos), XMLoadFloat3(&cameraTargetPos), cameraT));
+	cameraGO->SetLocalPosition(pos);
 }
 
 // Changes for when we start a sprint
 void FirstPersonMovement::StartSprint()
 {
 	sprinting = true;
-	cameraTargetPos = XMFLOAT3(0, STAND_HEIGHT + SPRINT_BOB_MAX, 0);
-	cameraState = CameraState::Sprinting;
-	cameraT = 0;
-	cameraDir = 1;
+	CameraTransition(CameraState::Sprinting, STAND_HEIGHT, SPRINT_BOB_MAX);
 }
 // Changes for when we end a sprint
 void FirstPersonMovement::EndSprint()
@@ -408,10 +430,8 @@ void FirstPersonMovement::StartCrouch()
 {
 	crouching = true;
 	controller->Resize(CROUCH_HEIGHT);
-	cameraTargetPos = XMFLOAT3(0, STAND_HEIGHT + CROUCH_BOB_MAX, 0);
-	cameraState = CameraState::Crouching;
-	cameraT = 0;
-	cameraDir = 1;
+	CameraTransition(CameraState::Crouching, CROUCH_HEIGHT, CROUCH_BOB_MAX);
+
 }
 // Changes for when we end a crouch
 void FirstPersonMovement::EndCrouch()
@@ -426,8 +446,7 @@ void FirstPersonMovement::StartSlide()
 	cameraState = CameraState::Sliding;
 	slideState = SlideState::Starting;
 	controller->Resize(SLIDE_HEIGHT);
-	cameraGO->SetLocalPosition(0, SLIDE_HEIGHT, 0);
-
+	CameraTransition(CameraState::Sliding, SLIDE_HEIGHT, 0);
 }
 // Changes for when we end a slide
 void FirstPersonMovement::EndSlide(bool fromJump)
@@ -436,7 +455,6 @@ void FirstPersonMovement::EndSlide(bool fromJump)
 		slideState = SlideState::EndingFromJump;
 	else slideState = SlideState::Ending;
 	controller->Resize(STAND_HEIGHT);
-	cameraGO->SetLocalPosition(0, STAND_HEIGHT, 0);
 }
 // If the slide state is in a valid sliding state
 bool FirstPersonMovement::IsSliding()
