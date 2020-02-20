@@ -17,12 +17,29 @@ private:
 	//Transformation data
 	DirectX::XMFLOAT3 up;
 
+	//Projection data
+	bool projectionDirty;
+	float fovDegrees;
+	float aspectRatio;
+	float nearClip;
+	float farClip;
+
+	// --------------------------------------------------------
+	// Create the camera's projection matrix from the class fields
+	// --------------------------------------------------------
+	void CreateProjectionMatrix();
+
 public:
 	// --------------------------------------------------------
 	// Constructor - Set up the camera
-	// (Remember to create the projection matrix right after!)
+	//
+	// fovDegrees - Y FOV of the camera in degrees
+	// aspectRatio - Aspect ratio of the camera (width / height)
+	// nearClip - Near clip plane distance
+	// farClip - Far clip plane distance
 	// --------------------------------------------------------
-	Camera(GameObject* gameObject);
+	Camera(GameObject* gameObject, float fovDegrees,
+		float aspectRatio, float nearClip, float farClip);
 
 	// --------------------------------------------------------
 	// Destructor for when an instance is deleted
@@ -45,17 +62,6 @@ public:
 	DirectX::XMFLOAT4X4 GetRawViewMatrix();
 
 	// --------------------------------------------------------
-	// Create the camera's projection matrix from parameters
-	//
-	// fov - FOV of the camera
-	// aspectRatio - Aspect ratio of the camera (width / height)
-	// nearClip - Near clip plane distance
-	// farClip - Far clip plane distance
-	// --------------------------------------------------------
-	void CreateProjectionMatrix(float fov, float aspectRatio, 
-									float nearClip, float farClip);
-
-	// --------------------------------------------------------
 	// Get the camera's projection matrix
 	// --------------------------------------------------------
 	DirectX::XMFLOAT4X4 GetProjectionMatrix();
@@ -64,5 +70,43 @@ public:
 	// Get the raw (untransposed) camera's projection matrix
 	// --------------------------------------------------------
 	DirectX::XMFLOAT4X4 GetRawProjectionMatrix();
+
+	// --------------------------------------------------------
+	// Set the FOV of the camera (in degrees)
+	// --------------------------------------------------------
+	void SetFOV(float fovDegrees);
+	// --------------------------------------------------------
+	// Get the FOV of the camera (in degrees)
+	// --------------------------------------------------------
+	float GetFOV();
+
+	// --------------------------------------------------------
+	// Set the aspect ratio of the camera (width / height)
+	// --------------------------------------------------------
+	void SetAspectRatio(float ratio);
+	// --------------------------------------------------------
+	// Get the aspect ratio of the camera (width / height)
+	// --------------------------------------------------------
+	float GetAspectRatio();
+
+	// --------------------------------------------------------
+	// Set the near clip plane distance
+	// --------------------------------------------------------
+	void SetNearClip(float nearClip);
+	// --------------------------------------------------------
+	// Get the near clip plane distance
+	// --------------------------------------------------------
+	float GetNearClip();
+
+	// --------------------------------------------------------
+	// Set the far clip plane distance
+	// --------------------------------------------------------
+	void SetFarClip(float farClip);
+	// --------------------------------------------------------
+	// Get the far clip plane distance
+	// --------------------------------------------------------
+	float GetFarClip();
+
+
 };
 

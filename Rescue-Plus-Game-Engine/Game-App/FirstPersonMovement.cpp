@@ -28,6 +28,9 @@ using namespace DirectX;
 #define WALK_BOB_SPEED 5.0f
 #define SPRINT_BOB_MAX 0.075f
 #define SPRINT_BOB_SPEED 8.0f
+#define SPRINT_FOV_ADDITION 2.0f
+#define SPRINT_FOV_IN_SPEED 1.0f
+#define SPRINT_FOV_OUT_SPEED 10.0f
 #define CROUCH_BOB_MAX 0.075f
 #define CROUCH_BOB_SPEED 6.0f
 
@@ -65,8 +68,10 @@ FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent
 	cameraBasePos = XMFLOAT3(0, STAND_HEIGHT, 0);
 	cameraTargetPos = XMFLOAT3(0, STAND_HEIGHT, 0);
 	cameraT = 0;
+	cameraFOVT = 0;
 	cameraDir = 1;
 	cameraLerpToStart = false;
+	cameraFOV = camera->GetFOV();
 }
 FirstPersonMovement::~FirstPersonMovement()
 { }
@@ -81,8 +86,7 @@ FirstPersonMovement* FirstPersonMovement::CreateFirstPersonCharacter(const char*
 
 	//Camera object
 	GameObject* camera = new GameObject("FPCamera");
-	camera->AddComponent<Camera>()
-		->CreateProjectionMatrix(0.25f * XM_PI, (float)screenWidth / screenHeight, 0.1f, 10000.0f);
+	camera->AddComponent<Camera>(60.0f, (float)screenWidth / screenHeight, 0.1f, 10000.0f);
 	camera->SetParent(root);
 	camera->SetLocalPosition(0, STAND_HEIGHT, 0);
 
@@ -230,6 +234,8 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 		velVec = XMVectorSet(0, XMVectorGetY(velVec), 0, 0);
 		if (sprinting)
 			CameraTransition(CameraState::Sprinting, STAND_HEIGHT, SPRINT_BOB_MAX);
+		else if (crouching)
+			CameraTransition(CameraState::Crouching, CROUCH_HEIGHT, CROUCH_BOB_MAX);
 	}
 	else if (!grounded && prevGrounded)
 	{
@@ -288,19 +294,31 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 		cameraT += CAMERA_LERP_SPEED * fixedTimestep;
 
 		XMFLOAT3 pos;
-		XMStoreFloat3(&pos, XMVectorLerp(XMLoadFloat3(&lastFrameCameraPos), XMLoadFloat3(&cameraTargetPos), cameraT));
+		XMStoreFloat3(&pos, XMVectorLerp(XMLoadFloat3(&lastFrameCameraPos), XMLoadFloat3(&cameraBasePos), cameraT));
 		cameraGO->SetLocalPosition(pos);
 
 		if (cameraT > 1)
+		{
 			cameraLerpToStart = false;
+			cameraT = 0;
+		}
 	}
 	//Apply head bob
-	else if ((movementX != 0 || movementZ != 0) &&
-		(cameraState == CameraState::Walking ||
-			cameraState == CameraState::Sprinting ||
-			cameraState == CameraState::Crouching))
+	else
 	{
 		ApplyHeadBob(fixedTimestep);
+	}
+
+	//Apply FOV change
+	if ((cameraState == CameraState::Sprinting || cameraState == CameraState::Sliding) && cameraFOVT < 1)
+	{
+		cameraFOVT += fixedTimestep * SPRINT_FOV_IN_SPEED;
+		camera->SetFOV(Lerp(cameraFOV, cameraFOV + SPRINT_FOV_ADDITION, cameraFOVT));
+	}
+	else if (cameraState != CameraState::Sprinting && cameraState != CameraState::Sliding && cameraFOVT > 0)
+	{
+		cameraFOVT -= fixedTimestep * SPRINT_FOV_OUT_SPEED;
+		camera->SetFOV(Lerp(cameraFOV, cameraFOV + SPRINT_FOV_ADDITION, cameraFOVT));
 	}
 }
 
@@ -394,29 +412,50 @@ void FirstPersonMovement::CameraTransition(CameraState newState, float baseHeigh
 // Apply various effects to the camera depending on the movement state
 void FirstPersonMovement::ApplyHeadBob(float fixedTimestep)
 {
-	float speed = WALK_BOB_SPEED;
-	//Sprinting
-	if (cameraState == CameraState::Sprinting)
-		speed = SPRINT_BOB_SPEED;
-	//Crouching
-	else if (cameraState == CameraState::Crouching)
-		speed = CROUCH_BOB_SPEED;
+	if ((cameraState == CameraState::Walking ||
+		cameraState == CameraState::Sprinting ||
+		cameraState == CameraState::Crouching))
+	{
+		float speed = WALK_BOB_SPEED;
+		//Sprinting
+		if (cameraState == CameraState::Sprinting)
+			speed = SPRINT_BOB_SPEED;
+		//Crouching
+		else if (cameraState == CameraState::Crouching)
+			speed = CROUCH_BOB_SPEED;
 
-	cameraT += cameraDir * speed * fixedTimestep;
-	if (cameraT > 1)
-		cameraDir = -1;
-	else if (cameraT < 0)
-		cameraDir = 1;
-	
-	XMFLOAT3 pos;
-	XMStoreFloat3(&pos, XMVectorLerp(XMLoadFloat3(&cameraBasePos), XMLoadFloat3(&cameraTargetPos), cameraT));
-	cameraGO->SetLocalPosition(pos);
+		if (movementX != 0 || movementZ != 0)
+		{
+			cameraT += cameraDir * speed * fixedTimestep;
+			if (cameraT > 1)
+				cameraDir = -1;
+			else if (cameraT < 0)
+				cameraDir = 1;
+		}
+		//Lerp to zero when standing still (crouching)
+		else if(cameraT > 0)
+			cameraT -= speed * fixedTimestep;
+
+		XMFLOAT3 pos;
+		XMStoreFloat3(&pos, XMVectorLerp(XMLoadFloat3(&cameraBasePos), XMLoadFloat3(&cameraTargetPos), cameraT));
+		cameraGO->SetLocalPosition(pos);
+	}
 }
 
 // Changes for when we start a sprint
 void FirstPersonMovement::StartSprint()
 {
 	sprinting = true;
+
+	//Only get the default FOV if we are done lerping back to to it
+	//Prevents spamming sprint on and off from causing FOV issues
+	//In a real game we'd read the FOV from a settings file so this issue
+	//wouldn't occur.
+	if (cameraFOVT <= 0)
+	{
+		cameraFOV = camera->GetFOV(); 
+		cameraFOVT = 0;
+	}
 	CameraTransition(CameraState::Sprinting, STAND_HEIGHT, SPRINT_BOB_MAX);
 }
 // Changes for when we end a sprint

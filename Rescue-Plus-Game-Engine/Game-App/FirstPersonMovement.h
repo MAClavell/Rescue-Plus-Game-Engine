@@ -27,6 +27,8 @@ private:
 	DirectX::XMFLOAT3 cameraTargetPos;
 	CameraState cameraState;
 	float cameraT;
+	float cameraFOVT;
+	float cameraFOV;
 	short cameraDir;
 	bool cameraLerpToStart;
 

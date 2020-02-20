@@ -163,11 +163,7 @@ void Game::OnResize()
 	DXCore::OnResize();
 
 	// Update our projection matrix since the window size changed
-	camera->CreateProjectionMatrix(
-		0.25f * XM_PI,			// Field of View Angle
-		(float)width / height,	// Aspect ratio
-		0.1f,				  	// Near clip plane distance
-		100.0f);			  	// Far clip plane distance
+	camera->SetAspectRatio((float)width / height);
 }
 
 // --------------------------------------------------------

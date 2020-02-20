@@ -51,6 +51,14 @@ static bool InRange(float value, float range)
 }
 
 // --------------------------------------------------------
+//Lerps between two values
+// --------------------------------------------------------
+static float Lerp(float v1, float v2, float t)
+{
+	return v1 + t * (v2 - v1);
+}
+
+// --------------------------------------------------------
 //Lerps until the result is negligably close to the target value.
 // --------------------------------------------------------
 static float LerpThreshhold(float v1, float v2, float t, float thresh = 0.001)
@@ -59,7 +67,6 @@ static float LerpThreshhold(float v1, float v2, float t, float thresh = 0.001)
 		return v1 + t * (v2 - v1);
 	else
 		return v2;
-	return 0;
 }
 
 // --------------------------------------------------------
