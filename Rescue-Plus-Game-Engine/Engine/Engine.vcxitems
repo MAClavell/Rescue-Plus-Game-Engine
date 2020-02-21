@@ -30,6 +30,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Material.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)MAT_Skybox.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Mesh.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)PerlinNoise.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)PhysicsManager.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)PhysicsMaterial.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Renderer.cpp" />
@@ -63,6 +64,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)MiscHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ParallelFor.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ParallelForSplitters.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)PerlinNoise.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsHelper.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsManager.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)PhysicsMaterial.h" />

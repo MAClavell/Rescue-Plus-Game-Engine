@@ -5,6 +5,7 @@
 #include "MAT_PBRTexture.h"
 #include "JobSystem.h"
 #include "Raycast.h"
+#include "PerlinNoise.h"
 
 // For the DirectX Math library
 using namespace DirectX;
@@ -116,6 +117,9 @@ void Game::ReadConfig(string path)
 void Game::Init()
 {
 	ReadConfig("Assets/rescue+.txt");
+
+	//Initialize perlin noise
+	PerlinNoise::Seed(unsigned int(time(NULL)));
 
 	//Initialize job system
 	JobSystem::Init();

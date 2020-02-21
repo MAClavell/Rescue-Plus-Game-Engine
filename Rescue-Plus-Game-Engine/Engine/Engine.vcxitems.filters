@@ -123,6 +123,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)InputManager.cpp">
       <Filter>Source Files\Input</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)PerlinNoise.cpp">
+      <Filter>Source Files\Helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)GameObject.h">
@@ -229,6 +232,9 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)InputCodes.h">
       <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\Documents\GitHub\Rescue-Plus-Game-Engine\Rescue-Plus-Game-Engine\Engine\PerlinNoise.h">
+      <Filter>Header Files\Helpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
