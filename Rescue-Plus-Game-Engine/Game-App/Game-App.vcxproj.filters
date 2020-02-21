@@ -65,6 +65,9 @@
     <ClCompile Include="ShipyardCrane.cpp">
       <Filter>Source Files\UserComponents</Filter>
     </ClCompile>
+    <ClCompile Include="CameraShaker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DXCore.h">
@@ -93,6 +96,9 @@
     </ClInclude>
     <ClInclude Include="ShipyardCrane.h">
       <Filter>Header Files\UserComponents</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraShaker.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

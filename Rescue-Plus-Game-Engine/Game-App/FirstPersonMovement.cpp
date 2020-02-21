@@ -64,6 +64,7 @@ FirstPersonMovement::FirstPersonMovement(GameObject* gameObject) : UserComponent
 	velocity = XMFLOAT3(0, 0, 0);
 	slideDir = XMFLOAT3(0, 0, 0);
 
+	cameraShaker = CameraShaker(cameraGO, 10.0f);
 	lastFrameCameraPos = cameraGO->GetLocalPosition();
 	cameraBasePos = XMFLOAT3(0, STAND_HEIGHT, 0);
 	cameraTargetPos = XMFLOAT3(0, STAND_HEIGHT, 0);
@@ -231,6 +232,8 @@ void FirstPersonMovement::FixedUpdate(float fixedTimestep)
 	//Landing, so remove our horizontal velocity
 	if (grounded && !prevGrounded)
 	{
+		cameraShaker.AddTrauma(abs(XMVectorGetY(velVec) / 15.0f));
+
 		velVec = XMVectorSet(0, XMVectorGetY(velVec), 0, 0);
 		if (sprinting)
 			CameraTransition(CameraState::Sprinting, STAND_HEIGHT, SPRINT_BOB_MAX);
@@ -327,7 +330,7 @@ void FirstPersonMovement::Update(float deltaTime)
 {
 	//Rotate the camera to where the user is looking
 	inputManager->CaptureWindow();
-	CalculateCameraRotFromMouse();
+	CalculateCameraRotFromMouse(deltaTime);
 
 	//Detect Input first
 	movementZ = 0; //0=none, 1=W, 2=S
@@ -397,6 +400,10 @@ void FirstPersonMovement::Update(float deltaTime)
 		else if ((movementX != 0 || movementZ != 0) && cameraState != CameraState::Walking)
 			CameraTransition(CameraState::Walking, STAND_HEIGHT, WALK_BOB_MAX);
 	}
+
+	//Always set the trauma when sliding
+	if(IsSliding())
+		cameraShaker.SetTrauma(0.25f);
 }
 
 void FirstPersonMovement::CameraTransition(CameraState newState, float baseHeight, float bobMax)
@@ -502,7 +509,7 @@ bool FirstPersonMovement::IsSliding()
 }
 
 // Calculate the camera's rotation when the player moves the mouse
-void FirstPersonMovement::CalculateCameraRotFromMouse()
+void FirstPersonMovement::CalculateCameraRotFromMouse(float deltaTime)
 {
 	static float cameraSensitivity = 0.15f;
 
@@ -554,8 +561,12 @@ void FirstPersonMovement::CalculateCameraRotFromMouse()
 		xRot = Clamp(xRot, -89.99f, 89.99f);
 
 	//Change the Yaw and the Pitch of the camera
+	XMFLOAT3 baseRot = XMFLOAT3(xRot, yRot, 0);
 	gameObject()->SetRotation(0, yRot, 0);
-	cameraGO->SetRotation(xRot, yRot, 0);
+	cameraGO->SetRotation(baseRot);
+	
+	//Apply camera shake
+	cameraShaker.Update(deltaTime, baseRot);
 
 	SetCursorPos(centerX, centerY); //Position the mouse in the center
 	SetCursor(false);

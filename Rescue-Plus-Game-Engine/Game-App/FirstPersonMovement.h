@@ -2,6 +2,7 @@
 #include "Camera.h"
 #include "InputManager.h"
 #include "CharacterController.h"
+#include "CameraShaker.h"
 
 class FirstPersonMovement :
 	public UserComponent
@@ -22,6 +23,7 @@ private:
 	DirectX::XMFLOAT3 slideDir;
 
 	//Camera
+	CameraShaker cameraShaker;
 	DirectX::XMFLOAT3 lastFrameCameraPos;
 	DirectX::XMFLOAT3 cameraBasePos;
 	DirectX::XMFLOAT3 cameraTargetPos;
@@ -92,7 +94,7 @@ private:
 	// --------------------------------------------------------
 	// Calculate the camera's rotation when the player moves the mouse
 	// --------------------------------------------------------
-	void CalculateCameraRotFromMouse();
+	void CalculateCameraRotFromMouse(float deltaTime);
 	
 public:
 	FirstPersonMovement(GameObject* gameObject);

@@ -224,6 +224,7 @@ xcopy "$(SolutionDir)Engine\PhysX\bin\*.*" "$(TargetDir)" /Y /I /E</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CameraShaker.cpp" />
     <ClCompile Include="DXCore.cpp" />
     <ClCompile Include="DebugMovement.cpp" />
     <ClCompile Include="FirstPersonMovement.cpp" />
@@ -237,6 +238,7 @@ xcopy "$(SolutionDir)Engine\PhysX\bin\*.*" "$(TargetDir)" /Y /I /E</Command>
     <ClCompile Include="TestCallbacks.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CameraShaker.h" />
     <ClInclude Include="DXCore.h" />
     <ClInclude Include="DebugMovement.h" />
     <ClInclude Include="FirstPersonMovement.h" />
